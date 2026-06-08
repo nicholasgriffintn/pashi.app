@@ -4,8 +4,11 @@ export type Audience =
 	| "Gaming"
 	| "Geographic"
 	| "Identifiers"
+	| "People"
 	| "Product"
 	| "Random"
+	| "Security"
+	| "Strings"
 	| "TestData"
 	| "Tools";
 export type ResultKind = "fields" | "image" | "palette" | "text";
@@ -14,8 +17,10 @@ export type GeneratorResultValue = string | string[] | Record<string, string>;
 export interface GeneratorInputField {
 	id: string;
 	label: string;
+	options?: readonly string[];
 	placeholder: string;
 	required: boolean;
+	type?: "select" | "textarea" | "text";
 }
 
 export interface GeneratorTool {
@@ -31,6 +36,7 @@ export interface GeneratorTool {
 	input: {
 		fields?: readonly GeneratorInputField[];
 		label: string;
+		mode?: "none" | "text";
 		required: boolean;
 	};
 	label: string;

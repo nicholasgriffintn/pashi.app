@@ -15,6 +15,7 @@ const QR_SIZE = "360x360";
 
 export function GeneratorConsole() {
 	const [tools, setTools] = useState<GeneratorInfoTool[]>([getFallbackTool()]);
+	const [exportFormats, setExportFormats] = useState<string[]>([]);
 	const [activeToolId, setActiveToolId] = useState(getRouteToolId() ?? "qr");
 	const [input, setInput] = useState(DEFAULT_INPUT);
 	const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
@@ -22,11 +23,13 @@ export function GeneratorConsole() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [generateId, setGenerateId] = useState(0);
 	const [result, setResult] = useState<ResultStageValue | undefined>(() =>
-		createQrResult(getFallbackTool(), DEFAULT_INPUT, 0),
+		createImageResult(getFallbackTool(), DEFAULT_INPUT, {}, 0),
 	);
 
 	const activeTool = tools.find((tool) => tool.id === activeToolId) ?? tools[0];
 	const hasFields = Boolean(activeTool.input.fields?.length);
+	const hasPrimaryInput = !hasFields && activeTool.input.mode !== "none";
+	const visibleExamples = activeTool.input.mode === "none" ? [] : activeTool.display.examples;
 	useEffect(() => {
 		let ignore = false;
 
@@ -40,12 +43,14 @@ export function GeneratorConsole() {
 				const nextTool =
 					info.tools.find((tool) => tool.id === routeToolId) ?? info.tools[0];
 				setTools(info.tools);
+				setExportFormats(info.exportFormats);
 				setActiveToolId(nextTool.id);
-				setInput(getDefaultInput(nextTool));
-				setFieldValues(getDefaultFieldValues(nextTool));
+				const initialValues = getInitialValues(nextTool);
+				setInput(initialValues.input);
+				setFieldValues(initialValues.fields);
 				setResult(
 					nextTool.result.kind === "image"
-						? createQrResult(nextTool, getDefaultInput(nextTool), 0)
+						? createImageResult(nextTool, initialValues.input, initialValues.fields, 0)
 						: undefined,
 				);
 			})
@@ -70,8 +75,8 @@ export function GeneratorConsole() {
 		setIsLoading(true);
 
 		if (activeTool.result.kind === "image") {
-			const payload = input.trim();
-			if (!payload) {
+			const payload = hasFields ? fieldValues : input.trim();
+			if (!hasFields && !payload) {
 				setError("Give Pashi something to generate.");
 				setIsLoading(false);
 				return;
@@ -79,7 +84,7 @@ export function GeneratorConsole() {
 
 			const nextGenerateId = generateId + 1;
 			setGenerateId(nextGenerateId);
-			setResult(createQrResult(activeTool, payload, nextGenerateId));
+			setResult(createImageResult(activeTool, input, fieldValues, nextGenerateId));
 			return;
 		}
 
@@ -125,22 +130,20 @@ export function GeneratorConsole() {
 								{activeTool.input.fields?.map((field) => (
 									<label className="field-control" key={field.id}>
 										<span>{field.label}</span>
-										<input
-											onChange={(event) =>
+										<FieldInput
+											field={field}
+											onChange={(value) =>
 												setFieldValues((current) => ({
 													...current,
-													[field.id]: event.target.value,
+													[field.id]: value,
 												}))
 											}
-											placeholder={field.placeholder}
-											required={field.required}
-											type="text"
 											value={fieldValues[field.id] ?? ""}
 										/>
 									</label>
 								))}
 							</div>
-						) : (
+						) : hasPrimaryInput ? (
 							<>
 								<label htmlFor="generate-input">{activeTool.input.label}</label>
 								<div className="input-row">
@@ -157,6 +160,12 @@ export function GeneratorConsole() {
 									</button>
 								</div>
 							</>
+						) : (
+							<div className="generate-actions">
+								<button disabled={isLoading} type="submit">
+									{isLoading ? "Generating" : activeTool.display.actionLabel}
+								</button>
+							</div>
 						)}
 						{hasFields ? (
 							<div className="generate-actions">
@@ -165,10 +174,10 @@ export function GeneratorConsole() {
 								</button>
 							</div>
 						) : null}
-						{activeTool.display.examples.length > 0 ? (
+						{visibleExamples.length > 0 ? (
 							<div className="examples" aria-label="Examples">
 								<span>Try</span>
-								{activeTool.display.examples.map((example) => (
+								{visibleExamples.map((example) => (
 									<button
 										key={example}
 										onClick={() => applyExample(activeTool, example, setInput, setFieldValues)}
@@ -189,6 +198,8 @@ export function GeneratorConsole() {
 						actions={
 							result ? (
 								<ResultActions
+									exportFormats={exportFormats}
+									fields={fieldValues}
 									input={input}
 									onClear={() => setResult(undefined)}
 									onRegenerate={() => {
@@ -209,28 +220,113 @@ export function GeneratorConsole() {
 	);
 }
 
-function createQrResult(tool: GeneratorInfoTool, payload: string, generateId: number): ResultStageValue {
+function createImageResult(
+	tool: GeneratorInfoTool,
+	input: string,
+	fields: Record<string, string>,
+	generateId: number,
+): ResultStageValue {
 	const params = new URLSearchParams({
-		data: payload,
-		format: "png",
-		size: QR_SIZE,
 		generate: `${generateId}`,
 	});
 
+	if (tool.id === "qr") {
+		params.set("data", input);
+		params.set("format", "png");
+		params.set("size", QR_SIZE);
+	} else {
+		if (input) {
+			params.set("input", input);
+		}
+		for (const [key, value] of Object.entries(fields)) {
+			if (value) {
+				params.set(key, value);
+			}
+		}
+	}
+
 	return {
-		alt: `QR code for ${payload}`,
-		kind: "qr",
+		alt: `${tool.label} result`,
+		kind: "image",
 		src: `${tool.endpoint}?${params.toString()}`,
 	};
 }
 
 function getDefaultInput(tool: GeneratorInfoTool) {
+	if (tool.input.mode === "none" || tool.input.fields?.length) {
+		return "";
+	}
+
 	return tool.input.required ? (tool.display.examples[0] ?? DEFAULT_INPUT) : "";
 }
 
 function getDefaultFieldValues(tool: GeneratorInfoTool) {
 	return Object.fromEntries(
 		(tool.input.fields ?? []).map((field) => [field.id, field.placeholder]),
+	);
+}
+
+function getInitialValues(tool: GeneratorInfoTool) {
+	const params = new URLSearchParams(window.location.search);
+	const input = params.get("input") ?? params.get("data") ?? getDefaultInput(tool);
+	const fields = {
+		...getDefaultFieldValues(tool),
+		...Object.fromEntries(
+			(tool.input.fields ?? []).flatMap((field) => {
+				const value = params.get(field.id);
+				return value === null ? [] : [[field.id, value]];
+			}),
+		),
+	};
+
+	return { fields, input };
+}
+
+function FieldInput({
+	field,
+	onChange,
+	value,
+}: {
+	field: NonNullable<GeneratorInfoTool["input"]["fields"]>[number];
+	onChange: (value: string) => void;
+	value: string;
+}) {
+	if (field.type === "textarea") {
+		return (
+			<textarea
+				onChange={(event) => onChange(event.target.value)}
+				placeholder={field.placeholder}
+				required={field.required}
+				rows={4}
+				value={value}
+			/>
+		);
+	}
+
+	if (field.type === "select" && field.options?.length) {
+		return (
+			<select
+				onChange={(event) => onChange(event.target.value)}
+				required={field.required}
+				value={value}
+			>
+				{field.options.map((option) => (
+					<option key={option} value={option}>
+						{option}
+					</option>
+				))}
+			</select>
+		);
+	}
+
+	return (
+		<input
+			onChange={(event) => onChange(event.target.value)}
+			placeholder={field.placeholder}
+			required={field.required}
+			type="text"
+			value={value}
+		/>
 	);
 }
 

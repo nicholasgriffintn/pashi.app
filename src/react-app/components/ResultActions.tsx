@@ -5,6 +5,8 @@ import type { GeneratorInfoTool } from "../lib/generator-info";
 import type { ResultStageValue } from "./ResultStage";
 
 interface ResultActionsProps {
+	exportFormats: string[];
+	fields: Record<string, string>;
 	input: string;
 	onClear: () => void;
 	onRegenerate: () => void;
@@ -13,6 +15,8 @@ interface ResultActionsProps {
 }
 
 export function ResultActions({
+	exportFormats,
+	fields,
 	input,
 	onClear,
 	onRegenerate,
@@ -20,13 +24,10 @@ export function ResultActions({
 	tool,
 }: ResultActionsProps) {
 	const [status, setStatus] = useState("");
-	const textDownloadHref = useMemo(() => {
-		if (result.kind === "qr") {
-			return "";
-		}
-
-		return `data:text/plain;charset=utf-8,${encodeURIComponent(resultToText(result))}`;
-	}, [result]);
+	const exportHrefs = useMemo(
+		() => createExportHrefs(tool, input, fields, exportFormats),
+		[exportFormats, fields, input, tool],
+	);
 
 	async function runAction(action: () => Promise<void>, successMessage: string) {
 		try {
@@ -37,26 +38,36 @@ export function ResultActions({
 		}
 	}
 
-	if (result.kind === "qr") {
-		const pngHref = getQrFormatUrl(result.src, "png");
-		const svgHref = getQrFormatUrl(result.src, "svg");
+	if (result.kind === "image") {
+		const pngHref = tool.id === "qr" ? getImageFormatUrl(result.src, "png") : "";
+		const svgHref = tool.id === "qr" ? getImageFormatUrl(result.src, "svg") : result.src;
 
 		return (
 			<div className="result-actions" aria-label="Result actions">
-				<a download="pashi-qr.png" href={pngHref}>
-					PNG
-				</a>
-				<a download="pashi-qr.svg" href={svgHref}>
+				{tool.id === "qr" ? (
+					<a download="pashi-qr.png" href={pngHref}>
+						PNG
+					</a>
+				) : null}
+				<a download={`pashi-${tool.id}.svg`} href={svgHref}>
 					SVG
 				</a>
-				<button onClick={() => runAction(() => copyImage(pngHref), "Image copied")} type="button">
+				<button onClick={() => runAction(() => copyImage(pngHref || svgHref), "Image copied")} type="button">
 					Copy image
 				</button>
-				<button onClick={() => runAction(() => copyText(input), "URL copied")} type="button">
-					Copy URL
+				<button
+					onClick={() => runAction(() => copyText(tool.id === "qr" ? input : result.src), "URL copied")}
+					type="button"
+				>
+					{tool.id === "qr" ? "Copy URL" : "Copy image URL"}
 				</button>
-				<a href={input} rel="noreferrer" target="_blank">
-					Open
+				{tool.id === "qr" && isHttpUrl(input) ? (
+					<a href={input} rel="noreferrer" target="_blank">
+						Open URL
+					</a>
+				) : null}
+				<a href={result.src} rel="noreferrer" target="_blank">
+					Open image
 				</a>
 				<button onClick={onRegenerate} type="button">
 					Regenerate
@@ -74,9 +85,11 @@ export function ResultActions({
 			<button onClick={() => runAction(() => copyText(resultToText(result)), "Copied")} type="button">
 				Copy
 			</button>
-			<a download={`pashi-${tool.id}.txt`} href={textDownloadHref}>
-				Download
-			</a>
+			{exportHrefs.map(({ format, href }) => (
+				<a download={`pashi-${tool.id}.${format}`} href={href} key={format}>
+					{format.toUpperCase()}
+				</a>
+			))}
 			<button onClick={onRegenerate} type="button">
 				Regenerate
 			</button>
@@ -86,6 +99,33 @@ export function ResultActions({
 			{status ? <span>{status}</span> : null}
 		</div>
 	);
+}
+
+function createExportHrefs(
+	tool: GeneratorInfoTool,
+	input: string,
+	fields: Record<string, string>,
+	formats: string[],
+) {
+	if (tool.result.kind === "image") {
+		return [];
+	}
+
+	const params = new URLSearchParams();
+	if (input) {
+		params.set("input", input);
+	}
+	for (const [key, value] of Object.entries(fields)) {
+		if (value) {
+			params.set(key, value);
+		}
+	}
+
+	const suffix = params.size > 0 ? `?${params.toString()}` : "";
+	return formats.map((format) => ({
+		format,
+		href: `/export/${tool.id}/${format}${suffix}`,
+	}));
 }
 
 function resultToText(result: GenerateResult) {
@@ -102,10 +142,19 @@ function resultToText(result: GenerateResult) {
 		.join("\n");
 }
 
-function getQrFormatUrl(src: string, format: "png" | "svg") {
+function getImageFormatUrl(src: string, format: "png" | "svg") {
 	const url = new URL(src, window.location.origin);
 	url.searchParams.set("format", format);
 	return `${url.pathname}?${url.searchParams.toString()}`;
+}
+
+function isHttpUrl(value: string) {
+	try {
+		const url = new URL(value);
+		return url.protocol === "http:" || url.protocol === "https:";
+	} catch {
+		return false;
+	}
 }
 
 async function copyText(value: string) {

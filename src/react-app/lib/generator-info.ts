@@ -7,8 +7,11 @@ export interface GeneratorInfoTool {
 		| "Gaming"
 		| "Geographic"
 		| "Identifiers"
+		| "People"
 		| "Product"
 		| "Random"
+		| "Security"
+		| "Strings"
 		| "TestData"
 		| "Tools";
 	description: string;
@@ -22,6 +25,7 @@ export interface GeneratorInfoTool {
 	input: {
 		fields?: GeneratorInputField[];
 		label: string;
+		mode?: "none" | "text";
 		required: boolean;
 	};
 	label: string;
@@ -34,11 +38,14 @@ export interface GeneratorInfoTool {
 export interface GeneratorInputField {
 	id: string;
 	label: string;
+	options?: string[];
 	placeholder: string;
 	required: boolean;
+	type?: "select" | "textarea" | "text";
 }
 
 export interface GeneratorInfo {
+	exportFormats: string[];
 	name: string;
 	tools: GeneratorInfoTool[];
 }
@@ -50,7 +57,10 @@ export async function fetchGeneratorInfo(): Promise<GeneratorInfo> {
 		throw new Error("Could not load generators.");
 	}
 
-	return body;
+	return {
+		...body,
+		exportFormats: "exportFormats" in body && Array.isArray(body.exportFormats) ? body.exportFormats : [],
+	};
 }
 
 export function getFallbackTool(): GeneratorInfoTool {

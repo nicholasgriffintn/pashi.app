@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { GeneratorInfoTool } from "../lib/generator-info";
 
@@ -12,8 +12,14 @@ interface ToolPickerProps {
 
 export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
+	const [activeIndex, setActiveIndex] = useState(0);
+	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
+		maxHeight: 320,
+		side: "bottom",
+	});
 	const [query, setQuery] = useState("");
 	const [recentToolIds, setRecentToolIds] = useState<string[]>(() => readRecentToolIds());
+	const triggerRef = useRef<HTMLButtonElement>(null);
 	const rootRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
 	const listboxId = useId();
@@ -21,6 +27,29 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 		() => groupTools(filterTools(tools, query), recentToolIds),
 		[query, recentToolIds, tools],
 	);
+	const flatTools = useMemo(() => groups.flatMap((group) => group.tools), [groups]);
+	const activeOptionId = flatTools[activeIndex] ? optionId(listboxId, flatTools[activeIndex].id) : undefined;
+	const updatePlacement = useCallback(() => {
+		const trigger = triggerRef.current;
+		if (!trigger) {
+			return;
+		}
+
+		const rect = trigger.getBoundingClientRect();
+		const gap = 8;
+		const padding = 12;
+		const below = window.innerHeight - rect.bottom - gap - padding;
+		const above = rect.top - gap - padding;
+		const side = below >= Math.min(320, above) ? "bottom" : "top";
+		const available = Math.max(180, side === "bottom" ? below : above);
+		setMenuPlacement({ maxHeight: Math.min(448, available), side });
+	}, []);
+	const openPicker = useCallback(() => {
+		const selectedIndex = flatTools.findIndex((tool) => tool.id === activeTool.id);
+		setActiveIndex(Math.max(0, selectedIndex));
+		updatePlacement();
+		setIsOpen(true);
+	}, [activeTool.id, flatTools, updatePlacement]);
 
 	useEffect(() => {
 		if (!isOpen) {
@@ -29,6 +58,29 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 
 		searchRef.current?.focus();
 	}, [isOpen]);
+
+	useEffect(() => {
+		if (!isOpen) {
+			return;
+		}
+
+		function handleWindowChange() {
+			updatePlacement();
+		}
+
+		window.addEventListener("resize", handleWindowChange);
+		window.addEventListener("scroll", handleWindowChange, true);
+
+		return () => {
+			window.removeEventListener("resize", handleWindowChange);
+			window.removeEventListener("scroll", handleWindowChange, true);
+		};
+	}, [isOpen, updatePlacement]);
+
+	useEffect(() => {
+		const activeOption = activeOptionId ? document.getElementById(activeOptionId) : null;
+		activeOption?.scrollIntoView({ block: "nearest" });
+	}, [activeOptionId]);
 
 	useEffect(() => {
 		function handlePointerDown(event: MouseEvent) {
@@ -45,13 +97,13 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 				event.preventDefault();
-				setIsOpen(true);
+				openPicker();
 				return;
 			}
 
 			if (event.key === "/" && !isTypingTarget(event.target)) {
 				event.preventDefault();
-				setIsOpen(true);
+				openPicker();
 			}
 		}
 
@@ -62,7 +114,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 			document.removeEventListener("mousedown", handlePointerDown);
 			document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, []);
+	}, [openPicker]);
 
 	function selectTool(toolId: string) {
 		const nextRecentToolIds = [toolId, ...recentToolIds.filter((id) => id !== toolId)].slice(0, 4);
@@ -73,13 +125,62 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 		setIsOpen(false);
 	}
 
+	function handlePickerKeyDown(event: ReactKeyboardEvent) {
+		if (!isOpen) {
+			if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				openPicker();
+			}
+			return;
+		}
+
+		if (event.key === "ArrowDown") {
+			event.preventDefault();
+			setActiveIndex((index) => nextOptionIndex(index, flatTools.length, 1));
+			return;
+		}
+
+		if (event.key === "ArrowUp") {
+			event.preventDefault();
+			setActiveIndex((index) => nextOptionIndex(index, flatTools.length, -1));
+			return;
+		}
+
+		if (event.key === "Home") {
+			event.preventDefault();
+			setActiveIndex(0);
+			return;
+		}
+
+		if (event.key === "End") {
+			event.preventDefault();
+			setActiveIndex(Math.max(0, flatTools.length - 1));
+			return;
+		}
+
+		if (event.key === "Enter") {
+			event.preventDefault();
+			const tool = flatTools[activeIndex];
+			if (tool) {
+				selectTool(tool.id);
+			}
+		}
+	}
+
 	return (
-		<div className="tool-picker" ref={rootRef}>
+		<div className="tool-picker" onKeyDown={handlePickerKeyDown} ref={rootRef}>
 			<button
 				aria-controls={listboxId}
 				aria-expanded={isOpen}
 				className="tool-trigger"
-				onClick={() => setIsOpen((value) => !value)}
+				onClick={() => {
+					if (isOpen) {
+						setIsOpen(false);
+					} else {
+						openPicker();
+					}
+				}}
+				ref={triggerRef}
 				type="button"
 			>
 				<span>
@@ -90,12 +191,24 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 			</button>
 
 			{isOpen ? (
-				<div className="tool-menu">
+				<div
+					className="tool-menu"
+					data-side={menuPlacement.side}
+					style={{ maxHeight: `${menuPlacement.maxHeight}px` }}
+				>
 					<input
 						aria-label="Search generators"
+						aria-activedescendant={activeOptionId}
+						aria-controls={listboxId}
+						aria-expanded={isOpen}
+						aria-haspopup="listbox"
 						className="tool-search"
-						onChange={(event) => setQuery(event.target.value)}
+						onChange={(event) => {
+							setQuery(event.target.value);
+							setActiveIndex(0);
+						}}
 						placeholder="Search generators"
+						role="combobox"
 						ref={searchRef}
 						type="search"
 						value={query}
@@ -106,11 +219,14 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 								<p>{group.label}</p>
 								{group.tools.map((tool) => (
 									<button
+										id={optionId(listboxId, tool.id)}
 										aria-selected={tool.id === activeTool.id}
 										className="tool-option"
+										data-active={flatTools[activeIndex]?.id === tool.id ? "true" : undefined}
 										key={`${group.label}-${tool.id}`}
 										onClick={() => selectTool(tool.id)}
 										role="option"
+										tabIndex={-1}
 										type="button"
 									>
 										<span>{tool.label}</span>
@@ -125,6 +241,23 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 			) : null}
 		</div>
 	);
+}
+
+interface MenuPlacement {
+	maxHeight: number;
+	side: "bottom" | "top";
+}
+
+function nextOptionIndex(index: number, length: number, direction: 1 | -1) {
+	if (length === 0) {
+		return 0;
+	}
+
+	return (index + direction + length) % length;
+}
+
+function optionId(listboxId: string, toolId: string) {
+	return `${listboxId}-${toolId}`;
 }
 
 function filterTools(tools: GeneratorInfoTool[], query: string) {

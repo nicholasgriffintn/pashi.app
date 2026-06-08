@@ -26,8 +26,10 @@ function createUserStory(request: GeneratorRequest) {
 	const feature = primaryValueFor(request, "feature", "this workflow");
 	const persona = fieldValueFor(request, "persona", "user");
 	const outcome = fieldValueFor(request, "outcome", "finish the job with less manual work");
+	const context = fieldValueFor(request, "context", "the current workflow");
 	return {
-		acceptanceHint: `Success means the ${persona.toLowerCase()} can complete ${feature.toLowerCase()} and reach ${outcome.toLowerCase()}.`,
+		context,
+		acceptanceHint: `Success means the ${persona.toLowerCase()} can complete ${feature.toLowerCase()} in ${context.toLowerCase()} and reach ${outcome.toLowerCase()}.`,
 		benefit: `So that I can ${outcome.toLowerCase()}.`,
 		need: `I want ${feature.toLowerCase()}.`,
 		story: `As a ${persona.toLowerCase()}, I want ${feature.toLowerCase()} so that I can ${outcome.toLowerCase()}.`,
@@ -38,8 +40,10 @@ function createReleaseNote(request: GeneratorRequest) {
 	const change = primaryValueFor(request, "change", "the generator flow");
 	const audience = fieldValueFor(request, "audience", "teams");
 	const impact = fieldValueFor(request, "impact", "create and share the asset faster");
+	const tone = fieldValueFor(request, "tone", "direct");
 	return {
-		detail: `${change} is now available for ${audience.toLowerCase()}.`,
+		body: `${change} is now available for ${audience.toLowerCase()}. This keeps the work moving without adding extra steps.`,
+		detail: `${change} is now available for ${audience.toLowerCase()} in a ${tone.toLowerCase()} release note style.`,
 		impact: `${audience} can ${impact.toLowerCase()}.`,
 		title: `Improved ${change}`,
 		type: "Improvement",
@@ -50,7 +54,9 @@ function createAcceptanceCriteria(request: GeneratorRequest) {
 	const feature = primaryValueFor(request, "feature", "the generator");
 	const success = fieldValueFor(request, "success", "a result appears");
 	const failure = fieldValueFor(request, "failure", "show a clear error without clearing the form");
+	const edge = fieldValueFor(request, "edge", "unexpected input");
 	return {
+		edge: `Given ${edge.toLowerCase()}, when the user tries ${feature.toLowerCase()}, then the interface keeps state and explains what changed.`,
 		error: `When the input is invalid, ${failure}.`,
 		generation: `Given valid input for ${feature.toLowerCase()}, when I generate it, then ${success}.`,
 		loading: "While generation is running, reserve the final result area to avoid layout shift.",

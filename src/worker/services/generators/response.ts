@@ -1,7 +1,7 @@
 import { findGenerator } from "./catalogue";
 import type { GeneratorRequest } from "./request";
 import { json } from "../../utils/http";
-import { createQrResponse } from "./image/qr";
+import { createImageResponse } from "./image";
 import { createJsonResult } from "./json";
 
 export async function createGeneratorResponse(
@@ -15,7 +15,7 @@ export async function createGeneratorResponse(
 	}
 
 	if (generator.result.kind === "image") {
-		return createQrResponse(request.input, params);
+		return createImageResponse(generator, request, params);
 	}
 
 	try {

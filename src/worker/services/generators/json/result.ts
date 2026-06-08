@@ -33,7 +33,7 @@ export function paletteResult(
 export function textResult(
 	generator: GeneratorTool,
 	input: string,
-	result: string,
+	result: string | string[],
 ): JsonResult {
 	return {
 		input,

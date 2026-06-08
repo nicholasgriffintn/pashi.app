@@ -9,8 +9,17 @@ export function parseLength(input: string, fallback: number, min: number, max: n
 	return parseInteger(input, fallback, min, max);
 }
 
+export function parseCount(input: string, fallback = 1, max = 1000) {
+	return parseInteger(input, fallback, 1, max);
+}
+
 export function parseInteger(input: string, fallback: number, min: number, max: number) {
 	const parsed = input ? Number.parseInt(input, 10) : fallback;
+	return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
+export function parseNumber(input: string, fallback: number, min: number, max: number) {
+	const parsed = input ? Number.parseFloat(input) : fallback;
 	return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
 }
 
@@ -45,6 +54,10 @@ export function randomCharacters(alphabet: string, length: number) {
 	return Array.from(randomBytes(length), (byte) => alphabet[byte % alphabet.length]).join("");
 }
 
+export function randomHex(length: number) {
+	return randomCharacters("0123456789abcdef", length);
+}
+
 export function randomChoice<T>(items: readonly T[]) {
 	const item = items[randomIntegerInRange(items.length)];
 	if (item === undefined) {
@@ -52,6 +65,21 @@ export function randomChoice<T>(items: readonly T[]) {
 	}
 
 	return item;
+}
+
+export function singleOrList<T>(values: readonly T[]): T | T[] {
+	const first = values[0];
+	return values.length === 1 && first !== undefined ? first : [...values];
+}
+
+export function shuffle<T>(items: readonly T[]) {
+	const shuffled = [...items];
+	for (let index = shuffled.length - 1; index > 0; index -= 1) {
+		const swapIndex = randomIntegerInRange(index + 1);
+		[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+	}
+
+	return shuffled;
 }
 
 export function randomIntegerInRange(maxExclusive: number) {
@@ -67,6 +95,10 @@ export function randomIntegerInRange(maxExclusive: number) {
 	return value % range;
 }
 
+export function randomUnitInterval() {
+	return randomIntegerInRange(1_000_000_000) / 1_000_000_000;
+}
+
 export function slugify(value: string) {
 	return value
 		.normalize("NFKD")
@@ -78,7 +110,13 @@ export function slugify(value: string) {
 }
 
 export async function sha256(value: string) {
-	const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+	return createDigest(value, "SHA-256");
+}
+
+export type DigestAlgorithm = "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
+
+export async function createDigest(value: string, algorithm: DigestAlgorithm) {
+	const digest = await crypto.subtle.digest(algorithm, new TextEncoder().encode(value));
 	return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -92,6 +130,10 @@ export function bytesToBase64(bytes: Uint8Array) {
 		binary += String.fromCodePoint(byte);
 	}
 	return btoa(binary);
+}
+
+export function bytesToBase64Url(bytes: Uint8Array) {
+	return bytesToBase64(bytes).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 }
 
 export function hashSeed(value: string) {

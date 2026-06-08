@@ -1,7 +1,30 @@
 import type { GeneratorTool, JsonResult } from "../types";
 import type { GeneratorRequest } from "../request";
-import { hashSeed } from "../../../utils/generation";
-import { fieldsResult, paletteResult } from "./result";
+import { hashSeed, parseInteger, randomChoice } from "../../../utils/generation";
+import { paletteResult, textResult } from "./result";
+
+const LOREM_WORDS = [
+	"lorem",
+	"ipsum",
+	"dolor",
+	"sit",
+	"amet",
+	"consectetur",
+	"adipiscing",
+	"elit",
+	"integer",
+	"viverra",
+	"nunc",
+	"porta",
+	"mauris",
+	"facilisis",
+	"pulvinar",
+	"praesent",
+	"rhoncus",
+	"tellus",
+	"magna",
+	"aliquam",
+] as const;
 
 export function createDesignResult(
 	generator: GeneratorTool,
@@ -10,7 +33,7 @@ export function createDesignResult(
 	const { input } = request;
 	switch (generator.id) {
 		case "lorem":
-			return fieldsResult(generator, input, createMicrocopySet(request));
+			return textResult(generator, input, createLoremIpsum(request));
 		case "palette":
 			return paletteResult(generator, input, createPalette(input || "Pashi"));
 		default:
@@ -18,16 +41,25 @@ export function createDesignResult(
 	}
 }
 
-function createMicrocopySet(request: GeneratorRequest) {
-	const surface = request.fields.surface?.trim() || request.input || "this step";
-	const tone = request.fields.tone?.trim() || "clear";
-	const audience = request.fields.audience?.trim() || "user";
-	return {
-		body: `${surface} is ready for ${audience}. Keep the tone ${tone} and make the next step obvious.`,
-		button: "Continue",
-		empty: `No ${surface.toLowerCase()} yet.`,
-		heading: `Add ${surface}`,
-	};
+function createLoremIpsum(request: GeneratorRequest) {
+	const topic = request.fields.topic?.trim() || request.input.trim();
+	const paragraphs = parseInteger(request.fields.paragraphs ?? "", 2, 1, 8);
+	const sentences = parseInteger(request.fields.sentences ?? "", 3, 1, 8);
+
+	return Array.from({ length: paragraphs }, () =>
+		Array.from({ length: sentences }, () => createLoremSentence(topic)).join(" "),
+	).join("\n\n");
+}
+
+function createLoremSentence(topic: string) {
+	const wordCount = 8 + Math.floor(hashSeed(`${topic}-${crypto.randomUUID()}`) % 9);
+	const words: string[] = Array.from({ length: wordCount }, () => randomChoice(LOREM_WORDS));
+	if (topic) {
+		words.splice(2, 0, ...topic.toLowerCase().split(/\s+/).slice(0, 2));
+	}
+
+	const sentence = words.join(" ");
+	return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
 }
 
 function createPalette(seed: string) {

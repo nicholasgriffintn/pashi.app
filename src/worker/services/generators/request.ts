@@ -10,6 +10,15 @@ export function createGeneratorRequest(input: string, fields: Record<string, str
 	};
 }
 
+export function createGeneratorRequestFromSearchParams(params: URLSearchParams) {
+	const input = params.get("input") ?? params.get("data") ?? "";
+	const fields = Object.fromEntries(
+		[...params.entries()].filter(([key]) => key !== "input" && key !== "data"),
+	);
+
+	return createGeneratorRequest(input, fields);
+}
+
 export function fieldValue(request: GeneratorRequest, key: string, fallback = "") {
 	return (request.fields[key] ?? fallback).trim();
 }

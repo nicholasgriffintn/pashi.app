@@ -2,13 +2,13 @@ import type React from "react";
 
 import type { GenerateResult } from "../lib/generate-api";
 
-interface QrResult {
+interface ImageResult {
 	alt: string;
-	kind: "qr";
+	kind: "image";
 	src: string;
 }
 
-export type ResultStageValue = GenerateResult | QrResult;
+export type ResultStageValue = GenerateResult | ImageResult;
 
 interface ResultStageProps {
 	actions?: React.ReactNode;
@@ -24,7 +24,7 @@ export function ResultStage({ actions, isLoading, onQrLoad, result }: ResultStag
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
 				{!result ? (
 					<p className="empty-result">Pick a generator, paste something, generate.</p>
-				) : result.kind === "qr" ? (
+				) : result.kind === "image" ? (
 					<img alt={result.alt} className="qr-result" onLoad={onQrLoad} src={result.src} />
 				) : (
 					<ResultBody result={result} />
@@ -61,5 +61,5 @@ function ResultBody({ result }: { result: GenerateResult }) {
 		);
 	}
 
-	return <pre className="text-result">{String(result.result)}</pre>;
+	return <pre className="text-result">{Array.isArray(result.result) ? result.result.join("\n") : String(result.result)}</pre>;
 }

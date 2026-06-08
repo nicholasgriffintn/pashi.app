@@ -1,10 +1,13 @@
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import {
+	parseCount,
 	parseInteger,
 	randomCharacters,
 	randomChoice,
 	randomIntegerInRange,
+	randomUnitInterval,
+	singleOrList,
 } from "../../../utils/generation";
 import { fieldsResult, textResult } from "./result";
 
@@ -34,6 +37,94 @@ const USERNAME_NOUNS = [
 	"wave",
 	"zone",
 ] as const;
+const COMPANY_PREFIXES = [
+	"Arc",
+	"Beacon",
+	"Bright",
+	"Circuit",
+	"Foundry",
+	"North",
+	"Signal",
+	"Vector",
+	"Vertex",
+	"Wave",
+] as const;
+const COMPANY_SUFFIXES = [
+	"Analytics",
+	"Design",
+	"Dynamics",
+	"Labs",
+	"Logistics",
+	"Networks",
+	"Systems",
+	"Works",
+] as const;
+const US_STATES = [
+	"Alabama",
+	"Alaska",
+	"Arizona",
+	"Arkansas",
+	"California",
+	"Colorado",
+	"Connecticut",
+	"Delaware",
+	"Florida",
+	"Georgia",
+	"Hawaii",
+	"Idaho",
+	"Illinois",
+	"Indiana",
+	"Iowa",
+	"Kansas",
+	"Kentucky",
+	"Louisiana",
+	"Maine",
+	"Maryland",
+	"Massachusetts",
+	"Michigan",
+	"Minnesota",
+	"Mississippi",
+	"Missouri",
+	"Montana",
+	"Nebraska",
+	"Nevada",
+	"New Hampshire",
+	"New Jersey",
+	"New Mexico",
+	"New York",
+	"North Carolina",
+	"North Dakota",
+	"Ohio",
+	"Oklahoma",
+	"Oregon",
+	"Pennsylvania",
+	"Rhode Island",
+	"South Carolina",
+	"South Dakota",
+	"Tennessee",
+	"Texas",
+	"Utah",
+	"Vermont",
+	"Virginia",
+	"Washington",
+	"West Virginia",
+	"Wisconsin",
+	"Wyoming",
+] as const;
+const ZODIAC_SIGNS = [
+	"Aries",
+	"Taurus",
+	"Gemini",
+	"Cancer",
+	"Leo",
+	"Virgo",
+	"Libra",
+	"Scorpio",
+	"Sagittarius",
+	"Capricorn",
+	"Aquarius",
+	"Pisces",
+] as const;
 
 export function createIdentifierResult(
 	generator: GeneratorTool,
@@ -42,25 +133,38 @@ export function createIdentifierResult(
 	switch (generator.id) {
 		case "card":
 			return fieldsResult(generator, request.input, createCard(request));
+		case "company":
+			return textResult(generator, request.input, createCompanies(request));
 		case "coordinates":
 			return fieldsResult(generator, request.input, createCoordinates());
 		case "iban":
-			return textResult(generator, request.input, createGbIban());
+			return textResult(generator, request.input, createGbIbans(request));
 		case "ipv4":
-			return textResult(generator, request.input, createIpv4());
+			return textResult(generator, request.input, createIpv4Addresses(request));
 		case "ipv6":
-			return textResult(generator, request.input, createIpv6());
+			return textResult(generator, request.input, createIpv6Addresses(request));
 		case "mac":
-			return textResult(generator, request.input, createMacAddress());
+			return textResult(generator, request.input, createMacAddresses(request));
+		case "minecraft-uuid":
+			return fieldsResult(generator, request.input, createMinecraftUuid());
 		case "phone":
-			return textResult(generator, request.input, createPhoneNumber(request));
+			return textResult(generator, request.input, createPhoneNumbers(request));
+		case "us-state":
+			return textResult(generator, request.input, createUsStates(request));
 		case "username":
-			return textResult(generator, request.input, createUsername(request));
+			return textResult(generator, request.input, createUsernames(request));
+		case "zodiac":
+			return textResult(generator, request.input, createZodiacSigns(request));
 		case "zip":
-			return textResult(generator, request.input, createZipCode());
+			return textResult(generator, request.input, createZipCodes(request));
 		default:
 			return undefined;
 	}
+}
+
+function createTextList(request: GeneratorRequest, createValue: () => string) {
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, createValue));
 }
 
 function createIpv4() {
@@ -77,6 +181,18 @@ function createMacAddress() {
 	return bytes.map((byte) => byte.toString(16).padStart(2, "0")).join(":");
 }
 
+function createIpv4Addresses(request: GeneratorRequest) {
+	return createTextList(request, createIpv4);
+}
+
+function createIpv6Addresses(request: GeneratorRequest) {
+	return createTextList(request, createIpv6);
+}
+
+function createMacAddresses(request: GeneratorRequest) {
+	return createTextList(request, createMacAddress);
+}
+
 function createPhoneNumber(request: GeneratorRequest) {
 	const country = (request.fields.country || "US").trim().toUpperCase();
 	if (country === "GB" || country === "UK") {
@@ -90,11 +206,35 @@ function randomAreaCode() {
 	return `${randomIntegerInRange(8) + 2}${randomIntegerInRange(8) + 2}${randomIntegerInRange(10)}`;
 }
 
+function createPhoneNumbers(request: GeneratorRequest) {
+	return createTextList(request, () => createPhoneNumber(request));
+}
+
 function createUsername(request: GeneratorRequest) {
 	const separator = request.fields.separator ?? "-";
 	const suffixLength = parseInteger(request.fields.suffix ?? "", 3, 0, 8);
 	const suffix = suffixLength > 0 ? `${separator}${randomCharacters(DIGITS, suffixLength)}` : "";
 	return `${randomChoice(USERNAME_ADJECTIVES)}${separator}${randomChoice(USERNAME_NOUNS)}${suffix}`;
+}
+
+function createUsernames(request: GeneratorRequest) {
+	return createTextList(request, () => createUsername(request));
+}
+
+function createCompanyName() {
+	return `${randomChoice(COMPANY_PREFIXES)} ${randomChoice(COMPANY_SUFFIXES)} ${randomChoice(["Ltd", "Inc", "Group", "Studio"])}`;
+}
+
+function createCompanies(request: GeneratorRequest) {
+	return createTextList(request, createCompanyName);
+}
+
+function createMinecraftUuid() {
+	const uuid = crypto.randomUUID();
+	return {
+		compact: uuid.replaceAll("-", ""),
+		uuid,
+	};
 }
 
 function createCoordinates() {
@@ -108,11 +248,23 @@ function createCoordinates() {
 }
 
 function randomCoordinate(min: number, max: number) {
-	return min + (randomIntegerInRange(1_000_000_000) / 1_000_000_000) * (max - min);
+	return min + randomUnitInterval() * (max - min);
 }
 
 function createZipCode() {
 	return `${randomIntegerInRange(90_000) + 10_000}`;
+}
+
+function createZipCodes(request: GeneratorRequest) {
+	return createTextList(request, createZipCode);
+}
+
+function createUsStates(request: GeneratorRequest) {
+	return createTextList(request, () => randomChoice(US_STATES));
+}
+
+function createZodiacSigns(request: GeneratorRequest) {
+	return createTextList(request, () => randomChoice(ZODIAC_SIGNS));
 }
 
 function createCard(request: GeneratorRequest) {
@@ -155,6 +307,10 @@ function createGbIban() {
 	const bban = `${bank}${sortCode}${account}`;
 	const check = ibanCheckDigits("GB", bban);
 	return `GB${check}${bban}`;
+}
+
+function createGbIbans(request: GeneratorRequest) {
+	return createTextList(request, createGbIban);
 }
 
 function ibanCheckDigits(countryCode: string, bban: string) {

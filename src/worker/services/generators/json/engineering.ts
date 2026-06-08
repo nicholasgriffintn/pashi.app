@@ -3,11 +3,14 @@ import type { GeneratorRequest } from "../request";
 import {
 	base64Encode,
 	bytesToBase64,
+	createDigest,
+	type DigestAlgorithm,
 	parseDate,
+	parseCount,
 	parseLength,
 	randomBytes,
 	requireInput,
-	sha256,
+	singleOrList,
 	slugify,
 } from "../../../utils/generation";
 import { fieldsResult, textResult } from "./result";
@@ -21,21 +24,55 @@ export async function createEngineeringResult(
 		case "base64":
 			return textResult(generator, input, base64Encode(requireInput(input)));
 		case "hash":
-			return textResult(generator, input, await sha256(requireInput(input)));
+			return textResult(generator, input, await createHash(request));
 		case "password":
-			return textResult(generator, input, createPassword(parseLength(input, 24, 12, 64)));
+			return textResult(generator, input, createPasswords(request));
 		case "slug":
 			return textResult(generator, input, slugify(requireInput(input)));
 		case "timestamp":
 			return fieldsResult(generator, input, createTimestamp(input));
 		case "token":
-			return textResult(generator, input, createToken(parseLength(input, 32, 8, 96)));
+			return textResult(generator, input, createTokens(request));
 		case "url":
 			return textResult(generator, input, encodeURIComponent(requireInput(input)));
 		case "uuid":
-			return textResult(generator, input, crypto.randomUUID());
+			return textResult(generator, input, createUuids(request));
 		default:
 			return undefined;
+	}
+}
+
+function createPasswords(request: GeneratorRequest) {
+	const length = parseLength(request.fields.length ?? request.input, 24, 12, 64);
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => createPassword(length)));
+}
+
+function createTokens(request: GeneratorRequest) {
+	const length = parseLength(request.fields.length ?? request.input, 32, 8, 96);
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => createToken(length)));
+}
+
+function createUuids(request: GeneratorRequest) {
+	const count = parseCount(request.fields.count ?? request.input, 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => crypto.randomUUID()));
+}
+
+function createHash(request: GeneratorRequest) {
+	const value = request.fields.value?.trim() || requireInput(request.input);
+	const algorithm = normaliseHashAlgorithm(request.fields.algorithm);
+	return createDigest(value, algorithm);
+}
+
+function normaliseHashAlgorithm(value: string | undefined): DigestAlgorithm {
+	switch (value) {
+		case "SHA-1":
+		case "SHA-384":
+		case "SHA-512":
+			return value;
+		default:
+			return "SHA-256";
 	}
 }
 

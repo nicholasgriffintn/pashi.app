@@ -2,11 +2,13 @@ import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import {
 	parseDelimitedList,
+	parseCount,
 	parseInteger,
 	randomCharacters,
 	randomChoice,
-	randomIntegerInRange,
+	singleOrList,
 } from "../../../utils/generation";
+import { rollDice } from "./dice";
 import { fieldsResult, paletteResult, textResult } from "./result";
 
 const STRING_ALPHABETS = {
@@ -52,13 +54,11 @@ export function createRandomResult(
 ): JsonResult | undefined {
 	switch (generator.id) {
 		case "coinflip":
-			return textResult(generator, request.input, randomChoice(["Heads", "Tails"]));
+			return textResult(generator, request.input, createCoinFlips(request));
 		case "colour":
 			return paletteResult(generator, request.input, createColours(request));
 		case "dice":
 			return fieldsResult(generator, request.input, rollDice(request));
-		case "number":
-			return textResult(generator, request.input, `${randomInteger(request)}`);
 		case "passphrase":
 			return textResult(generator, request.input, createPassphrase(request));
 		case "pick":
@@ -72,34 +72,33 @@ export function createRandomResult(
 	}
 }
 
-function randomInteger(request: GeneratorRequest) {
-	const min = parseInteger(request.fields.min ?? "", 1, -1_000_000, 1_000_000);
-	const max = parseInteger(request.fields.max ?? "", 100, -1_000_000, 1_000_000);
-	const lower = Math.min(min, max);
-	const upper = Math.max(min, max);
-	return lower + randomIntegerInRange(upper - lower + 1);
-}
-
 function createString(request: GeneratorRequest) {
 	const length = parseInteger(request.fields.length ?? request.input, 16, 1, 512);
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
 	const alphabetKey = request.fields.alphabet?.trim().toLowerCase();
 	const alphabet =
 		alphabetKey && alphabetKey in STRING_ALPHABETS
 			? STRING_ALPHABETS[alphabetKey as keyof typeof STRING_ALPHABETS]
 			: STRING_ALPHABETS.alphanumeric;
 
-	return randomCharacters(alphabet, length);
+	return singleOrList(Array.from({ length: count }, () => randomCharacters(alphabet, length)));
 }
 
 function createPin(request: GeneratorRequest) {
 	const length = parseInteger(request.fields.length ?? request.input, 6, 3, 16);
-	return randomCharacters(STRING_ALPHABETS.numeric, length);
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => randomCharacters(STRING_ALPHABETS.numeric, length)));
 }
 
 function createPassphrase(request: GeneratorRequest) {
 	const words = parseInteger(request.fields.words ?? request.input, 4, 2, 12);
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
 	const separator = request.fields.separator ?? "-";
-	return Array.from({ length: words }, () => randomChoice(PASSPHRASE_WORDS)).join(separator);
+	return singleOrList(
+		Array.from({ length: count }, () =>
+			Array.from({ length: words }, () => randomChoice(PASSPHRASE_WORDS)).join(separator),
+		),
+	);
 }
 
 function createColours(request: GeneratorRequest) {
@@ -107,16 +106,9 @@ function createColours(request: GeneratorRequest) {
 	return Array.from({ length: count }, () => `#${randomCharacters(STRING_ALPHABETS.hex, 6).toUpperCase()}`);
 }
 
-function rollDice(request: GeneratorRequest) {
-	const dice = parseInteger(request.fields.dice ?? "", 2, 1, 100);
-	const sides = parseInteger(request.fields.sides ?? "", 6, 2, 1000);
-	const rolls = Array.from({ length: dice }, () => 1 + randomIntegerInRange(sides));
-	return {
-		dice: `${dice}`,
-		rolls: rolls.join(", "),
-		sides: `${sides}`,
-		total: `${rolls.reduce((sum, roll) => sum + roll, 0)}`,
-	};
+function createCoinFlips(request: GeneratorRequest) {
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => randomChoice(["Heads", "Tails"])));
 }
 
 function pickListItem(request: GeneratorRequest) {
