@@ -1,6 +1,22 @@
-export type Audience = "Design" | "Engineering" | "Product";
+export type Audience =
+	| "Design"
+	| "Engineering"
+	| "Gaming"
+	| "Geographic"
+	| "Identifiers"
+	| "Product"
+	| "Random"
+	| "TestData"
+	| "Tools";
 export type ResultKind = "fields" | "image" | "palette" | "text";
 export type GeneratorResultValue = string | string[] | Record<string, string>;
+
+export interface GeneratorInputField {
+	id: string;
+	label: string;
+	placeholder: string;
+	required: boolean;
+}
 
 export interface GeneratorTool {
 	audience: Audience;
@@ -13,6 +29,7 @@ export interface GeneratorTool {
 	endpoint: string;
 	id: string;
 	input: {
+		fields?: readonly GeneratorInputField[];
 		label: string;
 		required: boolean;
 	};

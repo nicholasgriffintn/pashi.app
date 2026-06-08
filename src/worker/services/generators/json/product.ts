@@ -1,59 +1,68 @@
 import type { GeneratorTool, JsonResult } from "../types";
+import type { GeneratorRequest } from "../request";
 import { slugify } from "../../../utils/generation";
 import { fieldsResult, textResult } from "./result";
 
 export function createProductResult(
 	generator: GeneratorTool,
-	input: string,
+	request: GeneratorRequest,
 ): JsonResult | undefined {
+	const { input } = request;
 	switch (generator.id) {
 		case "acceptance":
-			return fieldsResult(generator, input, createAcceptanceCriteria(input));
+			return fieldsResult(generator, input, createAcceptanceCriteria(request));
 		case "release":
-			return fieldsResult(generator, input, createReleaseNote(input));
+			return fieldsResult(generator, input, createReleaseNote(request));
 		case "user-story":
-			return fieldsResult(generator, input, createUserStory(input));
+			return fieldsResult(generator, input, createUserStory(request));
 		case "utm":
-			return textResult(generator, input, createUtmLink(input));
+			return textResult(generator, input, createUtmLink(request));
 		default:
 			return undefined;
 	}
 }
 
-function createUserStory(input: string) {
-	const feature = subjectOr(input, "this workflow");
+function createUserStory(request: GeneratorRequest) {
+	const feature = primaryValueFor(request, "feature", "this workflow");
+	const persona = fieldValueFor(request, "persona", "user");
+	const outcome = fieldValueFor(request, "outcome", "finish the job with less manual work");
 	return {
-		acceptanceHint: `Success means the user can complete ${feature.toLowerCase()} without switching context.`,
-		benefit: "So that I can finish the job with less manual work.",
+		acceptanceHint: `Success means the ${persona.toLowerCase()} can complete ${feature.toLowerCase()} and reach ${outcome.toLowerCase()}.`,
+		benefit: `So that I can ${outcome.toLowerCase()}.`,
 		need: `I want ${feature.toLowerCase()}.`,
-		story: `As a user, I want ${feature.toLowerCase()} so that I can finish the job with less manual work.`,
+		story: `As a ${persona.toLowerCase()}, I want ${feature.toLowerCase()} so that I can ${outcome.toLowerCase()}.`,
 	};
 }
 
-function createReleaseNote(input: string) {
-	const change = subjectOr(input, "the generator flow");
+function createReleaseNote(request: GeneratorRequest) {
+	const change = primaryValueFor(request, "change", "the generator flow");
+	const audience = fieldValueFor(request, "audience", "teams");
+	const impact = fieldValueFor(request, "impact", "create and share the asset faster");
 	return {
-		detail: `${change} now takes fewer steps and keeps the generated output easier to inspect.`,
-		impact: "Teams can create and share the asset faster.",
+		detail: `${change} is now available for ${audience.toLowerCase()}.`,
+		impact: `${audience} can ${impact.toLowerCase()}.`,
 		title: `Improved ${change}`,
 		type: "Improvement",
 	};
 }
 
-function createAcceptanceCriteria(input: string) {
-	const feature = subjectOr(input, "the generator");
+function createAcceptanceCriteria(request: GeneratorRequest) {
+	const feature = primaryValueFor(request, "feature", "the generator");
+	const success = fieldValueFor(request, "success", "a result appears");
+	const failure = fieldValueFor(request, "failure", "show a clear error without clearing the form");
 	return {
-		error: "When the input is invalid, show a clear error without clearing the form.",
-		generation: `Given valid input for ${feature.toLowerCase()}, when I generate it, then a result appears.`,
+		error: `When the input is invalid, ${failure}.`,
+		generation: `Given valid input for ${feature.toLowerCase()}, when I generate it, then ${success}.`,
 		loading: "While generation is running, reserve the final result area to avoid layout shift.",
 		ready: "The result can be copied, scanned, or inspected without extra navigation.",
 	};
 }
 
-function createUtmLink(input: string) {
+function createUtmLink(request: GeneratorRequest) {
 	let url: URL;
+	const input = primaryValueFor(request, "url", "https://nicholasgriffin.dev/");
 	try {
-		url = new URL(input || "https://nicholasgriffin.dev/");
+		url = new URL(input);
 	} catch {
 		try {
 			url = new URL(`https://${input}`);
@@ -62,12 +71,19 @@ function createUtmLink(input: string) {
 		}
 	}
 
-	url.searchParams.set("utm_source", "pashi");
-	url.searchParams.set("utm_medium", "generate");
-	url.searchParams.set("utm_campaign", slugify(url.hostname.replace(/^www\./, "")) || "campaign");
+	url.searchParams.set("utm_source", fieldValueFor(request, "source", "pashi"));
+	url.searchParams.set("utm_medium", fieldValueFor(request, "medium", "generate"));
+	url.searchParams.set(
+		"utm_campaign",
+		slugify(fieldValueFor(request, "campaign", url.hostname.replace(/^www\./, ""))) || "campaign",
+	);
 	return url.toString();
 }
 
-function subjectOr(input: string, fallback: string) {
-	return input.trim() || fallback;
+function primaryValueFor(request: GeneratorRequest, key: string, fallback: string) {
+	return request.fields[key]?.trim() || request.input || fallback;
+}
+
+function fieldValueFor(request: GeneratorRequest, key: string, fallback: string) {
+	return request.fields[key]?.trim() || fallback;
 }

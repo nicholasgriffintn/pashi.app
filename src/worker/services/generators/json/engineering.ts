@@ -1,4 +1,5 @@
 import type { GeneratorTool, JsonResult } from "../types";
+import type { GeneratorRequest } from "../request";
 import {
 	base64Encode,
 	bytesToBase64,
@@ -13,8 +14,9 @@ import { fieldsResult, textResult } from "./result";
 
 export async function createEngineeringResult(
 	generator: GeneratorTool,
-	input: string,
+	request: GeneratorRequest,
 ): Promise<JsonResult | undefined> {
+	const { input } = request;
 	switch (generator.id) {
 		case "base64":
 			return textResult(generator, input, base64Encode(requireInput(input)));

@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 
 import { createGeneratorResponse, listGeneratorTools } from "./services/generators/index";
-import { readInputBody } from "./utils/body";
+import { createGeneratorRequest } from "./services/generators/request";
+import { readGeneratorBody } from "./utils/body";
 
 const app = new Hono<{ Bindings: Env }>({ strict: false });
 
@@ -18,12 +19,16 @@ app.get("/api/info", (c) => c.json(createApiIndexResponse()));
 app.get("/api/:type", (c) =>
 	createGeneratorResponse(
 		c.req.param("type"),
-		c.req.query("input") ?? c.req.query("data") ?? "",
+		createGeneratorRequest(c.req.query("input") ?? c.req.query("data") ?? ""),
 		new URL(c.req.url).searchParams,
 	),
 );
-app.post("/api/:type", async (c) =>
-	createGeneratorResponse(c.req.param("type"), await readInputBody(c)),
-);
+app.post("/api/:type", async (c) => {
+	const body = await readGeneratorBody(c);
+	return createGeneratorResponse(
+		c.req.param("type"),
+		createGeneratorRequest(body.input, body.fields),
+	);
+});
 
 export default app;

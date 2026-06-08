@@ -1,14 +1,16 @@
 import type { GeneratorTool, JsonResult } from "../types";
+import type { GeneratorRequest } from "../request";
 import { hashSeed } from "../../../utils/generation";
 import { fieldsResult, paletteResult } from "./result";
 
 export function createDesignResult(
 	generator: GeneratorTool,
-	input: string,
+	request: GeneratorRequest,
 ): JsonResult | undefined {
+	const { input } = request;
 	switch (generator.id) {
 		case "lorem":
-			return fieldsResult(generator, input, createMicrocopySet(input));
+			return fieldsResult(generator, input, createMicrocopySet(request));
 		case "palette":
 			return paletteResult(generator, input, createPalette(input || "Pashi"));
 		default:
@@ -16,13 +18,15 @@ export function createDesignResult(
 	}
 }
 
-function createMicrocopySet(input: string) {
-	const subject = subjectOr(input, "this step");
+function createMicrocopySet(request: GeneratorRequest) {
+	const surface = request.fields.surface?.trim() || request.input || "this step";
+	const tone = request.fields.tone?.trim() || "clear";
+	const audience = request.fields.audience?.trim() || "user";
 	return {
-		body: `${subject} is ready when you are. Add the details now, or come back once the signal is clearer.`,
+		body: `${surface} is ready for ${audience}. Keep the tone ${tone} and make the next step obvious.`,
 		button: "Continue",
-		empty: `No ${subject.toLowerCase()} yet.`,
-		heading: `Add ${subject}`,
+		empty: `No ${surface.toLowerCase()} yet.`,
+		heading: `Add ${surface}`,
 	};
 }
 
@@ -34,10 +38,6 @@ function createPalette(seed: string) {
 		const lightness = 44 + ((base + index * 7) % 16);
 		return hslToHex(hue, saturation, lightness);
 	});
-}
-
-function subjectOr(input: string, fallback: string) {
-	return input.trim() || fallback;
 }
 
 function hslToHex(hue: number, saturation: number, lightness: number) {

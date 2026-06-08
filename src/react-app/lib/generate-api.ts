@@ -12,9 +12,10 @@ export interface GenerateResult {
 export async function generateThing(
 	endpoint: string,
 	input: string,
+	fields: Record<string, string> = {},
 ): Promise<GenerateResult> {
 	const response = await fetch(endpoint, {
-		body: JSON.stringify({ input }),
+		body: JSON.stringify({ fields, input }),
 		headers: { "Content-Type": "application/json" },
 		method: "POST",
 	});

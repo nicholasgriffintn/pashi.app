@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { type Dispatch, type FormEvent, type SetStateAction, useEffect, useState } from "react";
 
 import { generateThing } from "../lib/generate-api";
 import {
@@ -17,6 +17,7 @@ export function GeneratorConsole() {
 	const [tools, setTools] = useState<GeneratorInfoTool[]>([getFallbackTool()]);
 	const [activeToolId, setActiveToolId] = useState(getRouteToolId() ?? "qr");
 	const [input, setInput] = useState(DEFAULT_INPUT);
+	const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [generateId, setGenerateId] = useState(0);
@@ -25,6 +26,7 @@ export function GeneratorConsole() {
 	);
 
 	const activeTool = tools.find((tool) => tool.id === activeToolId) ?? tools[0];
+	const hasFields = Boolean(activeTool.input.fields?.length);
 	useEffect(() => {
 		let ignore = false;
 
@@ -40,6 +42,7 @@ export function GeneratorConsole() {
 				setTools(info.tools);
 				setActiveToolId(nextTool.id);
 				setInput(getDefaultInput(nextTool));
+				setFieldValues(getDefaultFieldValues(nextTool));
 				setResult(
 					nextTool.result.kind === "image"
 						? createQrResult(nextTool, getDefaultInput(nextTool), 0)
@@ -81,7 +84,7 @@ export function GeneratorConsole() {
 		}
 
 		try {
-			setResult(await generateThing(activeTool.endpoint, input));
+			setResult(await generateThing(activeTool.endpoint, input, fieldValues));
 			setIsLoading(false);
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Generation failed.");
@@ -93,6 +96,7 @@ export function GeneratorConsole() {
 		const nextTool = tools.find((tool) => tool.id === nextToolId) ?? tools[0];
 		setActiveToolId(nextToolId);
 		setInput(getDefaultInput(nextTool));
+		setFieldValues(getDefaultFieldValues(nextTool));
 		setError("");
 		setResult(undefined);
 		pushGeneratorRoute(nextTool.id);
@@ -116,27 +120,58 @@ export function GeneratorConsole() {
 
 						<p className="tool-description">{activeTool.description}</p>
 
-						<label htmlFor="generate-input">{activeTool.input.label}</label>
-						<div className="input-row">
-							<input
-								id="generate-input"
-								name="generate-input"
-								onChange={(event) => setInput(event.target.value)}
-								placeholder={activeTool.placeholder}
-								type="text"
-								value={input}
-							/>
-							<button disabled={isLoading} type="submit">
-								{isLoading ? "Generateping" : activeTool.display.actionLabel}
-							</button>
-						</div>
+						{hasFields ? (
+							<div className="field-grid">
+								{activeTool.input.fields?.map((field) => (
+									<label className="field-control" key={field.id}>
+										<span>{field.label}</span>
+										<input
+											onChange={(event) =>
+												setFieldValues((current) => ({
+													...current,
+													[field.id]: event.target.value,
+												}))
+											}
+											placeholder={field.placeholder}
+											required={field.required}
+											type="text"
+											value={fieldValues[field.id] ?? ""}
+										/>
+									</label>
+								))}
+							</div>
+						) : (
+							<>
+								<label htmlFor="generate-input">{activeTool.input.label}</label>
+								<div className="input-row">
+									<input
+										id="generate-input"
+										name="generate-input"
+										onChange={(event) => setInput(event.target.value)}
+										placeholder={activeTool.placeholder}
+										type="text"
+										value={input}
+									/>
+									<button disabled={isLoading} type="submit">
+										{isLoading ? "Generating" : activeTool.display.actionLabel}
+									</button>
+								</div>
+							</>
+						)}
+						{hasFields ? (
+							<div className="generate-actions">
+								<button disabled={isLoading} type="submit">
+									{isLoading ? "Generating" : activeTool.display.actionLabel}
+								</button>
+							</div>
+						) : null}
 						{activeTool.display.examples.length > 0 ? (
 							<div className="examples" aria-label="Examples">
 								<span>Try</span>
 								{activeTool.display.examples.map((example) => (
 									<button
 										key={example}
-										onClick={() => setInput(example)}
+										onClick={() => applyExample(activeTool, example, setInput, setFieldValues)}
 										type="button"
 									>
 										{example}
@@ -191,6 +226,27 @@ function createQrResult(tool: GeneratorInfoTool, payload: string, generateId: nu
 
 function getDefaultInput(tool: GeneratorInfoTool) {
 	return tool.input.required ? (tool.display.examples[0] ?? DEFAULT_INPUT) : "";
+}
+
+function getDefaultFieldValues(tool: GeneratorInfoTool) {
+	return Object.fromEntries(
+		(tool.input.fields ?? []).map((field) => [field.id, field.placeholder]),
+	);
+}
+
+function applyExample(
+	tool: GeneratorInfoTool,
+	example: string,
+	setInput: (value: string) => void,
+	setFieldValues: Dispatch<SetStateAction<Record<string, string>>>,
+) {
+	const firstField = tool.input.fields?.[0];
+	if (!firstField) {
+		setInput(example);
+		return;
+	}
+
+	setFieldValues((current) => ({ ...current, [firstField.id]: example }));
 }
 
 function getRouteToolId() {

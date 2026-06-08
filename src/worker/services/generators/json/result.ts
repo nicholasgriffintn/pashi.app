@@ -24,7 +24,7 @@ export function paletteResult(
 		input,
 		kind: "palette",
 		label: generator.label,
-		meta: "Five colours",
+		meta: `${result.length} ${result.length === 1 ? "colour" : "colours"}`,
 		result,
 		type: generator.id,
 	};

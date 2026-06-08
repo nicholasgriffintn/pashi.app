@@ -6,8 +6,19 @@ export function requireInput(input: string) {
 }
 
 export function parseLength(input: string, fallback: number, min: number, max: number) {
+	return parseInteger(input, fallback, min, max);
+}
+
+export function parseInteger(input: string, fallback: number, min: number, max: number) {
 	const parsed = input ? Number.parseInt(input, 10) : fallback;
 	return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
+export function parseDelimitedList(input: string) {
+	return input
+		.split(/\r?\n|,/)
+		.map((item) => item.trim())
+		.filter(Boolean);
 }
 
 export function parseDate(input: string) {
@@ -28,6 +39,32 @@ export function randomBytes(length: number) {
 	const bytes = new Uint8Array(length);
 	crypto.getRandomValues(bytes);
 	return bytes;
+}
+
+export function randomCharacters(alphabet: string, length: number) {
+	return Array.from(randomBytes(length), (byte) => alphabet[byte % alphabet.length]).join("");
+}
+
+export function randomChoice<T>(items: readonly T[]) {
+	const item = items[randomIntegerInRange(items.length)];
+	if (item === undefined) {
+		throw new Error("No items available.");
+	}
+
+	return item;
+}
+
+export function randomIntegerInRange(maxExclusive: number) {
+	const range = Math.max(1, maxExclusive);
+	const maxUint32 = 0x1_0000_0000;
+	const limit = Math.floor(maxUint32 / range) * range;
+	let value = randomUint32();
+
+	while (value >= limit) {
+		value = randomUint32();
+	}
+
+	return value % range;
 }
 
 export function slugify(value: string) {
@@ -64,4 +101,14 @@ export function hashSeed(value: string) {
 		hash = Math.imul(hash, 16777619);
 	}
 	return Math.abs(hash);
+}
+
+function randomUint32() {
+	const bytes = randomBytes(4);
+	return (
+		(bytes[0] * 0x1_000000) +
+		(bytes[1] << 16) +
+		(bytes[2] << 8) +
+		bytes[3]
+	);
 }

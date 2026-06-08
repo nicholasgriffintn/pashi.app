@@ -1,7 +1,16 @@
 export type ResultDisplayKind = "fields" | "image" | "palette" | "text";
 
 export interface GeneratorInfoTool {
-	audience: "Design" | "Engineering" | "Product";
+	audience:
+		| "Design"
+		| "Engineering"
+		| "Gaming"
+		| "Geographic"
+		| "Identifiers"
+		| "Product"
+		| "Random"
+		| "TestData"
+		| "Tools";
 	description: string;
 	display: {
 		actionLabel: string;
@@ -11,6 +20,7 @@ export interface GeneratorInfoTool {
 	endpoint: string;
 	id: string;
 	input: {
+		fields?: GeneratorInputField[];
 		label: string;
 		required: boolean;
 	};
@@ -19,6 +29,13 @@ export interface GeneratorInfoTool {
 	result: {
 		kind: ResultDisplayKind;
 	};
+}
+
+export interface GeneratorInputField {
+	id: string;
+	label: string;
+	placeholder: string;
+	required: boolean;
 }
 
 export interface GeneratorInfo {

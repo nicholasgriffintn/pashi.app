@@ -264,6 +264,7 @@ h1 {
 	grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.generate-actions button,
 .input-row button {
 	background: #ff2f78;
 	color: #fff7d7;
@@ -279,20 +280,64 @@ h1 {
 		transform 160ms ease;
 }
 
+.generate-actions button:hover:not(:disabled),
 .input-row button:hover:not(:disabled) {
 	background: #25ffe6;
 	color: #11142e;
 	transform: translate(-2px, -2px);
 }
 
+.generate-actions button:disabled,
 .input-row button:disabled {
 	cursor: wait;
 	opacity: 0.72;
 }
 
+.generate-actions button:focus-visible,
 .input-row button:focus-visible {
 	outline: 3px solid #ffd14c;
 	outline-offset: 3px;
+}
+
+.generate-actions {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.field-grid {
+	display: grid;
+	gap: 0.65rem;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-control {
+	display: grid;
+	gap: 0.35rem;
+}
+
+.field-control span {
+	color: #ffd14c;
+	font-size: 0.78rem;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+.field-control input {
+	background: rgba(255, 247, 215, 0.92);
+	border: 2px solid #0d1024;
+	border-radius: 0;
+	color: #0d1024;
+	font: inherit;
+	font-weight: 800;
+	min-height: 2.7rem;
+	min-width: 0;
+	padding: 0 0.8rem;
+	width: 100%;
+}
+
+.field-control input:focus-visible {
+	outline: 3px solid #25ffe6;
+	outline-offset: 2px;
 }
 
 .examples {
@@ -597,6 +642,11 @@ h1 {
 		grid-template-columns: 1fr;
 	}
 
+	.field-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.generate-actions button,
 	.input-row button {
 		width: 100%;
 	}

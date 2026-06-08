@@ -1,11 +1,12 @@
 import { findGenerator } from "./catalogue";
+import type { GeneratorRequest } from "./request";
 import { json } from "../../utils/http";
 import { createQrResponse } from "./image/qr";
 import { createJsonResult } from "./json";
 
 export async function createGeneratorResponse(
 	type: string,
-	input: string,
+	request: GeneratorRequest,
 	params = new URLSearchParams(),
 ) {
 	const generator = findGenerator(type);
@@ -14,11 +15,11 @@ export async function createGeneratorResponse(
 	}
 
 	if (generator.result.kind === "image") {
-		return createQrResponse(input, params);
+		return createQrResponse(request.input, params);
 	}
 
 	try {
-		return json(await createJsonResult(generator, input.trim()));
+		return json(await createJsonResult(generator, request));
 	} catch (error) {
 		return json(
 			{ error: error instanceof Error ? error.message : "Generation failed." },
