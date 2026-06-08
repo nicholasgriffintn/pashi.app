@@ -3,6 +3,11 @@ export type ResultDisplayKind = "fields" | "image" | "palette" | "text";
 export interface GeneratorInfoTool {
 	audience: "Design" | "Engineering" | "Product";
 	description: string;
+	display: {
+		actionLabel: string;
+		category: string;
+		examples: string[];
+	};
 	endpoint: string;
 	id: string;
 	input: {
@@ -35,6 +40,11 @@ export function getFallbackTool(): GeneratorInfoTool {
 	return {
 		audience: "Engineering",
 		description: "Scannable image for links, notes, and handoff docs.",
+		display: {
+			actionLabel: "Generate QR",
+			category: "Code",
+			examples: ["https://pashi.app"],
+		},
 		endpoint: "/api/qr",
 		id: "qr",
 		input: { label: "Input", required: true },

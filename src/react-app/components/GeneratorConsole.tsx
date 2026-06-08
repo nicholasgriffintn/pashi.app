@@ -1,32 +1,26 @@
 import { type FormEvent, useEffect, useState } from "react";
 
-import { generateThing, type GenerateResult } from "../lib/generate-api";
+import { generateThing } from "../lib/generate-api";
 import {
 	fetchGeneratorInfo,
 	getFallbackTool,
 	type GeneratorInfoTool,
 } from "../lib/generator-info";
-import { ResultStage } from "./ResultStage";
+import { ResultActions } from "./ResultActions";
+import { ResultStage, type ResultStageValue } from "./ResultStage";
+import { ToolPicker } from "./ToolPicker";
 
 const DEFAULT_INPUT = "https://pashi.app";
 const QR_SIZE = "360x360";
 
-type ResultValue =
-	| GenerateResult
-	| {
-		alt: string;
-		kind: "qr";
-		src: string;
-	};
-
 export function GeneratorConsole() {
 	const [tools, setTools] = useState<GeneratorInfoTool[]>([getFallbackTool()]);
-	const [activeToolId, setActiveToolId] = useState("qr");
+	const [activeToolId, setActiveToolId] = useState(getRouteToolId() ?? "qr");
 	const [input, setInput] = useState(DEFAULT_INPUT);
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [snapId, setSnapId] = useState(0);
-	const [result, setResult] = useState<ResultValue>(() =>
+	const [generateId, setGenerateId] = useState(0);
+	const [result, setResult] = useState<ResultStageValue | undefined>(() =>
 		createQrResult(getFallbackTool(), DEFAULT_INPUT, 0),
 	);
 
@@ -40,9 +34,17 @@ export function GeneratorConsole() {
 					return;
 				}
 
+				const routeToolId = getRouteToolId();
+				const nextTool =
+					info.tools.find((tool) => tool.id === routeToolId) ?? info.tools[0];
 				setTools(info.tools);
-				setActiveToolId(info.tools[0].id);
-				setResult(createQrResult(info.tools[0], DEFAULT_INPUT, 0));
+				setActiveToolId(nextTool.id);
+				setInput(getDefaultInput(nextTool));
+				setResult(
+					nextTool.result.kind === "image"
+						? createQrResult(nextTool, getDefaultInput(nextTool), 0)
+						: undefined,
+				);
 			})
 			.catch((caught) => {
 				if (!ignore) {
@@ -57,20 +59,24 @@ export function GeneratorConsole() {
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
+		await generateActiveTool();
+	}
+
+	async function generateActiveTool() {
 		setError("");
 		setIsLoading(true);
 
 		if (activeTool.result.kind === "image") {
 			const payload = input.trim();
 			if (!payload) {
-				setError("Give Pashi something to snap.");
+				setError("Give Pashi something to generate.");
 				setIsLoading(false);
 				return;
 			}
 
-			const nextSnapId = snapId + 1;
-			setSnapId(nextSnapId);
-			setResult(createQrResult(activeTool, payload, nextSnapId));
+			const nextGenerateId = generateId + 1;
+			setGenerateId(nextGenerateId);
+			setResult(createQrResult(activeTool, payload, nextGenerateId));
 			return;
 		}
 
@@ -86,8 +92,10 @@ export function GeneratorConsole() {
 	function handleToolChange(nextToolId: string) {
 		const nextTool = tools.find((tool) => tool.id === nextToolId) ?? tools[0];
 		setActiveToolId(nextToolId);
-		setInput(nextTool.input.required ? DEFAULT_INPUT : "");
+		setInput(getDefaultInput(nextTool));
 		setError("");
+		setResult(undefined);
+		pushGeneratorRoute(nextTool.id);
 	}
 
 	return (
@@ -96,38 +104,46 @@ export function GeneratorConsole() {
 				<div className="copy">
 					<img alt="Pashi mascot logo" className="mobile-logo" src="/logo.svg" />
 					<h1 id="pashi-title">Pashi</h1>
-					<p className="intro">Generate useful little things in a snap.</p>
+					<p className="intro">Generate useful little things in a flash.</p>
 
 					<form className="generator" onSubmit={handleSubmit}>
-						<label htmlFor="tool">Generator</label>
-						<select
-							id="tool"
-							onChange={(event) => handleToolChange(event.target.value)}
-							value={activeToolId}
-						>
-							{tools.map((tool) => (
-								<option key={tool.id} value={tool.id}>
-									{tool.label} - {tool.audience}
-								</option>
-							))}
-						</select>
+						<label>Generator</label>
+						<ToolPicker
+							activeTool={activeTool}
+							onChange={handleToolChange}
+							tools={tools}
+						/>
 
 						<p className="tool-description">{activeTool.description}</p>
 
-						<label htmlFor="snap-input">{activeTool.input.label}</label>
+						<label htmlFor="generate-input">{activeTool.input.label}</label>
 						<div className="input-row">
 							<input
-								id="snap-input"
-								name="snap-input"
+								id="generate-input"
+								name="generate-input"
 								onChange={(event) => setInput(event.target.value)}
 								placeholder={activeTool.placeholder}
 								type="text"
 								value={input}
 							/>
 							<button disabled={isLoading} type="submit">
-								{isLoading ? "Snapping" : "Snap"}
+								{isLoading ? "Generateping" : activeTool.display.actionLabel}
 							</button>
 						</div>
+						{activeTool.display.examples.length > 0 ? (
+							<div className="examples" aria-label="Examples">
+								<span>Try</span>
+								{activeTool.display.examples.map((example) => (
+									<button
+										key={example}
+										onClick={() => setInput(example)}
+										type="button"
+									>
+										{example}
+									</button>
+								))}
+							</div>
+						) : null}
 						{error ? <p className="error">{error}</p> : null}
 					</form>
 				</div>
@@ -135,6 +151,19 @@ export function GeneratorConsole() {
 				<div className="showcase">
 					<img alt="Pashi mascot logo" className="mascot" src="/logo.svg" />
 					<ResultStage
+						actions={
+							result ? (
+								<ResultActions
+									input={input}
+									onClear={() => setResult(undefined)}
+									onRegenerate={() => {
+										void generateActiveTool();
+									}}
+									result={result}
+									tool={activeTool}
+								/>
+							) : undefined
+						}
 						isLoading={isLoading}
 						onQrLoad={() => setIsLoading(false)}
 						result={result}
@@ -145,12 +174,12 @@ export function GeneratorConsole() {
 	);
 }
 
-function createQrResult(tool: GeneratorInfoTool, payload: string, snapId: number): ResultValue {
+function createQrResult(tool: GeneratorInfoTool, payload: string, generateId: number): ResultStageValue {
 	const params = new URLSearchParams({
 		data: payload,
 		format: "png",
 		size: QR_SIZE,
-		snap: `${snapId}`,
+		generate: `${generateId}`,
 	});
 
 	return {
@@ -158,4 +187,20 @@ function createQrResult(tool: GeneratorInfoTool, payload: string, snapId: number
 		kind: "qr",
 		src: `${tool.endpoint}?${params.toString()}`,
 	};
+}
+
+function getDefaultInput(tool: GeneratorInfoTool) {
+	return tool.input.required ? (tool.display.examples[0] ?? DEFAULT_INPUT) : "";
+}
+
+function getRouteToolId() {
+	const [toolId] = window.location.pathname.split("/").filter(Boolean);
+	return toolId && toolId !== "api" ? toolId : undefined;
+}
+
+function pushGeneratorRoute(toolId: string) {
+	const nextPath = `/${toolId}`;
+	if (window.location.pathname !== nextPath) {
+		window.history.pushState(null, "", nextPath);
+	}
 }

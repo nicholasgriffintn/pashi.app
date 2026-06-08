@@ -1,6 +1,6 @@
 {
 	"name": "pashi",
-	"description": "Generate things in a snap",
+	"description": "Pashi generates useful little things in a flash",
 	"private": true,
 	"scripts": {
 		"build": "tsc -b && vite build",

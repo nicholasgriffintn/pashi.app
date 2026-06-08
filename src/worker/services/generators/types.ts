@@ -5,6 +5,11 @@ export type GeneratorResultValue = string | string[] | Record<string, string>;
 export interface GeneratorTool {
 	audience: Audience;
 	description: string;
+	display: {
+		actionLabel: string;
+		category: string;
+		examples: readonly string[];
+	};
 	endpoint: string;
 	id: string;
 	input: {

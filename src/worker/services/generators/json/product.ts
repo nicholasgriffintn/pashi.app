@@ -44,7 +44,7 @@ function createAcceptanceCriteria(input: string) {
 	const feature = subjectOr(input, "the generator");
 	return {
 		error: "When the input is invalid, show a clear error without clearing the form.",
-		generation: `Given valid input for ${feature.toLowerCase()}, when I snap it, then a generated result appears.`,
+		generation: `Given valid input for ${feature.toLowerCase()}, when I generate it, then a result appears.`,
 		loading: "While generation is running, reserve the final result area to avoid layout shift.",
 		ready: "The result can be copied, scanned, or inspected without extra navigation.",
 	};
@@ -53,17 +53,17 @@ function createAcceptanceCriteria(input: string) {
 function createUtmLink(input: string) {
 	let url: URL;
 	try {
-		url = new URL(input || "https://example.com/");
+		url = new URL(input || "https://nicholasgriffin.dev/");
 	} catch {
 		try {
 			url = new URL(`https://${input}`);
 		} catch {
-			url = new URL("https://example.com/");
+			url = new URL("https://nicholasgriffin.dev/");
 		}
 	}
 
 	url.searchParams.set("utm_source", "pashi");
-	url.searchParams.set("utm_medium", "snap");
+	url.searchParams.set("utm_medium", "generate");
 	url.searchParams.set("utm_campaign", slugify(url.hostname.replace(/^www\./, "")) || "campaign");
 	return url.toString();
 }

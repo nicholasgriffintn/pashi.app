@@ -1,3 +1,5 @@
+import type React from "react";
+
 import type { GenerateResult } from "../lib/generate-api";
 
 interface QrResult {
@@ -6,25 +8,29 @@ interface QrResult {
 	src: string;
 }
 
-type ResultStageValue = GenerateResult | QrResult;
+export type ResultStageValue = GenerateResult | QrResult;
 
 interface ResultStageProps {
+	actions?: React.ReactNode;
 	isLoading: boolean;
 	onQrLoad: () => void;
-	result: ResultStageValue;
+	result?: ResultStageValue;
 }
 
-export function ResultStage({ isLoading, onQrLoad, result }: ResultStageProps) {
+export function ResultStage({ actions, isLoading, onQrLoad, result }: ResultStageProps) {
 	return (
 		<section className="result-stage" aria-busy={isLoading} aria-live="polite">
 			<div className="result-box">
-				{isLoading ? <div className="loading-snap" aria-hidden="true" /> : null}
-				{result.kind === "qr" ? (
+				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
+				{!result ? (
+					<p className="empty-result">Pick a generator, paste something, generate.</p>
+				) : result.kind === "qr" ? (
 					<img alt={result.alt} className="qr-result" onLoad={onQrLoad} src={result.src} />
 				) : (
 					<ResultBody result={result} />
 				)}
 			</div>
+			{result ? actions : null}
 		</section>
 	);
 }

@@ -3845,7 +3845,7 @@ type AiSearchListItemsParams = {
     sort_by?: 'status' | 'modified_at';
     /** Filter items by processing status. */
     status?: 'queued' | 'running' | 'completed' | 'error' | 'skipped' | 'outdated';
-    /** Filter items by source (e.g. "builtin" or "web-crawler:https://example.com"). */
+    /** Filter items by source (e.g. "builtin" or "web-crawler:https://nicholasgriffin.dev"). */
     source?: string;
     /** JSON-encoded Vectorize filter for metadata filtering. */
     metadata_filter?: string;
@@ -10500,7 +10500,7 @@ interface RequestInitCfProperties extends Record<string, unknown> {
     /**
      * Redirects the request to an alternate origin server. You can use this,
      * for example, to implement load balancing across several origins.
-     * (e.g.us-east.example.com)
+     * (e.g.us-east.nicholasgriffin.dev)
      *
      * Note - For security reasons, the hostname set in resolveOverride must
      * be proxied on the same Cloudflare zone of the incoming request.

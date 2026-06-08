@@ -1,6 +1,6 @@
 # Pashi
 
-Generate useful little things in a snap.
+Generates useful little things in a flash
 
 ## API
 
