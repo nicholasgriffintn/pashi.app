@@ -132,11 +132,11 @@ export function createIdentifierResult(
 ): JsonResult | undefined {
 	switch (generator.id) {
 		case "card":
-			return fieldsResult(generator, request.input, createCard(request));
+			return fieldsResult(generator, request.input, createCards(request));
 		case "company":
 			return textResult(generator, request.input, createCompanies(request));
 		case "coordinates":
-			return fieldsResult(generator, request.input, createCoordinates());
+			return fieldsResult(generator, request.input, createCoordinateRecords(request));
 		case "iban":
 			return textResult(generator, request.input, createGbIbans(request));
 		case "ipv4":
@@ -146,7 +146,7 @@ export function createIdentifierResult(
 		case "mac":
 			return textResult(generator, request.input, createMacAddresses(request));
 		case "minecraft-uuid":
-			return fieldsResult(generator, request.input, createMinecraftUuid());
+			return fieldsResult(generator, request.input, createMinecraftUuids(request));
 		case "phone":
 			return textResult(generator, request.input, createPhoneNumbers(request));
 		case "us-state":
@@ -163,6 +163,11 @@ export function createIdentifierResult(
 }
 
 function createTextList(request: GeneratorRequest, createValue: () => string) {
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, createValue));
+}
+
+function createRecordList(request: GeneratorRequest, createValue: () => Record<string, string>) {
 	const count = parseCount(request.fields.count ?? "", 1, 1000);
 	return singleOrList(Array.from({ length: count }, createValue));
 }
@@ -237,6 +242,10 @@ function createMinecraftUuid() {
 	};
 }
 
+function createMinecraftUuids(request: GeneratorRequest) {
+	return createRecordList(request, createMinecraftUuid);
+}
+
 function createCoordinates() {
 	const latitude = randomCoordinate(-90, 90);
 	const longitude = randomCoordinate(-180, 180);
@@ -245,6 +254,10 @@ function createCoordinates() {
 		longitude: longitude.toFixed(6),
 		pair: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
 	};
+}
+
+function createCoordinateRecords(request: GeneratorRequest) {
+	return createRecordList(request, createCoordinates);
 }
 
 function randomCoordinate(min: number, max: number) {
@@ -281,6 +294,10 @@ function createCard(request: GeneratorRequest) {
 		expiry: `${String(randomIntegerInRange(12) + 1).padStart(2, "0")}/${randomIntegerInRange(6) + 27}`,
 		number,
 	};
+}
+
+function createCards(request: GeneratorRequest) {
+	return createRecordList(request, () => createCard(request));
 }
 
 function luhnCheckDigit(body: string) {

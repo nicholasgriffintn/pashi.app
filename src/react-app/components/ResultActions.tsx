@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type AnchorHTMLAttributes, useMemo } from "react";
 
 import type { GenerateResult } from "../lib/generate-api";
 import type { GeneratorInfoTool } from "../lib/generator-info";
@@ -9,6 +9,7 @@ interface ResultActionsProps {
 	fields: Record<string, string>;
 	input: string;
 	onClear: () => void;
+	onNotify: (message: string) => void;
 	onRegenerate: () => void;
 	result: ResultStageValue;
 	tool: GeneratorInfoTool;
@@ -19,11 +20,11 @@ export function ResultActions({
 	fields,
 	input,
 	onClear,
+	onNotify,
 	onRegenerate,
 	result,
 	tool,
 }: ResultActionsProps) {
-	const [status, setStatus] = useState("");
 	const exportHrefs = useMemo(
 		() => createExportHrefs(tool, input, fields, exportFormats),
 		[exportFormats, fields, input, tool],
@@ -32,73 +33,102 @@ export function ResultActions({
 	async function runAction(action: () => Promise<void>, successMessage: string) {
 		try {
 			await action();
-			setStatus(successMessage);
+			onNotify(successMessage);
 		} catch {
-			setStatus("Action failed");
+			onNotify("Action failed");
 		}
 	}
 
 	if (result.kind === "image") {
-		const pngHref = tool.id === "qr" ? getImageFormatUrl(result.src, "png") : "";
-		const svgHref = tool.id === "qr" ? getImageFormatUrl(result.src, "svg") : result.src;
-
 		return (
 			<div className="result-actions" aria-label="Result actions">
-				{tool.id === "qr" ? (
-					<a download="pashi-qr.png" href={pngHref}>
-						PNG
-					</a>
-				) : null}
-				<a download={`pashi-${tool.id}.svg`} href={svgHref}>
-					SVG
-				</a>
-				<button onClick={() => runAction(() => copyImage(pngHref || svgHref), "Image copied")} type="button">
-					Copy image
-				</button>
-				<button
-					onClick={() => runAction(() => copyText(tool.id === "qr" ? input : result.src), "URL copied")}
-					type="button"
-				>
-					{tool.id === "qr" ? "Copy URL" : "Copy image URL"}
-				</button>
-				{tool.id === "qr" && isHttpUrl(input) ? (
-					<a href={input} rel="noreferrer" target="_blank">
-						Open URL
-					</a>
-				) : null}
-				<a href={result.src} rel="noreferrer" target="_blank">
-					Open image
-				</a>
-				<button onClick={onRegenerate} type="button">
-					Regenerate
-				</button>
-				<button onClick={onClear} type="button">
-					Clear
-				</button>
-				{status ? <span>{status}</span> : null}
+				<ActionLink
+					download={`pashi-${tool.id}`}
+					href={result.src}
+					icon="↓"
+					label="Download image"
+				/>
+				<ActionButton
+					icon="⧉"
+					label="Copy image"
+					onClick={() => runAction(() => copyImage(result.src), "Image copied")}
+				/>
+				<ActionButton
+					icon="⌘"
+					label="Copy image URL"
+					onClick={() => runAction(() => copyText(result.src), "Image URL copied")}
+				/>
+				<ActionLink href={result.src} icon="↗" label="Open image" rel="noreferrer" target="_blank" />
+				<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
+				<ActionButton icon="×" label="Clear result" onClick={onClear} />
 			</div>
 		);
 	}
 
 	return (
 		<div className="result-actions" aria-label="Result actions">
-			<button onClick={() => runAction(() => copyText(resultToText(result)), "Copied")} type="button">
-				Copy
-			</button>
+			<ActionButton
+				icon="⧉"
+				label="Copy result"
+				onClick={() => runAction(() => copyText(resultToText(result)), "Copied")}
+			/>
 			{exportHrefs.map(({ format, href }) => (
-				<a download={`pashi-${tool.id}.${format}`} href={href} key={format}>
-					{format.toUpperCase()}
-				</a>
+				<ActionLink
+					download={`pashi-${tool.id}.${format}`}
+					href={href}
+					icon={formatIcon(format)}
+					key={format}
+					label={`Download ${format.toUpperCase()}`}
+				/>
 			))}
-			<button onClick={onRegenerate} type="button">
-				Regenerate
-			</button>
-			<button onClick={onClear} type="button">
-				Clear
-			</button>
-			{status ? <span>{status}</span> : null}
+			<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
+			<ActionButton icon="×" label="Clear result" onClick={onClear} />
 		</div>
 	);
+}
+
+function ActionButton({
+	icon,
+	label,
+	onClick,
+}: {
+	icon: string;
+	label: string;
+	onClick: () => void;
+}) {
+	return (
+		<button aria-label={label} onClick={onClick} title={label} type="button">
+			<span aria-hidden="true">{icon}</span>
+		</button>
+	);
+}
+
+function ActionLink({
+	icon,
+	label,
+	...props
+}: AnchorHTMLAttributes<HTMLAnchorElement> & {
+	icon: string;
+	label: string;
+}) {
+	return (
+		<a aria-label={label} title={label} {...props}>
+			<span aria-hidden="true">{icon}</span>
+		</a>
+	);
+}
+
+function formatIcon(format: string) {
+	switch (format.toLowerCase()) {
+		case "csv":
+			return "≡";
+		case "json":
+			return "{}";
+		case "txt":
+			return "T";
+		default:
+			return "↓";
+	}
 }
 
 function createExportHrefs(
@@ -130,6 +160,10 @@ function createExportHrefs(
 
 function resultToText(result: GenerateResult) {
 	if (Array.isArray(result.result)) {
+		if (isRecordArray(result.result)) {
+			return result.result.map(recordToText).join("\n\n");
+		}
+
 		return result.result.join("\n");
 	}
 
@@ -137,24 +171,17 @@ function resultToText(result: GenerateResult) {
 		return result.result;
 	}
 
-	return Object.entries(result.result)
+	return recordToText(result.result);
+}
+
+function recordToText(record: Record<string, string>) {
+	return Object.entries(record)
 		.map(([key, value]) => `${key}: ${value}`)
 		.join("\n");
 }
 
-function getImageFormatUrl(src: string, format: "png" | "svg") {
-	const url = new URL(src, window.location.origin);
-	url.searchParams.set("format", format);
-	return `${url.pathname}?${url.searchParams.toString()}`;
-}
-
-function isHttpUrl(value: string) {
-	try {
-		const url = new URL(value);
-		return url.protocol === "http:" || url.protocol === "https:";
-	} catch {
-		return false;
-	}
+function isRecordArray(value: unknown[]): value is Record<string, string>[] {
+	return value.every((item) => typeof item === "object" && item !== null && !Array.isArray(item));
 }
 
 async function copyText(value: string) {

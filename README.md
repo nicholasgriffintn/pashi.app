@@ -1,21 +1,16 @@
 # Pashi
 
-Generates useful little things in a flash
+Tiny generators for quick output.
 
-## API
+## Functionality
 
-### QR Code Generator
+Pashi takes its name from the manga SFX `pashi`: a crisp smack or click of impact.
 
-Generate a QR code for a URL:
+Go to [https://pashi.app/](https://pashi.app/) to see it in action. You can generate from a wide range of categories depending on your needs.
 
-```txt
-GET /api/qr?data=https%3A%2F%2Fpashi.app
-```
+Pashi also features exports to various formats, including JSON, CSV, and SQL, making it easy to integrate generated data into your projects.
 
-Optional query parameters:
-
-- `format`: `png` or `svg` (defaults to `png`)
-- `size`: dimensions such as `300x300` (defaults to `300x300`)
+And if you'd like to use Pashi in your own projects, you can access the API at [https://pashi.app/api](https://pashi.app/api) to generate data programmatically. Go to [https://pashi.app/api/info](https://pashi.app/api/info) for more information on how to use the API.
 
 ## Development
 

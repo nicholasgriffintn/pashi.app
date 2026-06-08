@@ -1,7 +1,6 @@
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import {
-	parseDelimitedList,
 	parseCount,
 	parseInteger,
 	randomCharacters,
@@ -61,8 +60,6 @@ export function createRandomResult(
 			return fieldsResult(generator, request.input, rollDice(request));
 		case "passphrase":
 			return textResult(generator, request.input, createPassphrase(request));
-		case "pick":
-			return textResult(generator, request.input, pickListItem(request));
 		case "pin":
 			return textResult(generator, request.input, createPin(request));
 		case "string":
@@ -109,13 +106,4 @@ function createColours(request: GeneratorRequest) {
 function createCoinFlips(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 1000);
 	return singleOrList(Array.from({ length: count }, () => randomChoice(["Heads", "Tails"])));
-}
-
-function pickListItem(request: GeneratorRequest) {
-	const items = parseDelimitedList(request.fields.items || request.input);
-	if (items.length === 0) {
-		throw new Error("Add at least one list item.");
-	}
-
-	return randomChoice(items);
 }

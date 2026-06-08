@@ -15,6 +15,8 @@ export function createToolsResult(
 	switch (generator.id) {
 		case "list-randomizer":
 			return textResult(generator, request.input, randomiseList(request).join("\n"));
+		case "name-picker":
+			return textResult(generator, request.input, pickListItem(request));
 		case "secret-santa":
 			return fieldsResult(generator, request.input, createSecretSanta(request));
 		case "teams":
@@ -34,6 +36,11 @@ function randomiseList(request: GeneratorRequest) {
 function createYesNo(request: GeneratorRequest) {
 	const yesWeight = parseInteger(request.fields.yesWeight ?? "", 50, 0, 100);
 	return randomIntegerInRange(100) < yesWeight ? "Yes" : "No";
+}
+
+function pickListItem(request: GeneratorRequest) {
+	const items = parseItems(request);
+	return items[randomIntegerInRange(items.length)];
 }
 
 function createTeams(request: GeneratorRequest) {

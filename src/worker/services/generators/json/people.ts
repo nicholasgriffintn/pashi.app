@@ -1,10 +1,12 @@
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import {
+	parseCount,
 	parseInteger,
 	randomCharacters,
 	randomChoice,
 	randomIntegerInRange,
+	singleOrList,
 	slugify,
 } from "../../../utils/generation";
 import { fieldsResult } from "./result";
@@ -80,10 +82,15 @@ export function createPeopleResult(
 ): JsonResult | undefined {
 	switch (generator.id) {
 		case "person":
-			return fieldsResult(generator, request.input, createPerson(request));
+			return fieldsResult(generator, request.input, createPeople(request));
 		default:
 			return undefined;
 	}
+}
+
+function createPeople(request: GeneratorRequest) {
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => createPerson(request)));
 }
 
 function createPerson(request: GeneratorRequest) {

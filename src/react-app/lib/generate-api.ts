@@ -5,7 +5,7 @@ export interface GenerateResult {
 	kind: GenerateResultKind;
 	label: string;
 	meta: string;
-	result: string | string[] | Record<string, string>;
+	result: string | string[] | Record<string, string> | Record<string, string>[];
 	type: string;
 }
 

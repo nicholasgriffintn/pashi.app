@@ -1,6 +1,6 @@
 {
 	"name": "pashi",
-	"description": "Pashi generates useful little things in a flash",
+	"description": "Pashi is a fast generator toolkit named for the pashi impact SFX",
 	"private": true,
 	"scripts": {
 		"build": "tsc -b && vite build",

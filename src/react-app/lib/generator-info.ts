@@ -62,21 +62,3 @@ export async function fetchGeneratorInfo(): Promise<GeneratorInfo> {
 		exportFormats: "exportFormats" in body && Array.isArray(body.exportFormats) ? body.exportFormats : [],
 	};
 }
-
-export function getFallbackTool(): GeneratorInfoTool {
-	return {
-		audience: "Engineering",
-		description: "Scannable image for links, notes, and handoff docs.",
-		display: {
-			actionLabel: "Generate QR",
-			category: "Code",
-			examples: ["https://pashi.app"],
-		},
-		endpoint: "/api/qr",
-		id: "qr",
-		input: { label: "Input", required: true },
-		label: "QR image",
-		placeholder: "https://pashi.app",
-		result: { kind: "image" },
-	};
-}

@@ -1,35 +1,53 @@
-import { type Dispatch, type FormEvent, type SetStateAction, useEffect, useState } from "react";
+import {
+	type FormEvent,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 
 import { generateThing } from "../lib/generate-api";
+import { fetchGeneratorInfo, type GeneratorInfoTool } from "../lib/generator-info";
 import {
-	fetchGeneratorInfo,
-	getFallbackTool,
-	type GeneratorInfoTool,
-} from "../lib/generator-info";
+	createImageResult,
+	getDefaultFieldValues,
+	getDefaultInput,
+	getInitialValues,
+	getRouteToolId,
+	pushGeneratorRoute,
+} from "../lib/generator-state";
+import { GeneratorForm } from "./GeneratorForm";
+import { PashiLogoButton } from "./PashiLogoButton";
 import { ResultActions } from "./ResultActions";
 import { ResultStage, type ResultStageValue } from "./ResultStage";
-import { ToolPicker } from "./ToolPicker";
-
-const DEFAULT_INPUT = "https://pashi.app";
-const QR_SIZE = "360x360";
 
 export function GeneratorConsole() {
-	const [tools, setTools] = useState<GeneratorInfoTool[]>([getFallbackTool()]);
+	const initialRouteToolId = getRouteToolId();
+	const [tools, setTools] = useState<GeneratorInfoTool[]>([]);
 	const [exportFormats, setExportFormats] = useState<string[]>([]);
-	const [activeToolId, setActiveToolId] = useState(getRouteToolId() ?? "qr");
-	const [input, setInput] = useState(DEFAULT_INPUT);
+	const [activeToolId, setActiveToolId] = useState(initialRouteToolId ?? "");
+	const [input, setInput] = useState("");
 	const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 	const [error, setError] = useState("");
+	const [isInfoLoading, setIsInfoLoading] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
 	const [generateId, setGenerateId] = useState(0);
-	const [result, setResult] = useState<ResultStageValue | undefined>(() =>
-		createImageResult(getFallbackTool(), DEFAULT_INPUT, {}, 0),
-	);
+	const [notification, setNotification] = useState("");
+	const [result, setResult] = useState<ResultStageValue | undefined>();
+	const notificationTimer = useRef<number | undefined>(undefined);
 
-	const activeTool = tools.find((tool) => tool.id === activeToolId) ?? tools[0];
-	const hasFields = Boolean(activeTool.input.fields?.length);
-	const hasPrimaryInput = !hasFields && activeTool.input.mode !== "none";
-	const visibleExamples = activeTool.input.mode === "none" ? [] : activeTool.display.examples;
+	const activeTool = tools.find((tool) => tool.id === activeToolId);
+	const hasFields = Boolean(activeTool?.input.fields?.length);
+	const notify = useCallback((message: string) => {
+		window.clearTimeout(notificationTimer.current);
+		setNotification(message);
+		notificationTimer.current = window.setTimeout(() => setNotification(""), 2400);
+	}, []);
+
+	useEffect(() => {
+		return () => window.clearTimeout(notificationTimer.current);
+	}, [notify]);
+
 	useEffect(() => {
 		let ignore = false;
 
@@ -58,12 +76,18 @@ export function GeneratorConsole() {
 				if (!ignore) {
 					setError(caught instanceof Error ? caught.message : "Could not load generators.");
 				}
+			})
+			.finally(() => {
+				if (!ignore) {
+					setIsInfoLoading(false);
+					notify("Generators ready");
+				}
 			});
 
 		return () => {
 			ignore = true;
 		};
-	}, []);
+	}, [notify]);
 
 	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -73,6 +97,12 @@ export function GeneratorConsole() {
 	async function generateActiveTool() {
 		setError("");
 		setIsLoading(true);
+
+		if (!activeTool) {
+			setError("Generators are still loading.");
+			setIsLoading(false);
+			return;
+		}
 
 		if (activeTool.result.kind === "image") {
 			const payload = hasFields ? fieldValues : input.trim();
@@ -98,7 +128,11 @@ export function GeneratorConsole() {
 	}
 
 	function handleToolChange(nextToolId: string) {
-		const nextTool = tools.find((tool) => tool.id === nextToolId) ?? tools[0];
+		const nextTool = tools.find((tool) => tool.id === nextToolId);
+		if (!nextTool) {
+			return;
+		}
+
 		setActiveToolId(nextToolId);
 		setInput(getDefaultInput(nextTool));
 		setFieldValues(getDefaultFieldValues(nextTool));
@@ -107,101 +141,66 @@ export function GeneratorConsole() {
 		pushGeneratorRoute(nextTool.id);
 	}
 
+	function handleFieldChange(fieldId: string, value: string) {
+		setFieldValues((current) => ({
+			...current,
+			[fieldId]: value,
+		}));
+	}
+
 	return (
 		<main className="shell">
 			<section className="hero" aria-labelledby="pashi-title">
 				<div className="copy">
-					<img alt="Pashi mascot logo" className="mobile-logo" src="/logo.svg" />
+					<PashiLogoButton
+						className="mobile-logo-button"
+						imageClassName="mobile-logo"
+						isLoading={isInfoLoading}
+					/>
 					<h1 id="pashi-title">Pashi</h1>
-					<p className="intro">Generate useful little things in a flash.</p>
+					<p className="intro">Tiny generators for quick output.</p>
 
-					<form className="generator" onSubmit={handleSubmit}>
-						<label>Generator</label>
-						<ToolPicker
+					{!activeTool ? (
+						<div aria-busy="true" className="generator generator-loading">
+							<label>Generator</label>
+							<p className="tool-description">
+								{isInfoLoading ? `Loading ${activeToolId || "generators"}` : "No generators available"}
+							</p>
+						</div>
+					) : (
+						<GeneratorForm
 							activeTool={activeTool}
-							onChange={handleToolChange}
+							error={error}
+							fieldValues={fieldValues}
+							input={input}
+							isLoading={isLoading}
+							onFieldChange={handleFieldChange}
+							onInputChange={setInput}
+							onSubmit={handleSubmit}
+							onToolChange={handleToolChange}
 							tools={tools}
 						/>
-
-						<p className="tool-description">{activeTool.description}</p>
-
-						{hasFields ? (
-							<div className="field-grid">
-								{activeTool.input.fields?.map((field) => (
-									<label className="field-control" key={field.id}>
-										<span>{field.label}</span>
-										<FieldInput
-											field={field}
-											onChange={(value) =>
-												setFieldValues((current) => ({
-													...current,
-													[field.id]: value,
-												}))
-											}
-											value={fieldValues[field.id] ?? ""}
-										/>
-									</label>
-								))}
-							</div>
-						) : hasPrimaryInput ? (
-							<>
-								<label htmlFor="generate-input">{activeTool.input.label}</label>
-								<div className="input-row">
-									<input
-										id="generate-input"
-										name="generate-input"
-										onChange={(event) => setInput(event.target.value)}
-										placeholder={activeTool.placeholder}
-										type="text"
-										value={input}
-									/>
-									<button disabled={isLoading} type="submit">
-										{isLoading ? "Generating" : activeTool.display.actionLabel}
-									</button>
-								</div>
-							</>
-						) : (
-							<div className="generate-actions">
-								<button disabled={isLoading} type="submit">
-									{isLoading ? "Generating" : activeTool.display.actionLabel}
-								</button>
-							</div>
-						)}
-						{hasFields ? (
-							<div className="generate-actions">
-								<button disabled={isLoading} type="submit">
-									{isLoading ? "Generating" : activeTool.display.actionLabel}
-								</button>
-							</div>
-						) : null}
-						{visibleExamples.length > 0 ? (
-							<div className="examples" aria-label="Examples">
-								<span>Try</span>
-								{visibleExamples.map((example) => (
-									<button
-										key={example}
-										onClick={() => applyExample(activeTool, example, setInput, setFieldValues)}
-										type="button"
-									>
-										{example}
-									</button>
-								))}
-							</div>
-						) : null}
-						{error ? <p className="error">{error}</p> : null}
-					</form>
+					)}
 				</div>
 
 				<div className="showcase">
-					<img alt="Pashi mascot logo" className="mascot" src="/logo.svg" />
+					<PashiLogoButton
+						className="mascot-button"
+						imageClassName="mascot"
+						isLoading={isInfoLoading}
+					/>
+					{isInfoLoading ? (
+						<ScreenReaderStatus message="Loading generators" />
+					) : null}
 					<ResultStage
 						actions={
-							result ? (
+							result && activeTool ? (
 								<ResultActions
 									exportFormats={exportFormats}
 									fields={fieldValues}
 									input={input}
 									onClear={() => setResult(undefined)}
+									onNotify={notify}
 									onRegenerate={() => {
 										void generateActiveTool();
 									}}
@@ -211,148 +210,24 @@ export function GeneratorConsole() {
 							) : undefined
 						}
 						isLoading={isLoading}
-						onQrLoad={() => setIsLoading(false)}
+						onImageLoad={() => setIsLoading(false)}
 						result={result}
 					/>
 				</div>
 			</section>
+			{notification ? (
+				<div className="pashi-toast" role="status">
+					{notification}
+				</div>
+			) : null}
 		</main>
 	);
 }
 
-function createImageResult(
-	tool: GeneratorInfoTool,
-	input: string,
-	fields: Record<string, string>,
-	generateId: number,
-): ResultStageValue {
-	const params = new URLSearchParams({
-		generate: `${generateId}`,
-	});
-
-	if (tool.id === "qr") {
-		params.set("data", input);
-		params.set("format", "png");
-		params.set("size", QR_SIZE);
-	} else {
-		if (input) {
-			params.set("input", input);
-		}
-		for (const [key, value] of Object.entries(fields)) {
-			if (value) {
-				params.set(key, value);
-			}
-		}
-	}
-
-	return {
-		alt: `${tool.label} result`,
-		kind: "image",
-		src: `${tool.endpoint}?${params.toString()}`,
-	};
-}
-
-function getDefaultInput(tool: GeneratorInfoTool) {
-	if (tool.input.mode === "none" || tool.input.fields?.length) {
-		return "";
-	}
-
-	return tool.input.required ? (tool.display.examples[0] ?? DEFAULT_INPUT) : "";
-}
-
-function getDefaultFieldValues(tool: GeneratorInfoTool) {
-	return Object.fromEntries(
-		(tool.input.fields ?? []).map((field) => [field.id, field.placeholder]),
-	);
-}
-
-function getInitialValues(tool: GeneratorInfoTool) {
-	const params = new URLSearchParams(window.location.search);
-	const input = params.get("input") ?? params.get("data") ?? getDefaultInput(tool);
-	const fields = {
-		...getDefaultFieldValues(tool),
-		...Object.fromEntries(
-			(tool.input.fields ?? []).flatMap((field) => {
-				const value = params.get(field.id);
-				return value === null ? [] : [[field.id, value]];
-			}),
-		),
-	};
-
-	return { fields, input };
-}
-
-function FieldInput({
-	field,
-	onChange,
-	value,
-}: {
-	field: NonNullable<GeneratorInfoTool["input"]["fields"]>[number];
-	onChange: (value: string) => void;
-	value: string;
-}) {
-	if (field.type === "textarea") {
-		return (
-			<textarea
-				onChange={(event) => onChange(event.target.value)}
-				placeholder={field.placeholder}
-				required={field.required}
-				rows={4}
-				value={value}
-			/>
-		);
-	}
-
-	if (field.type === "select" && field.options?.length) {
-		return (
-			<select
-				onChange={(event) => onChange(event.target.value)}
-				required={field.required}
-				value={value}
-			>
-				{field.options.map((option) => (
-					<option key={option} value={option}>
-						{option}
-					</option>
-				))}
-			</select>
-		);
-	}
-
+function ScreenReaderStatus({ message }: { message: string }) {
 	return (
-		<input
-			onChange={(event) => onChange(event.target.value)}
-			placeholder={field.placeholder}
-			required={field.required}
-			type="text"
-			value={value}
-		/>
+		<p className="sr-only" role="status">
+			{message}
+		</p>
 	);
-}
-
-function applyExample(
-	tool: GeneratorInfoTool,
-	example: string,
-	setInput: (value: string) => void,
-	setFieldValues: Dispatch<SetStateAction<Record<string, string>>>,
-) {
-	const firstField = tool.input.fields?.[0];
-	if (!firstField) {
-		setInput(example);
-		return;
-	}
-
-	setFieldValues((current) => ({ ...current, [firstField.id]: example }));
-}
-
-function getRouteToolId() {
-	const [toolId] = window.location.pathname.split("/").filter(Boolean);
-	return toolId && toolId !== "api" ? toolId : undefined;
-}
-
-function pushGeneratorRoute(toolId: string) {
-	const nextPath = `/${toolId}`;
-	if (window.location.pathname !== nextPath) {
-		window.history.pushState(null, "", nextPath);
-	}
 }

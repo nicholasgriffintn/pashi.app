@@ -16,7 +16,7 @@ export function createDateResult(
 		case "time":
 			return textResult(generator, request.input, createTimes(request));
 		case "datetime":
-			return fieldsResult(generator, request.input, createDateTime(request));
+			return fieldsResult(generator, request.input, createDateTimes(request));
 		default:
 			return undefined;
 	}
@@ -42,6 +42,11 @@ function createDateTime(request: GeneratorRequest) {
 		time: formatTime(date, "24h"),
 		utc: date.toUTCString(),
 	};
+}
+
+function createDateTimes(request: GeneratorRequest) {
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => createDateTime(request)));
 }
 
 function randomDate(request: GeneratorRequest) {

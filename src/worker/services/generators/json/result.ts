@@ -1,15 +1,15 @@
-import type { GeneratorTool, JsonResult } from "../types";
+import type { GeneratorResultRecord, GeneratorTool, JsonResult } from "../types";
 
 export function fieldsResult(
 	generator: GeneratorTool,
 	input: string,
-	result: Record<string, string>,
+	result: GeneratorResultRecord | GeneratorResultRecord[],
 ): JsonResult {
 	return {
 		input,
 		kind: "fields",
 		label: generator.label,
-		meta: "Structured",
+		meta: Array.isArray(result) ? `${result.length} records` : "Structured",
 		result,
 		type: generator.id,
 	};

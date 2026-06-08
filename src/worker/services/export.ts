@@ -1,7 +1,7 @@
 import { findGenerator } from "./generators/catalogue";
 import type { GeneratorRequest } from "./generators/request";
 import { createJsonResult } from "./generators/json";
-import type { GeneratorResultValue, JsonResult } from "./generators/types";
+import type { GeneratorResultRecord, GeneratorResultValue, JsonResult } from "./generators/types";
 import { json } from "../utils/http";
 
 const EXPORT_FORMATS = ["csv", "json", "txt"] as const;
@@ -67,6 +67,14 @@ function formatCsv(value: GeneratorResultValue) {
 	}
 
 	if (Array.isArray(value)) {
+		if (isRecordArray(value)) {
+			const columns = uniqueKeys(value);
+			return [
+				csvRow(columns),
+				...value.map((record) => csvRow(columns.map((column) => record[column] ?? ""))),
+			].join("\n").concat("\n");
+		}
+
 		return [
 			csvRow(["index", "value"]),
 			...value.map((item, index) => csvRow([`${index + 1}`, item])),
@@ -87,12 +95,28 @@ function formatText(result: JsonResult) {
 	}
 
 	if (Array.isArray(value)) {
+		if (isRecordArray(value)) {
+			return `${value.map(formatRecordText).join("\n\n")}\n`;
+		}
+
 		return `${value.join("\n")}\n`;
 	}
 
-	return `${Object.entries(value)
+	return `${formatRecordText(value)}\n`;
+}
+
+function formatRecordText(record: GeneratorResultRecord) {
+	return Object.entries(record)
 		.map(([key, entryValue]) => `${key}: ${entryValue}`)
-		.join("\n")}\n`;
+		.join("\n");
+}
+
+function isRecordArray(value: unknown[]): value is GeneratorResultRecord[] {
+	return value.every((item) => typeof item === "object" && item !== null && !Array.isArray(item));
+}
+
+function uniqueKeys(records: GeneratorResultRecord[]) {
+	return [...new Set(records.flatMap((record) => Object.keys(record)))];
 }
 
 function csvRow(values: readonly string[]) {

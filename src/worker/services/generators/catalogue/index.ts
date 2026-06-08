@@ -114,6 +114,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("datetime", "Date/time", "Engineering", "Random date/time with useful formats.", "Range", false, "2020-2030", "fields", "Generate datetime", ["2020-2030"], [
 		field("start", "Start", "2020-01-01T00:00:00Z", true),
 		field("end", "End", "2030-12-31T23:59:59Z", true),
+		field("count", "Count", "1", true),
 	]),
 	tool("ipv4", "IPv4 address", "Identifiers", "Random IPv4 addresses.", "Count", false, "1", "text", "Generate IPv4", ["1", "10"], [
 		field("count", "Count", "1", true),
@@ -136,7 +137,9 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("company", "Company name", "Identifiers", "Random company names.", "Count", false, "1", "text", "Generate company", ["1", "10"], [
 		field("count", "Count", "1", true),
 	]),
-	tool("minecraft-uuid", "Minecraft UUID", "Identifiers", "Random Minecraft UUID formats.", "Input", false, "", "fields", "Generate UUID", ["dashed and compact"]),
+	tool("minecraft-uuid", "Minecraft UUID", "Identifiers", "Random Minecraft UUID formats.", "Count", false, "1", "fields", "Generate UUID", ["1", "10"], [
+		field("count", "Count", "1", true),
+	]),
 	tool("us-state", "US state", "Geographic", "Random US states.", "Count", false, "1", "text", "Generate state", ["1", "5"], [
 		field("count", "Count", "1", true),
 	]),
@@ -147,6 +150,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("locale", "Locale", "GB", false, "select", ["GB", "US"]),
 		field("minAge", "Min age", "18", true),
 		field("maxAge", "Max age", "65", true),
+		field("count", "Count", "1", true),
 	]),
 	tool("number", "Number", "Random", "Random integers or decimals in a range.", "Range", false, "1-100", "text", "Generate number", ["1-100", "0-1 decimal"], [
 		field("min", "Min", "1", true),
@@ -199,30 +203,15 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("medium", "Medium", "email", true),
 		field("campaign", "Campaign", "launch", true),
 	]),
-	tool("user-story", "User story", "Product", "Product story with context.", "Feature", false, "Team invites", "fields", "Write story", ["Team invites", "Export history"], [
-		field("feature", "Feature", "Team invites", true),
-		field("persona", "Persona", "workspace admin", true),
-		field("outcome", "Outcome", "add teammates without support", true),
-		field("context", "Context", "Self-serve workspace onboarding", false),
+	tool("coordinates", "Coordinates", "Geographic", "Random latitude and longitude records.", "Count", false, "1", "fields", "Generate coords", ["1", "10"], [
+		field("count", "Count", "1", true),
 	]),
-	tool("release", "Release note", "Product", "Release note draft.", "Change", false, "Faster QR generation", "fields", "Draft release", ["Faster QR generation", "New token tool"], [
-		field("change", "Change", "Faster QR generation", true),
-		field("audience", "Audience", "engineering teams", false),
-		field("impact", "Impact", "ship shareable assets faster", false),
-		field("tone", "Tone", "Direct", false),
-	]),
-	tool("acceptance", "Criteria", "Product", "Acceptance criteria.", "Feature", false, "QR download button", "fields", "Write criteria", ["QR download button", "Password length setting"], [
-		field("feature", "Feature", "QR download button", true),
-		field("success", "Success", "the file downloads in the selected format", true),
-		field("failure", "Failure", "show a clear error without clearing the form", false),
-		field("edge", "Edge case", "network failure", false),
-	]),
-	tool("coordinates", "Coordinates", "Geographic", "Random latitude and longitude.", "Input", false, "", "fields", "Generate coords", ["lat/lng"]),
 	tool("zip", "ZIP code", "Geographic", "Random US ZIP codes.", "Count", false, "1", "text", "Generate ZIP", ["1", "10"], [
 		field("count", "Count", "1", true),
 	]),
 	tool("card", "Card number", "TestData", "Luhn-valid test card details.", "Brand", false, "visa", "fields", "Generate card", ["visa", "mastercard"], [
 		field("brand", "Brand", "visa", false, "select", ["visa", "mastercard", "amex"]),
+		field("count", "Count", "1", true),
 	]),
 	tool("iban", "IBAN", "TestData", "Valid-format GB IBANs for testing.", "Count", false, "1", "text", "Generate IBAN", ["1", "10"], [
 		field("count", "Count", "1", true),
@@ -262,7 +251,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("secret-santa", "Secret Santa", "Tools", "Assign each person a different recipient.", "People", true, "Ada\nGrace\nMargaret", "fields", "Assign pairs", ["Ada, Grace, Margaret"], [
 		field("items", "People", "Ada\nGrace\nMargaret", true, "textarea"),
 	]),
-	tool("pick", "Name picker", "Tools", "Pick one item from a comma or newline list.", "Items", true, "Ada, Grace, Margaret", "text", "Pick one", ["Ada, Grace, Margaret"], [
+	tool("name-picker", "Name picker", "Tools", "Pick one item from a comma or newline list.", "Items", true, "Ada\nGrace\nMargaret", "text", "Pick one", ["Ada, Grace, Margaret"], [
 		field("items", "Items", "Ada\nGrace\nMargaret", true, "textarea"),
 	]),
 ];

@@ -1,31 +1,26 @@
 import type React from "react";
 
 import type { GenerateResult } from "../lib/generate-api";
-
-interface ImageResult {
-	alt: string;
-	kind: "image";
-	src: string;
-}
+import type { ImageResult } from "../lib/generator-state";
 
 export type ResultStageValue = GenerateResult | ImageResult;
 
 interface ResultStageProps {
 	actions?: React.ReactNode;
 	isLoading: boolean;
-	onQrLoad: () => void;
+	onImageLoad: () => void;
 	result?: ResultStageValue;
 }
 
-export function ResultStage({ actions, isLoading, onQrLoad, result }: ResultStageProps) {
+export function ResultStage({ actions, isLoading, onImageLoad, result }: ResultStageProps) {
 	return (
 		<section className="result-stage" aria-busy={isLoading} aria-live="polite">
-			<div className="result-box">
+			<div className="result-box" data-result-kind={result?.kind}>
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
 				{!result ? (
 					<p className="empty-result">Pick a generator, paste something, generate.</p>
 				) : result.kind === "image" ? (
-					<img alt={result.alt} className="qr-result" onLoad={onQrLoad} src={result.src} />
+					<img alt={result.alt} className="image-result" onLoad={onImageLoad} src={result.src} />
 				) : (
 					<ResultBody result={result} />
 				)}
@@ -36,7 +31,7 @@ export function ResultStage({ actions, isLoading, onQrLoad, result }: ResultStag
 }
 
 function ResultBody({ result }: { result: GenerateResult }) {
-	if (result.kind === "palette" && Array.isArray(result.result)) {
+	if (result.kind === "palette" && Array.isArray(result.result) && isStringArray(result.result)) {
 		return (
 			<div className="palette-result">
 				{result.result.map((colour) => (
@@ -44,6 +39,32 @@ function ResultBody({ result }: { result: GenerateResult }) {
 						<span>{colour}</span>
 					</div>
 				))}
+			</div>
+		);
+	}
+
+	if (result.kind === "fields" && Array.isArray(result.result) && isRecordArray(result.result)) {
+		const columns = uniqueKeys(result.result);
+		return (
+			<div className="records-result">
+				<table>
+					<thead>
+						<tr>
+							{columns.map((column) => (
+								<th key={column}>{column}</th>
+							))}
+						</tr>
+					</thead>
+					<tbody>
+						{result.result.map((record, index) => (
+							<tr key={index}>
+								{columns.map((column) => (
+									<td key={column}>{record[column] ?? ""}</td>
+								))}
+							</tr>
+						))}
+					</tbody>
+				</table>
 			</div>
 		);
 	}
@@ -61,5 +82,33 @@ function ResultBody({ result }: { result: GenerateResult }) {
 		);
 	}
 
-	return <pre className="text-result">{Array.isArray(result.result) ? result.result.join("\n") : String(result.result)}</pre>;
+	return <pre className="text-result">{formatTextResult(result.result)}</pre>;
+}
+
+function formatTextResult(value: GenerateResult["result"]) {
+	if (Array.isArray(value)) {
+		if (isStringArray(value)) {
+			return value.join("\n");
+		}
+
+		return value.map((record) => Object.values(record).join("\t")).join("\n");
+	}
+
+	if (typeof value === "string") {
+		return value;
+	}
+
+	return Object.values(value).join("\n");
+}
+
+function isRecordArray(value: unknown[]): value is Record<string, string>[] {
+	return value.every((item) => typeof item === "object" && item !== null && !Array.isArray(item));
+}
+
+function isStringArray(value: unknown[]): value is string[] {
+	return value.every((item) => typeof item === "string");
+}
+
+function uniqueKeys(records: Record<string, string>[]) {
+	return [...new Set(records.flatMap((record) => Object.keys(record)))];
 }
