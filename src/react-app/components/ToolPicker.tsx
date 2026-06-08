@@ -23,12 +23,9 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
-		bottom: null,
 		left: 0,
 		maxHeight: 320,
 		side: "bottom",
-		top: 0,
-		width: 0,
 	});
 	const [query, setQuery] = useState("");
 	const [recentToolIds, setRecentToolIds] = useState<string[]>(() => readRecentToolIds());
@@ -44,11 +41,8 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	const activeOptionId = flatTools[activeIndex] ? optionId(listboxId, flatTools[activeIndex].id) : undefined;
 	const menuStyle = useMemo<ToolMenuStyle>(
 		() => ({
-			"--tool-menu-bottom": menuPlacement.bottom === null ? "auto" : `${menuPlacement.bottom}px`,
 			"--tool-menu-left": `${menuPlacement.left}px`,
 			"--tool-menu-max-height": `${menuPlacement.maxHeight}px`,
-			"--tool-menu-top": menuPlacement.top === null ? "auto" : `${menuPlacement.top}px`,
-			"--tool-menu-width": `${menuPlacement.width}px`,
 		}),
 		[menuPlacement],
 	);
@@ -59,22 +53,21 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 		}
 
 		const rect = trigger.getBoundingClientRect();
+		const rootRect = rootRef.current?.getBoundingClientRect();
 		const gap = 8;
 		const padding = 12;
-		const below = window.innerHeight - rect.bottom - gap - padding;
-		const above = rect.top - gap - padding;
+		const pageBottom = document.querySelector(".shell")?.getBoundingClientRect().bottom ?? window.innerHeight;
+		const usableBottom = Math.min(window.innerHeight, pageBottom) - padding;
+		const usableTop = padding;
+		const below = usableBottom - rect.bottom - gap;
+		const above = rect.top - usableTop - gap;
 		const side = below >= above ? "bottom" : "top";
-		const available = Math.max(0, side === "bottom" ? below : above);
-		const width = Math.min(rect.width, window.innerWidth - padding * 2);
-		const left = Math.min(Math.max(padding, rect.left), window.innerWidth - padding - width);
+		const available = Math.max(160, side === "bottom" ? below : above);
 
 		setMenuPlacement({
-			bottom: side === "top" ? window.innerHeight - rect.top + gap : null,
-			left,
+			left: rootRect ? rect.left - rootRect.left : 0,
 			maxHeight: Math.min(448, available),
 			side,
-			top: side === "bottom" ? rect.bottom + gap : null,
-			width,
 		});
 	}, []);
 	const openPicker = useCallback(() => {
@@ -299,20 +292,14 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 }
 
 interface MenuPlacement {
-	bottom: number | null;
 	left: number;
 	maxHeight: number;
 	side: "bottom" | "top";
-	top: number | null;
-	width: number;
 }
 
 type ToolMenuStyle = CSSProperties & {
-	"--tool-menu-bottom": string;
 	"--tool-menu-left": string;
 	"--tool-menu-max-height": string;
-	"--tool-menu-top": string;
-	"--tool-menu-width": string;
 };
 
 function nextOptionIndex(index: number, length: number, direction: 1 | -1) {

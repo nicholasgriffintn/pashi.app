@@ -25,11 +25,18 @@
 	box-sizing: border-box;
 }
 
+::selection {
+	background: #25ffe6;
+	color: #0d1024;
+}
+
 body {
 	margin: 0;
 	min-width: 320px;
 	min-height: 100vh;
 	overflow-x: hidden;
+	scrollbar-color: #25ffe6 #11142e;
+	scrollbar-width: thin;
 }
 
 button {
