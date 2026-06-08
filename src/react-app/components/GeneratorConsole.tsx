@@ -94,6 +94,7 @@ export function GeneratorConsole() {
 		<main className="shell">
 			<section className="hero" aria-labelledby="pashi-title">
 				<div className="copy">
+					<img alt="Pashi mascot logo" className="mobile-logo" src="/logo.svg" />
 					<h1 id="pashi-title">Pashi</h1>
 					<p className="intro">Generate useful little things in a snap.</p>
 
