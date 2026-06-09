@@ -7,8 +7,10 @@ export interface GeneratorValues {
 
 export interface ImageResult {
 	alt: string;
+	downloadName?: string;
 	generatedAt?: string;
 	kind: "image";
+	sourceUrl?: string;
 	src: string;
 }
 
@@ -72,7 +74,7 @@ export function getInitialValues(tool: GeneratorInfoTool): GeneratorValues {
 
 export function getRouteToolId() {
 	const [toolId] = window.location.pathname.split("/").filter(Boolean);
-	return toolId && toolId !== "api" ? toolId : undefined;
+	return toolId && toolId !== "api" && toolId !== "convert" ? toolId : undefined;
 }
 
 export function findToolByRoute(tools: readonly GeneratorInfoTool[], routeToolId: string | undefined) {

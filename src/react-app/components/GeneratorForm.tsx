@@ -72,7 +72,13 @@ export function GeneratorForm({
 	return (
 		<form className="generator" onSubmit={onSubmit}>
 			<label>Generator</label>
-			<ToolPicker activeTool={activeTool} onChange={onToolChange} tools={tools} />
+			<ToolPicker
+				activeTool={activeTool}
+				label="generators"
+				onChange={onToolChange}
+				recentKey="pashi:recent-generator-tools"
+				tools={tools}
+			/>
 
 			<p className="tool-description">{activeTool.description}</p>
 

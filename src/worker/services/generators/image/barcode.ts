@@ -1,5 +1,5 @@
 import type { GeneratorRequest } from "../request";
-import { escapeXml } from "../../../../shared/text";
+import { escapeXml } from "../../../utils/text";
 import { parseInteger } from "../../../utils/generation";
 import { json } from "../../../utils/http";
 

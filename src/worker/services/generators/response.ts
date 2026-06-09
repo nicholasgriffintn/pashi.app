@@ -3,12 +3,14 @@ import type { GeneratorRequest } from "./request";
 import { json } from "../../utils/http";
 import { createImageResponse } from "./image";
 import { createJsonResult } from "./json";
+import { usesAiMode } from "./request";
+import { createFeatureStatus, type FeatureEnv } from "../features";
 
 export async function createGeneratorResponse(
 	type: string,
 	request: GeneratorRequest,
 	params = new URLSearchParams(),
-	env?: Pick<Env, "AI">,
+	env?: FeatureEnv,
 ) {
 	const generator = findGenerator(type);
 	if (!generator) {
@@ -16,6 +18,9 @@ export async function createGeneratorResponse(
 	}
 
 	const generatedAt = new Date().toISOString();
+	if (usesAiMode(request) && (!env || !createFeatureStatus(env).ai.available)) {
+		return json({ error: "AI mode is not available." }, 503);
+	}
 
 	if (generator.result.kind === "image") {
 		const response = createImageResponse(generator, request, params);
@@ -24,7 +29,7 @@ export async function createGeneratorResponse(
 	}
 
 	try {
-		const result = await createJsonResult(generator, request, env);
+		const result = await createJsonResult(generator, request, env?.AI ? { AI: env.AI } : undefined);
 		return json({
 			...result,
 			generatedAt,

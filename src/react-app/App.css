@@ -41,13 +41,15 @@
 	gap: clamp(1.5rem, 5vw, 5rem);
 	grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
 	margin: 0 auto;
-	max-width: 1180px;
+	max-width: 1280px;
 	min-height: calc(100vh - clamp(2rem, 6vw, 5rem));
 	position: relative;
 	z-index: 1;
 }
 
 .copy {
+	display: grid;
+	gap: 0;
 	max-width: 40rem;
 }
 
@@ -136,6 +138,61 @@ h1 {
 	max-width: 36rem;
 }
 
+.app-mode-tabs {
+	align-items: center;
+	display: inline-grid;
+	gap: 0.4rem;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	margin: 0 0 1rem;
+	max-width: 20rem;
+}
+
+.app-mode-tabs button {
+	background: rgba(255, 247, 215, 0.08);
+	border: 2px solid rgba(37, 255, 230, 0.7);
+	color: #fff7d7;
+	cursor: pointer;
+	font: 900 0.82rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	min-height: 2.5rem;
+	padding: 0 0.85rem;
+	text-transform: uppercase;
+	transition:
+		background 160ms ease,
+		color 160ms ease,
+		box-shadow 160ms ease,
+		transform 160ms ease;
+}
+
+.app-mode-tabs button[aria-pressed="true"],
+.app-mode-tabs button:hover,
+.app-mode-tabs button:focus-visible {
+	background: #25ffe6;
+	box-shadow: 4px 4px 0 #ff2f78;
+	color: #11142e;
+	outline: 0;
+	transform: translate(-1px, -1px);
+}
+
+.app-mode-tabs button:disabled {
+	background: rgba(255, 247, 215, 0.08);
+	border-color: rgba(255, 247, 215, 0.22);
+	box-shadow: none;
+	color: rgba(255, 247, 215, 0.42);
+	cursor: not-allowed;
+	transform: none;
+}
+
+.tool-surface {
+	align-content: start;
+	display: grid;
+	min-height: clamp(23rem, 40vh, 31rem);
+	position: relative;
+}
+
+.tool-surface > .generator {
+	animation: tool-surface-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .generator {
 	backdrop-filter: blur(8px) saturate(1.1);
 	background:
@@ -152,7 +209,8 @@ h1 {
 	padding: clamp(1rem, 2.5vw, 1.4rem);
 	transition:
 		border-color 180ms ease,
-		box-shadow 180ms ease;
+		box-shadow 180ms ease,
+		transform 180ms ease;
 }
 
 .generator:focus-within {
@@ -525,6 +583,10 @@ h1 {
 	resize: vertical;
 }
 
+.converter-input textarea {
+	min-height: 12rem;
+}
+
 .field-control input:focus-visible,
 .field-control select:focus-visible,
 .field-control textarea:focus-visible {
@@ -577,6 +639,31 @@ h1 {
 	margin: 0;
 }
 
+.selected-file {
+	color: #f0d9bb;
+	font-size: 0.8rem;
+	font-weight: 800;
+	grid-column: 1 / -1;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.converter-output-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+}
+
+.converter-output-list span {
+	background: #11142e;
+	border: 1px solid rgba(37, 255, 230, 0.65);
+	color: #25ffe6;
+	font-size: 0.72rem;
+	font-weight: 900;
+	padding: 0.25rem 0.45rem;
+	text-transform: uppercase;
+}
+
 .showcase {
 	align-items: center;
 	display: grid;
@@ -604,6 +691,7 @@ h1 {
 	display: grid;
 	justify-items: center;
 	margin-top: -2rem;
+	min-height: calc(min(24rem, 70vw) + 4rem);
 	position: relative;
 	width: min(24rem, 70vw, 100%);
 	z-index: 3;
@@ -631,6 +719,7 @@ h1 {
 }
 
 .result-content {
+	animation: result-content-in 190ms cubic-bezier(0.16, 1, 0.3, 1);
 	display: grid;
 	height: 100%;
 	justify-items: stretch;
@@ -751,6 +840,38 @@ h1 {
 	background: rgba(17, 20, 46, 0.08);
 	border-left: 3px solid #ff2f78;
 	padding: 0.55rem 0.65rem;
+}
+
+.field-result .field-status {
+	background: #11142e;
+	border-left-color: #25ffe6;
+	color: #fff7d7;
+	order: -2;
+}
+
+.field-result .field-status dt,
+.field-result .field-status dd {
+	color: inherit;
+}
+
+.field-result .field-status dd {
+	font-size: 1.25rem;
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.field-result .field-status[data-status="complete"] {
+	border-left-color: #2fff82;
+}
+
+.field-result .field-status[data-status="failed"],
+.field-result .field-error {
+	border-left-color: #ff2f78;
+}
+
+.field-result .field-error {
+	background: rgba(255, 47, 120, 0.14);
+	order: -1;
 }
 
 .field-result dt {
@@ -909,9 +1030,30 @@ h1 {
 	gap: 0.5rem;
 	justify-content: center;
 	justify-self: center;
-	margin-top: 1.45rem;
+	margin-top: 0;
 	max-width: 18rem;
 	width: 100%;
+}
+
+.result-action-slot {
+	align-items: start;
+	display: grid;
+	justify-items: center;
+	min-height: 3.9rem;
+	opacity: 0;
+	padding-top: 1.45rem;
+	pointer-events: none;
+	transform: translateY(-0.25rem);
+	transition:
+		opacity 160ms ease,
+		transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+	width: 100%;
+}
+
+.result-action-slot[data-visible="true"] {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0);
 }
 
 .result-actions a,
@@ -1031,6 +1173,28 @@ h1 {
 	}
 }
 
+@keyframes result-content-in {
+	from {
+		opacity: 0;
+		transform: translateY(0.35rem) scale(0.985);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes tool-surface-in {
+	from {
+		opacity: 0;
+		transform: translateY(0.45rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.mobile-logo-button[data-impact="true"],
 	.mascot-button[data-impact="true"],
@@ -1040,8 +1204,14 @@ h1 {
 	.mascot-button[data-loading="true"]::after,
 	.generator-loading .tool-description,
 	.loading-generate,
-	.pashi-toast {
+	.pashi-toast,
+	.result-content,
+	.tool-surface > .generator {
 		animation: none;
+	}
+
+	.result-action-slot {
+		transition: none;
 	}
 }
 
@@ -1071,8 +1241,10 @@ h1 {
 		grid-template-areas:
 			"logo title"
 			"logo intro"
+			"mode-tabs mode-tabs"
 			"generator generator";
 		grid-template-columns: auto minmax(0, 1fr);
+		max-width: none;
 	}
 
 	.mobile-logo-button {
@@ -1097,8 +1269,19 @@ h1 {
 		margin: 0.4rem 0 0;
 	}
 
-	.generator {
+	.app-mode-tabs {
+		grid-area: mode-tabs;
+		margin: 1rem 0 0;
+		max-width: none;
+		width: 100%;
+	}
+
+	.tool-surface {
 		grid-area: generator;
+		min-height: auto;
+	}
+
+	.generator {
 		margin-top: 1.25rem;
 		max-width: none;
 		width: 100%;
@@ -1113,6 +1296,7 @@ h1 {
 	}
 
 	.result-stage {
+		min-height: calc(min(22rem, 86vw) + 4rem);
 		margin-top: 0;
 		width: min(22rem, 86vw);
 	}

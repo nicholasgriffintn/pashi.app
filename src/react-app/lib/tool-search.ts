@@ -1,6 +1,15 @@
-import type { GeneratorInfoTool } from "./generator-info";
+export interface SearchableTool {
+	aliases: readonly string[];
+	audience: string;
+	description: string;
+	display: {
+		category: string;
+	};
+	id: string;
+	label: string;
+}
 
-export function searchTools(tools: GeneratorInfoTool[], query: string) {
+export function searchTools<Tool extends SearchableTool>(tools: Tool[], query: string) {
 	const tokens = normaliseSearchText(query).split(" ").filter(Boolean);
 	if (tokens.length === 0) {
 		return tools;
@@ -12,7 +21,7 @@ export function searchTools(tools: GeneratorInfoTool[], query: string) {
 	});
 }
 
-function buildToolSearchText(tool: GeneratorInfoTool) {
+function buildToolSearchText(tool: SearchableTool) {
 	return `${tool.id} ${tool.label} ${tool.aliases.join(" ")} ${tool.description} ${tool.display.category} ${tool.audience}`;
 }
 

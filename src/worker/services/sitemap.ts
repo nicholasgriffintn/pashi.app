@@ -1,4 +1,4 @@
-import { escapeXml } from "../../shared/text";
+import { escapeXml } from "../utils/text";
 import { listGeneratorTools } from "./generators/index";
 
 export function createSitemapResponse(origin: string) {

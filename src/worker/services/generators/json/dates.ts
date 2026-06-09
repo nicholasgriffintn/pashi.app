@@ -1,6 +1,6 @@
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
-import { todayIsoDate } from "../../../../shared/text";
+import { todayIsoDate } from "../../../utils/text";
 import {
 	parseBoolean,
 	parseChoice,

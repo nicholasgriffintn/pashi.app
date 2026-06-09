@@ -8,6 +8,60 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
+	"vars": {
+		"ENABLE_AI": "true",
+		"ENABLE_CONVERSIONS": "true"
+	},
+	"ai": {
+		"binding": "AI",
+		"remote": true
+	},
+	"containers": [
+		{
+			"class_name": "ConversionContainer",
+			"image": "./containers/converter/Dockerfile",
+			"image_build_context": "./containers/converter",
+			"instance_type": "basic",
+			"max_instances": 2
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "ConversionContainer",
+				"name": "CONVERSION_CONTAINER"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"new_sqlite_classes": [
+				"ConversionContainer"
+			],
+			"tag": "v1"
+		}
+	],
+	"queues": {
+		"consumers": [
+			{
+				"max_batch_size": 1,
+				"max_retries": 3,
+				"queue": "pashi-conversions"
+			}
+		],
+		"producers": [
+			{
+				"binding": "CONVERSION_QUEUE",
+				"queue": "pashi-conversions"
+			}
+		]
+	},
+	"r2_buckets": [
+		{
+			"binding": "CONVERSION_BUCKET",
+			"bucket_name": "pashi-conversions"
+		}
+	],
 	"observability": {
 		"enabled": true
 	},

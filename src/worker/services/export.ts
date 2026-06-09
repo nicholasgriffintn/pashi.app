@@ -3,21 +3,18 @@ import type { GeneratorRequest } from "./generators/request";
 import { createJsonResult } from "./generators/json";
 import type { GeneratorResultValue, JsonResult } from "./generators/types";
 import { isRecordArray, recordToText, uniqueKeys } from "../../shared/records";
-import { safeFilename } from "../../shared/text";
+import { safeFilename } from "../utils/text";
 import { csvRow } from "../utils/csv";
 import { json } from "../utils/http";
-
-const EXPORT_FORMATS = ["csv", "json", "txt"] as const;
-
-export function listExportFormats() {
-	return EXPORT_FORMATS;
-}
+import { createFeatureStatus, type FeatureEnv } from "./features";
+import { usesAiMode } from "./generators/request";
+import { isExportFormat, type ExportFormat } from "./export-formats";
 
 export async function createExportResponse(
 	type: string,
 	format: string,
 	request: GeneratorRequest,
-	env?: Pick<Env, "AI">,
+	env?: FeatureEnv,
 ) {
 	const generator = findGenerator(type);
 	if (!generator) {
@@ -32,8 +29,12 @@ export async function createExportResponse(
 		return json({ error: "Unsupported export format." }, 400);
 	}
 
+	if (usesAiMode(request) && (!env || !createFeatureStatus(env).ai.available)) {
+		return json({ error: "AI mode is not available." }, 503);
+	}
+
 	try {
-		const result = await createJsonResult(generator, request, env);
+		const result = await createJsonResult(generator, request, env?.AI ? { AI: env.AI } : undefined);
 		return new Response(formatExportResult(result, format), {
 			headers: {
 				"Content-Disposition": `attachment; filename="${safeFilename(type)}.${format}"`,
@@ -49,11 +50,7 @@ export async function createExportResponse(
 	}
 }
 
-function isExportFormat(format: string): format is (typeof EXPORT_FORMATS)[number] {
-	return EXPORT_FORMATS.includes(format as (typeof EXPORT_FORMATS)[number]);
-}
-
-function formatExportResult(result: JsonResult, format: (typeof EXPORT_FORMATS)[number]) {
+function formatExportResult(result: JsonResult, format: ExportFormat) {
 	if (format === "json") {
 		return JSON.stringify(result, null, 2);
 	}
@@ -113,7 +110,7 @@ function formatRecordText(record: Record<string, string>) {
 	return recordToText(record);
 }
 
-function contentTypeFor(format: (typeof EXPORT_FORMATS)[number]) {
+function contentTypeFor(format: ExportFormat) {
 	switch (format) {
 		case "csv":
 			return "text/csv; charset=utf-8";

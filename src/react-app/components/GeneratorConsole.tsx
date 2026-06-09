@@ -1,18 +1,15 @@
+import type React from "react";
+
 import { useGeneratorConsole } from "../lib/use-generator-console";
 import { GeneratorForm } from "./GeneratorForm";
-import { PashiLogoButton } from "./PashiLogoButton";
+import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
-import { ResultStage } from "./ResultStage";
 
-function ScreenReaderStatus({ message }: { message: string }) {
-	return (
-		<p className="sr-only" role="status">
-			{message}
-		</p>
-	);
+interface GeneratorConsoleProps {
+	modeTabs: React.ReactNode;
 }
 
-export function GeneratorConsole() {
+export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
 	const consoleState = useGeneratorConsole();
 	const {
 		activeTool,
@@ -39,82 +36,59 @@ export function GeneratorConsole() {
 		tools,
 	} = consoleState;
 	const resultFields = resultMode === "ai" ? { ...fieldValues, mode: "ai" } : fieldValues;
+	const actions = result && activeTool ? (
+		<ResultActions
+			exportFormats={exportFormats}
+			fields={resultFields}
+			input={input}
+			onClear={clearResult}
+			onNotify={notify}
+			onRegenerate={() => {
+				void generateActiveTool();
+			}}
+			result={result}
+			tool={activeTool}
+		/>
+	) : undefined;
 
 	return (
-		<main className="shell">
-			<section className="hero" aria-labelledby="pashi-title">
-				<div className="copy">
-					<PashiLogoButton
-						className="mobile-logo-button"
-						imageClassName="mobile-logo"
-						isLoading={isInfoLoading}
-					/>
-					<h1 id="pashi-title">Pashi</h1>
-					<p className="intro">Tiny generators for quick output.</p>
-
-					{!activeTool ? (
-						<div aria-busy="true" className="generator generator-loading">
-							<label>Generator</label>
-							<p className="tool-description">
-								{isInfoLoading ? `Loading ${activeToolId || "generators"}` : "No generators available"}
-							</p>
-						</div>
-					) : (
-						<GeneratorForm
-							activeTool={activeTool}
-							error={error}
-							fieldValues={fieldValues}
-							generationMode={resultMode}
-							input={input}
-							isLoading={isLoading}
-							onFieldChange={handleFieldChange}
-							onGenerationModeChange={setResultMode}
-							onInputChange={setInput}
-							onSubmit={handleSubmit}
-							onToolChange={handleToolChange}
-							tools={tools}
-						/>
-					)}
+		<PashiShell
+			actions={actions}
+			emptyResultMessage="Pick a generator, paste something, generate."
+			generatedAtLabel="Generated"
+			intro="Generate and convert everyday formats."
+			isInfoLoading={isInfoLoading}
+			isLoading={isLoading}
+			modeTabs={modeTabs}
+			notification={notification}
+			onImageError={handleImageError}
+			onImageLoad={handleImageLoad}
+			result={result}
+			statusMessage="Loading generators"
+		>
+			{!activeTool ? (
+				<div aria-busy="true" className="generator generator-loading">
+					<label>Generator</label>
+					<p className="tool-description">
+						{isInfoLoading ? `Loading ${activeToolId || "generators"}` : "No generators available"}
+					</p>
 				</div>
-
-				<div className="showcase">
-					<PashiLogoButton
-						className="mascot-button"
-						imageClassName="mascot"
-						isLoading={isInfoLoading}
-					/>
-					{isInfoLoading ? (
-						<ScreenReaderStatus message="Loading generators" />
-					) : null}
-					<ResultStage
-						actions={
-							result && activeTool ? (
-								<ResultActions
-									exportFormats={exportFormats}
-									fields={resultFields}
-									input={input}
-									onClear={clearResult}
-									onNotify={notify}
-									onRegenerate={() => {
-										void generateActiveTool();
-									}}
-									result={result}
-									tool={activeTool}
-								/>
-							) : undefined
-						}
-						isLoading={isLoading}
-						onImageError={handleImageError}
-						onImageLoad={handleImageLoad}
-						result={result}
-					/>
-				</div>
-			</section>
-			{notification ? (
-				<div className="pashi-toast" role="status">
-					{notification}
-				</div>
-			) : null}
-		</main>
+			) : (
+				<GeneratorForm
+					activeTool={activeTool}
+					error={error}
+					fieldValues={fieldValues}
+					generationMode={resultMode}
+					input={input}
+					isLoading={isLoading}
+					onFieldChange={handleFieldChange}
+					onGenerationModeChange={setResultMode}
+					onInputChange={setInput}
+					onSubmit={handleSubmit}
+					onToolChange={handleToolChange}
+					tools={tools}
+				/>
+			)}
+		</PashiShell>
 	);
 }

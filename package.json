@@ -9,10 +9,12 @@
 		"deploy": "wrangler deploy",
 		"dev": "vite",
 		"lint": "eslint .",
-		"preview": "npm run build && vite preview"
+		"preview": "npm run build && vite preview",
+		"test": "node --test 'src/**/*.test.ts'"
 	},
 	"type": "module",
 	"dependencies": {
+		"@cloudflare/containers": "^0.3.7",
 		"hono": "4.11.1",
 		"isbot": "^5.1.42",
 		"react": "19.2.1",

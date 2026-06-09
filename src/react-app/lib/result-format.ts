@@ -1,4 +1,4 @@
-import type { GenerateResult } from "./generate-api";
+import type { TextResultStageValue } from "./result-types";
 import {
 	isRecordArray,
 	isStringArray,
@@ -23,7 +23,7 @@ export function formatGeneratedAt(value: string | undefined) {
 	return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 }
 
-export function formatTextResult(value: GenerateResult["result"]) {
+export function formatTextResult(value: TextResultStageValue["result"]) {
 	if (Array.isArray(value)) {
 		if (isStringArray(value)) {
 			return value.join("\n");
@@ -43,7 +43,7 @@ export function isColourRecordArray(records: ResultRecord[]) {
 	return records.every((record) => Boolean(record.primary && record.hex && record.rgb));
 }
 
-export function resultToText(result: GenerateResult) {
+export function resultToText(result: TextResultStageValue) {
 	if (Array.isArray(result.result)) {
 		if (isRecordArray(result.result)) {
 			return result.result.map(recordToText).join("\n\n");

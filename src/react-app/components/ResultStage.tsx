@@ -1,7 +1,6 @@
 import type React from "react";
 
-import type { GenerateResult } from "../lib/generate-api";
-import type { ResultStageValue } from "../lib/result-types";
+import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
 import {
 	formatGeneratedAt,
 	formatTextResult,
@@ -10,9 +9,12 @@ import {
 	isStringArray,
 	uniqueKeys,
 } from "../lib/result-format";
+import { createFieldDisplayModel } from "../lib/result-field-display";
 
 interface ResultStageProps {
 	actions?: React.ReactNode;
+	emptyMessage: string;
+	generatedAtLabel: string;
 	isLoading: boolean;
 	onImageError: () => void;
 	onImageLoad: () => void;
@@ -21,6 +23,8 @@ interface ResultStageProps {
 
 export function ResultStage({
 	actions,
+	emptyMessage,
+	generatedAtLabel,
 	isLoading,
 	onImageError,
 	onImageLoad,
@@ -29,12 +33,17 @@ export function ResultStage({
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
 
 	return (
-		<section className="result-stage" aria-busy={isLoading} aria-live="polite">
+		<section
+			aria-busy={isLoading}
+			aria-live="polite"
+			className="result-stage"
+			data-has-result={Boolean(result)}
+		>
 			<div className="result-box" data-result-kind={result?.kind}>
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
-				<div className="result-content">
+				<div className="result-content" key={result?.generatedAt ?? result?.kind ?? "empty"}>
 					{!result ? (
-						<p className="empty-result">Pick a generator, paste something, generate.</p>
+						<p className="empty-result">{emptyMessage}</p>
 					) : result.kind === "image" ? (
 						<img
 							alt={result.alt}
@@ -47,14 +56,16 @@ export function ResultStage({
 						<ResultBody result={result} />
 					)}
 				</div>
-				{generatedAt ? <p className="result-generated-at">Generated {generatedAt}</p> : null}
+				{generatedAt ? <p className="result-generated-at">{generatedAtLabel} {generatedAt}</p> : null}
 			</div>
-			{result ? actions : null}
+			<div className="result-action-slot" data-visible={Boolean(result && actions)}>
+				{result ? actions : null}
+			</div>
 		</section>
 	);
 }
 
-function ResultBody({ result }: { result: GenerateResult }) {
+function ResultBody({ result }: { result: TextResultStageValue }) {
 	if (result.kind === "palette" && Array.isArray(result.result) && isStringArray(result.result)) {
 		return (
 			<div className="palette-result">
@@ -125,9 +136,23 @@ function ResultBody({ result }: { result: GenerateResult }) {
 	}
 
 	if (result.kind === "fields" && !Array.isArray(result.result) && typeof result.result !== "string") {
+		const fieldDisplay = createFieldDisplayModel(result.result);
+
 		return (
 			<dl className="field-result">
-				{Object.entries(result.result).map(([key, value]) => (
+				{fieldDisplay.status ? (
+					<div className="field-status" data-status={fieldDisplay.status.toLowerCase()}>
+						<dt>Status</dt>
+						<dd>{fieldDisplay.status}</dd>
+					</div>
+				) : null}
+				{fieldDisplay.error ? (
+					<div className="field-error">
+						<dt>Error</dt>
+						<dd>{fieldDisplay.error}</dd>
+					</div>
+				) : null}
+				{fieldDisplay.entries.map(([key, value]) => (
 					<div key={key}>
 						<dt>{key}</dt>
 						<dd>{value}</dd>

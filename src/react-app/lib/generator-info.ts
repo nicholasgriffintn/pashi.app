@@ -1,3 +1,5 @@
+import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./pashi-info.ts";
+
 export type ResultDisplayKind = "fields" | "image" | "palette" | "text";
 export type GeneratorMode = "ai";
 
@@ -36,6 +38,7 @@ export interface GeneratorInfoTool {
 	result: {
 		kind: ResultDisplayKind;
 	};
+	toolType?: string;
 }
 
 export interface GeneratorInputField {
@@ -49,19 +52,29 @@ export interface GeneratorInputField {
 
 export interface GeneratorInfo {
 	exportFormats: string[];
+	features: FeatureStatusMap;
 	name: string;
+	services: ServiceStatusMap;
 	tools: GeneratorInfoTool[];
 }
 
+type ApiInfoTool = GeneratorInfoTool & {
+	toolType?: string;
+};
+
+function isGeneratorInfoTool(tool: ApiInfoTool): tool is GeneratorInfoTool {
+	return tool.toolType !== "converter" && "result" in tool;
+}
+
 export async function fetchGeneratorInfo(): Promise<GeneratorInfo> {
-	const response = await fetch("/api/info");
-	const body = (await response.json()) as GeneratorInfo | { error?: string };
-	if (!response.ok || !("tools" in body)) {
+	const body = await fetchPashiInfo<ApiInfoTool>();
+	if (!("tools" in body)) {
 		throw new Error("Could not load generators.");
 	}
 
 	return {
 		...body,
 		exportFormats: "exportFormats" in body && Array.isArray(body.exportFormats) ? body.exportFormats : [],
+		tools: body.tools.filter(isGeneratorInfoTool),
 	};
 }

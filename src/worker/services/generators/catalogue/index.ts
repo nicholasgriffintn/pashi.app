@@ -1,6 +1,6 @@
 import type { Audience, GeneratorInputField, GeneratorTool, ResultKind } from "../types";
-import { POKEMON_TYPES } from "../data/pokemon";
-import { todayIsoDate } from "../../../../shared/text";
+import { POKEMON_TYPES } from "../data/pokemon.ts";
+import { todayIsoDate } from "../../../utils/text.ts";
 
 const CATEGORY_LABELS: Record<Audience, string> = {
 	Design: "Design",

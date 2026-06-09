@@ -1,30 +1,29 @@
 import { Hono } from "hono";
 
 import { blockBots } from "./middleware/bot-blocker";
-import { createExportResponse, listExportFormats } from "./services/export";
-import { createGeneratorResponse, listGeneratorTools } from "./services/generators/index";
+import { createApiIndexResponse } from "./services/api-info";
+import { createConverterResponse, findConverterTool } from "./services/converters";
+import {
+	ConversionContainer,
+	createQueuedConversionUploadResponse,
+	processConversionQueue,
+	type ConversionEnv,
+} from "./services/converters/conversion-pipeline";
+import { isQueuedConversionUploadRequest } from "./services/converters/conversion-routing";
+import { createExportResponse } from "./services/export";
+import { createGeneratorResponse, findGenerator } from "./services/generators/index";
 import {
 	createGeneratorRequest,
 	createGeneratorRequestFromSearchParams,
 } from "./services/generators/request";
 import { createSitemapResponse } from "./services/sitemap";
-import { readGeneratorBody } from "./utils/body";
+import { readConverterBody, readGeneratorBody } from "./utils/body";
 
-const app = new Hono<{ Bindings: Env }>({ strict: false });
+const app = new Hono<{ Bindings: ConversionEnv }>({ strict: false });
 
 app.use("*", blockBots);
 
-function createApiIndexResponse() {
-	const tools = listGeneratorTools();
-	return {
-		endpoints: tools.map((tool) => tool.endpoint),
-		exportFormats: listExportFormats(),
-		name: "Pashi",
-		tools,
-	};
-}
-
-app.get("/api/info", (c) => c.json(createApiIndexResponse()));
+app.get("/api/info", (c) => c.json(createApiIndexResponse(c.env)));
 
 app.get("/sitemap.xml", (c) => {
 	const origin = new URL(c.req.url).origin;
@@ -50,23 +49,56 @@ app.post("/export/:type/:format", async (c) => {
 	);
 });
 
-app.get("/api/:type", (c) =>
-	createGeneratorResponse(
-		c.req.param("type"),
-		createGeneratorRequestFromSearchParams(new URL(c.req.url).searchParams),
-		new URL(c.req.url).searchParams,
-		c.env,
-	),
-);
+app.get("/api/:type", (c) => {
+	const type = c.req.param("type");
+	const params = new URL(c.req.url).searchParams;
 
-app.post("/api/:type", async (c) => {
-	const body = await readGeneratorBody(c);
-	return createGeneratorResponse(
-		c.req.param("type"),
-		createGeneratorRequest(body.input, body.fields),
-		new URLSearchParams(),
-		c.env,
-	);
+	if (findGenerator(type)) {
+		return createGeneratorResponse(
+			type,
+			createGeneratorRequestFromSearchParams(params),
+			params,
+			c.env,
+		);
+	}
+
+	if (findConverterTool(type)) {
+		return createConverterResponse(type, createGeneratorRequestFromSearchParams(params), c.env);
+	}
+
+	return c.json({ error: "Unknown tool type." }, 404);
 });
 
-export default app;
+app.post("/api/:type", async (c) => {
+	const type = c.req.param("type");
+
+	if (findGenerator(type)) {
+		const body = await readGeneratorBody(c);
+		return createGeneratorResponse(
+			type,
+			createGeneratorRequest(body.input, body.fields),
+			new URLSearchParams(),
+			c.env,
+		);
+	}
+
+	const converterTool = findConverterTool(type);
+	if (converterTool) {
+		const contentType = c.req.header("content-type")?.toLowerCase() ?? "";
+		if (isQueuedConversionUploadRequest(converterTool.id, contentType)) {
+			return createQueuedConversionUploadResponse(converterTool.id, c.req.raw, c.env);
+		}
+
+		const body = await readConverterBody(c);
+		return createConverterResponse(type, createGeneratorRequest(body.input, body.fields), c.env);
+	}
+
+	return c.json({ error: "Unknown tool type." }, 404);
+});
+
+export { ConversionContainer };
+
+export default {
+	fetch: app.fetch,
+	queue: processConversionQueue,
+};

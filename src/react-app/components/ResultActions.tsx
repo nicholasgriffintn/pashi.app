@@ -1,6 +1,7 @@
 import { type AnchorHTMLAttributes, useMemo } from "react";
 
 import type { GeneratorInfoTool } from "../lib/generator-info";
+import type { ConverterInfoTool } from "../lib/converter-api";
 import type { ResultStageValue } from "../lib/result-types";
 import { resultToText } from "../lib/result-format";
 
@@ -12,7 +13,7 @@ interface ResultActionsProps {
 	onNotify: (message: string) => void;
 	onRegenerate: () => void;
 	result: ResultStageValue;
-	tool: GeneratorInfoTool;
+	tool: GeneratorInfoTool | ConverterInfoTool;
 }
 
 function ActionButton({
@@ -60,12 +61,12 @@ function formatIcon(format: string) {
 }
 
 function createExportHrefs(
-	tool: GeneratorInfoTool,
+	tool: GeneratorInfoTool | ConverterInfoTool,
 	input: string,
 	fields: Record<string, string>,
 	formats: string[],
 ) {
-	if (tool.result.kind === "image") {
+	if (!("result" in tool) || tool.result.kind === "image") {
 		return [];
 	}
 
@@ -86,6 +87,10 @@ function createExportHrefs(
 	}));
 }
 
+function createTextDownloadHref(result: { mimeType?: string }, value: string) {
+	return `data:${result.mimeType ?? "text/plain;charset=utf-8"},${encodeURIComponent(value)}`;
+}
+
 async function copyText(value: string) {
 	await navigator.clipboard.writeText(value);
 }
@@ -100,6 +105,24 @@ async function copyImage(src: string) {
 	await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
 }
 
+function copyableImageUrl(result: Extract<ResultStageValue, { kind: "image" }>) {
+	return result.sourceUrl ?? result.src;
+}
+
+function resultDownloadUrl(result: ResultStageValue) {
+	if (
+		result.kind === "fields" &&
+		!Array.isArray(result.result) &&
+		typeof result.result !== "string" &&
+		typeof result.result.downloadUrl === "string" &&
+		result.result.downloadUrl
+	) {
+		return result.result.downloadUrl;
+	}
+
+	return undefined;
+}
+
 export function ResultActions({
 	exportFormats,
 	fields,
@@ -110,6 +133,7 @@ export function ResultActions({
 	result,
 	tool,
 }: ResultActionsProps) {
+	const downloadUrl = resultDownloadUrl(result);
 	const exportHrefs = useMemo(
 		() => createExportHrefs(tool, input, fields, exportFormats),
 		[exportFormats, fields, input, tool],
@@ -128,7 +152,7 @@ export function ResultActions({
 		return (
 			<div className="result-actions" aria-label="Result actions">
 				<ActionLink
-					download={`pashi-${tool.id}`}
+					download={result.downloadName ?? `pashi-${tool.id}`}
 					href={result.src}
 					icon="↓"
 					label="Download image"
@@ -141,7 +165,7 @@ export function ResultActions({
 				<ActionButton
 					icon="⌘"
 					label="Copy image URL"
-					onClick={() => runAction(() => copyText(result.src), "Image URL copied")}
+					onClick={() => runAction(() => copyText(copyableImageUrl(result)), "Image URL copied")}
 				/>
 				<ActionLink href={result.src} icon="↗" label="Open image" rel="noreferrer" target="_blank" />
 				<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
@@ -166,6 +190,21 @@ export function ResultActions({
 					label={`Download ${format.toUpperCase()}`}
 				/>
 			))}
+			{"downloadName" in result && result.downloadName ? (
+				<ActionLink
+					download={result.downloadName}
+					href={createTextDownloadHref(result, resultToText(result))}
+					icon="↓"
+					label="Download file"
+				/>
+			) : null}
+			{downloadUrl ? (
+				<ActionLink
+					href={downloadUrl}
+					icon="↓"
+					label="Download converted file"
+				/>
+			) : null}
 			<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
 			<ActionButton icon="×" label="Clear result" onClick={onClear} />
 		</div>

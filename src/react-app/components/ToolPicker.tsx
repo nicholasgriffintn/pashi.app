@@ -9,10 +9,8 @@ import {
 	useState,
 } from "react";
 
-import type { GeneratorInfoTool } from "../lib/generator-info";
 import { searchTools } from "../lib/tool-search";
 
-const RECENT_TOOLS_KEY = "pashi:recent-tools";
 const MENU_GAP = 8;
 const MENU_MAX_HEIGHT = 448;
 const MENU_MIN_HEIGHT = 220;
@@ -20,9 +18,22 @@ const MENU_VIEWPORT_PADDING = 12;
 const MENU_SHADOW_SPACE = 12;
 
 interface ToolPickerProps {
-	activeTool: GeneratorInfoTool;
+	activeTool: ToolPickerTool;
+	label: string;
 	onChange: (toolId: string) => void;
-	tools: GeneratorInfoTool[];
+	recentKey: string;
+	tools: ToolPickerTool[];
+}
+
+export interface ToolPickerTool {
+	aliases: readonly string[];
+	audience: string;
+	description: string;
+	display: {
+		category: string;
+	};
+	id: string;
+	label: string;
 }
 
 interface MenuPlacement {
@@ -46,11 +57,11 @@ function optionId(listboxId: string, toolId: string) {
 	return `${listboxId}-${toolId}`;
 }
 
-function groupTools(tools: GeneratorInfoTool[], recentToolIds: string[]) {
+function groupTools(tools: ToolPickerTool[], recentToolIds: string[]) {
 	const recentTools = recentToolIds
 		.map((toolId) => tools.find((tool) => tool.id === toolId))
-		.filter((tool): tool is GeneratorInfoTool => Boolean(tool));
-	const groups = new Map<string, GeneratorInfoTool[]>();
+		.filter((tool): tool is ToolPickerTool => Boolean(tool));
+	const groups = new Map<string, ToolPickerTool[]>();
 
 	for (const tool of tools) {
 		const group = groups.get(tool.display.category) ?? [];
@@ -68,24 +79,24 @@ function isTypingTarget(target: EventTarget | null) {
 	return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
 }
 
-function readRecentToolIds() {
+function readRecentToolIds(recentKey: string) {
 	try {
-		const value = localStorage.getItem(RECENT_TOOLS_KEY);
+		const value = localStorage.getItem(recentKey);
 		return value ? (JSON.parse(value) as string[]) : [];
 	} catch {
 		return [];
 	}
 }
 
-function writeRecentToolIds(toolIds: string[]) {
+function writeRecentToolIds(recentKey: string, toolIds: string[]) {
 	try {
-		localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(toolIds));
+		localStorage.setItem(recentKey, JSON.stringify(toolIds));
 	} catch {
 		// Recent tools are a convenience only.
 	}
 }
 
-export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
+export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: ToolPickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
@@ -93,7 +104,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 		side: "bottom",
 	});
 	const [query, setQuery] = useState("");
-	const [recentToolIds, setRecentToolIds] = useState<string[]>(() => readRecentToolIds());
+	const [recentToolIds, setRecentToolIds] = useState<string[]>(() => readRecentToolIds(recentKey));
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const rootRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
@@ -213,7 +224,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	function selectTool(toolId: string) {
 		const nextRecentToolIds = [toolId, ...recentToolIds.filter((id) => id !== toolId)].slice(0, 4);
 		setRecentToolIds(nextRecentToolIds);
-		writeRecentToolIds(nextRecentToolIds);
+		writeRecentToolIds(recentKey, nextRecentToolIds);
 		onChange(toolId);
 		setQuery("");
 		closePicker(true);
@@ -304,7 +315,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 					style={menuStyle}
 				>
 					<input
-						aria-label="Search generators"
+						aria-label={`Search ${label.toLowerCase()}`}
 						aria-activedescendant={activeOptionId}
 						aria-controls={listboxId}
 						aria-expanded={isOpen}
@@ -315,7 +326,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 							setActiveIndex(0);
 						}}
 						onKeyDown={handlePickerKeyDown}
-						placeholder="Search generators"
+						placeholder={`Search ${label.toLowerCase()}`}
 						role="combobox"
 						ref={searchRef}
 						type="search"
@@ -343,7 +354,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 								))}
 							</div>
 						))}
-						{groups.length === 0 ? <p className="tool-empty">No generator found.</p> : null}
+						{groups.length === 0 ? <p className="tool-empty">No tool found.</p> : null}
 					</div>
 				</div>
 			) : null}
