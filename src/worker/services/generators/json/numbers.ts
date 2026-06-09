@@ -26,6 +26,8 @@ export function createNumberResult(
 			return textResult(generator, request.input, createBaseNumber(request, 16));
 		case "number":
 			return textResult(generator, request.input, createNumbers(request));
+		case "binary":
+			return textResult(generator, request.input, createBinary(request));
 		case "octal-number":
 			return textResult(generator, request.input, createBaseNumber(request, 8));
 		default:
@@ -57,6 +59,16 @@ function createNumberValue(request: GeneratorRequest, type: (typeof NUMBER_TYPES
 		case "integer":
 			return `${createInteger(request)}`;
 	}
+}
+
+function createBinaryValues(request: GeneratorRequest) {
+	const count = parseCount(request.fields.count ?? "", 10, 1000);
+	const bits = parseInteger(request.fields.bits ?? "", 8, 1, 64);
+	return Array.from({ length: count }, () => randomCharacters("01", bits));
+}
+
+function createBinary(request: GeneratorRequest) {
+	return singleOrList(createBinaryValues(request));
 }
 
 function createInteger(request: GeneratorRequest) {

@@ -22,6 +22,14 @@ import { PashiLogoButton } from "./PashiLogoButton";
 import { ResultActions } from "./ResultActions";
 import { ResultStage, type ResultStageValue } from "./ResultStage";
 
+function ScreenReaderStatus({ message }: { message: string }) {
+	return (
+		<p className="sr-only" role="status">
+			{message}
+		</p>
+	);
+}
+
 export function GeneratorConsole() {
 	const initialRouteToolId = getRouteToolId();
 	const [tools, setTools] = useState<GeneratorInfoTool[]>([]);
@@ -222,13 +230,5 @@ export function GeneratorConsole() {
 				</div>
 			) : null}
 		</main>
-	);
-}
-
-function ScreenReaderStatus({ message }: { message: string }) {
-	return (
-		<p className="sr-only" role="status">
-			{message}
-		</p>
 	);
 }

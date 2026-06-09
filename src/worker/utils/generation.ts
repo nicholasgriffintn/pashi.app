@@ -152,7 +152,7 @@ export type DigestAlgorithm = "MD5" | "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512
 
 export async function createDigest(value: string, algorithm: DigestAlgorithm) {
 	if (algorithm === "MD5") {
-		return createMd5Digest(value);
+		return createMd5Digest(new TextEncoder().encode(value));
 	}
 
 	const digest = await crypto.subtle.digest(algorithm, new TextEncoder().encode(value));
@@ -213,9 +213,8 @@ function randomUint32() {
 	);
 }
 
-function createMd5Digest(value: string) {
-	const bytes = new TextEncoder().encode(value);
-	const padded = createMd5PaddedBytes(bytes);
+export function createMd5Digest(value: Uint8Array) {
+	const padded = createMd5PaddedBytes(value);
 	let a = 0x67452301;
 	let b = 0xefcdab89;
 	let c = 0x98badcfe;

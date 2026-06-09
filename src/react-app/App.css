@@ -585,6 +585,25 @@ h1 {
 	width: 100%;
 }
 
+.result-generated-at {
+	backdrop-filter: blur(2px);
+	background: rgba(17, 20, 46, 0.72);
+	pointer-events: none;
+	color: #fff7d7;
+	font-size: 0.68rem;
+	font-weight: 900;
+	letter-spacing: 0.02em;
+	margin: 0;
+	max-width: calc(100% - 1rem);
+	overflow: hidden;
+	padding: 0.26rem 0.5rem;
+	position: relative;
+	text-transform: uppercase;
+	text-overflow: ellipsis;
+	width: 100%;
+	z-index: 3;
+}
+
 .result-box::after {
 	border: 1px solid rgba(255, 247, 215, 0.42);
 	content: "";

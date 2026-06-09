@@ -2,6 +2,14 @@ import type React from "react";
 
 import type { GenerateResult } from "../lib/generate-api";
 import type { ImageResult } from "../lib/generator-state";
+import {
+	formatGeneratedAt,
+	formatTextResult,
+	isColourRecordArray,
+	isRecordArray,
+	isStringArray,
+	uniqueKeys,
+} from "../lib/result-format";
 
 export type ResultStageValue = GenerateResult | ImageResult;
 
@@ -13,6 +21,8 @@ interface ResultStageProps {
 }
 
 export function ResultStage({ actions, isLoading, onImageLoad, result }: ResultStageProps) {
+	const generatedAt = formatGeneratedAt(result?.generatedAt);
+
 	return (
 		<section className="result-stage" aria-busy={isLoading} aria-live="polite">
 			<div className="result-box" data-result-kind={result?.kind}>
@@ -24,6 +34,7 @@ export function ResultStage({ actions, isLoading, onImageLoad, result }: ResultS
 				) : (
 					<ResultBody result={result} />
 				)}
+				{generatedAt ? <p className="result-generated-at">Generated {generatedAt}</p> : null}
 			</div>
 			{result ? actions : null}
 		</section>
@@ -114,36 +125,4 @@ function ResultBody({ result }: { result: GenerateResult }) {
 	}
 
 	return <pre className="text-result">{formatTextResult(result.result)}</pre>;
-}
-
-function formatTextResult(value: GenerateResult["result"]) {
-	if (Array.isArray(value)) {
-		if (isStringArray(value)) {
-			return value.join("\n");
-		}
-
-		return value.map((record) => Object.values(record).join("\t")).join("\n");
-	}
-
-	if (typeof value === "string") {
-		return value;
-	}
-
-	return Object.values(value).join("\n");
-}
-
-function isRecordArray(value: unknown[]): value is Record<string, string>[] {
-	return value.every((item) => typeof item === "object" && item !== null && !Array.isArray(item));
-}
-
-function isStringArray(value: unknown[]): value is string[] {
-	return value.every((item) => typeof item === "string");
-}
-
-function isColourRecordArray(records: Record<string, string>[]) {
-	return records.every((record) => record.primary && record.hex && record.rgb);
-}
-
-function uniqueKeys(records: Record<string, string>[]) {
-	return [...new Set(records.flatMap((record) => Object.keys(record)))];
 }

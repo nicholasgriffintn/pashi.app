@@ -52,6 +52,7 @@ export interface JsonResult {
 	input: string;
 	kind: Exclude<ResultKind, "image">;
 	label: string;
+	generatedAt?: string;
 	meta: string;
 	result: GeneratorResultValue;
 	type: string;

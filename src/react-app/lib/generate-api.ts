@@ -3,6 +3,7 @@ export type GenerateResultKind = "fields" | "palette" | "text";
 export interface GenerateResult {
 	input: string;
 	kind: GenerateResultKind;
+	generatedAt?: string;
 	label: string;
 	meta: string;
 	result: string | string[] | Record<string, string> | Record<string, string>[];

@@ -58,6 +58,7 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	"minecraft-seed": ["minecraft-seeds"],
 	"number": ["numbers"],
 	"octal-number": ["octal-numbers"],
+	"binary": ["binary-number", "binary-numbers"],
 	"oauth-token": ["oauth-tokens"],
 	"passphrase": ["passphrases"],
 	"password": ["passwords"],
@@ -76,7 +77,7 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	"uuid": ["uuids"],
 	"webhook-secret": ["webhook-secrets"],
 	"zodiac": ["zodiac-sign", "zodiac-signs"],
-	"zip": ["zip-code", "zip-codes"],
+	"zip": ["zip-code", "zip-codes", "post-code", "postcodes", "postcode", "postal-code", "postal-codes"],
 };
 
 export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
@@ -92,8 +93,12 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("size", "Size", "512", true),
 		field("background", "Background", "0d1024", true),
 	]),
-	tool("uuid", "UUID", "Engineering", "Random v4 IDs.", "Count", false, "1", "text", "Generate UUID", ["1", "10"], [
+	tool("uuid", "UUID", "Engineering", "UUIDs across versions v1, v3, v4, v5 and v7.", "Count", false, "1", "text", "Generate UUID", ["1", "10"], [
 		field("count", "Count", "1", true),
+		field("format", "Format", "v4", false, "select", ["v1", "v3", "v4", "v5", "v7"]),
+		field("outputFormat", "Output format", "standard", false, "select", ["standard", "uppercase", "no-hyphens", "braced", "urn"]),
+		field("name", "Name", "name", false),
+		field("namespace", "Namespace", "url", false),
 	]),
 	tool("token", "Token", "Engineering", "URL-safe random tokens.", "Length", false, "32", "text", "Generate token", ["32", "48"], [
 		field("length", "Length", "32", true),
@@ -283,11 +288,15 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("includeFinancial", "Financial data", "true", false, "select", ["true", "false"]),
 		field("includeProfessional", "Professional data", "true", false, "select", ["true", "false"]),
 	]),
-	tool("number", "Number", "Random", "Random numbers by type, range, and precision.", "Type", false, "integer", "text", "Generate number", ["integer", "percentage"], [
+	tool("number", "Number", "Random", "Random numbers by type, range, and precision.", "Type", false, "integer", "text", "Generate number", ["integer", "negative", "even", "odd", "prime", "percentage"], [
 		field("min", "Min", "1", true),
 		field("max", "Max", "100", true),
 		field("type", "Type", "integer", true, "select", ["integer", "decimal", "prime", "percentage", "even", "odd", "negative"]),
 		field("decimals", "Decimals", "2", true),
+		field("count", "Count", "10", true),
+	]),
+	tool("binary", "Binary number", "Random", "Random binary values with configurable bit width and count.", "Bits", false, "8", "text", "Generate binary", ["8", "16"], [
+		field("bits", "Bits", "8", true),
 		field("count", "Count", "10", true),
 	]),
 	tool("hex-number", "Hex number", "Random", "Random hexadecimal numbers with length and format controls.", "Length", false, "8", "text", "Generate hex", ["8", "16"], [
@@ -311,7 +320,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("count", "Count", "1", true),
 	]),
 	tool("string", "String", "Strings", "Random strings, words, sentences, binary, hex, and base64.", "Length", false, "32", "text", "Generate string", ["alphanumeric", "lorem"], [
-		field("type", "Type", "alphanumeric", false, "select", ["alphanumeric", "letters", "words", "sentences", "paragraphs", "hex", "base64", "binary", "lorem"]),
+		field("type", "Type", "alphanumeric", false, "select", ["alphanumeric", "letters", "words", "sentences", "paragraphs", "binary", "hex", "base64", "lorem"]),
 		field("count", "Count", "1", true),
 		field("length", "Length", "32", true),
 		field("wordCount", "Words", "5", true),
@@ -375,7 +384,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("minLon", "Min longitude", "", false),
 		field("maxLon", "Max longitude", "", false),
 	]),
-	tool("zip", "ZIP code", "Geographic", "Random postal codes for multiple locales.", "Locale", false, "en_US", "text", "Generate ZIP", ["en_US", "en_GB"], [
+	tool("zip", "Post code", "Geographic", "Random post codes for multiple locales.", "Locale", false, "en_US", "text", "Generate post code", ["en_US", "en_GB"], [
 		field("locale", "Locale", "en_US", false, "select", ["en_US", "en_GB", "en_CA", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"]),
 		field("count", "Count", "10", true),
 	]),

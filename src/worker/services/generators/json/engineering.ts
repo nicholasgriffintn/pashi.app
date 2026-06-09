@@ -4,6 +4,7 @@ import {
 	base64Encode,
 	bytesToBase64,
 	parseCount,
+	parseChoice,
 	parseLength,
 	randomBytes,
 	randomDateInRange,
@@ -11,7 +12,8 @@ import {
 	singleOrList,
 	slugify,
 } from "../../../utils/generation";
-import { fieldsResult, textResult } from "./result";
+	import { createUuid, formatUuidForOutput, type UuidFormat, type UuidOutputFormat } from "../../../utils/uuid";
+	import { fieldsResult, textResult } from "./result";
 
 export async function createEngineeringResult(
 	generator: GeneratorTool,
@@ -30,7 +32,7 @@ export async function createEngineeringResult(
 		case "url":
 			return textResult(generator, input, encodeURIComponent(requireInput(input)));
 		case "uuid":
-			return textResult(generator, input, createUuids(request));
+			return textResult(generator, input, await createUuids(request));
 		default:
 			return undefined;
 	}
@@ -42,10 +44,19 @@ function createTokens(request: GeneratorRequest) {
 	return singleOrList(Array.from({ length: count }, () => createToken(length)));
 }
 
-function createUuids(request: GeneratorRequest) {
+async function createUuids(request: GeneratorRequest) {
+	const format = parseChoice(request.fields.format, UUID_FORMATS, "v4");
 	const count = parseCount(request.fields.count ?? request.input, 1, 1000);
-	return singleOrList(Array.from({ length: count }, () => crypto.randomUUID()));
+	const name = request.fields.name || request.input || "name";
+	const namespace = request.fields.namespace || "url";
+	const outputFormat = parseChoice(request.fields.outputFormat, UUID_OUTPUT_FORMATS, "standard");
+	const uuids = Array.from({ length: count }, () => createUuid(format, name, namespace));
+	const values = await Promise.all(uuids);
+	return singleOrList(values.map((uuid) => formatUuidForOutput(uuid, outputFormat)));
 }
+
+const UUID_FORMATS: readonly UuidFormat[] = ["v1", "v3", "v4", "v5", "v7"];
+const UUID_OUTPUT_FORMATS: readonly UuidOutputFormat[] = ["standard", "uppercase", "no-hyphens", "braced", "urn"];
 
 function createTimestamps(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 1000);

@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import type { GeneratorInfoTool } from "../lib/generator-info";
+import { searchTools } from "../lib/tool-search";
 
 const RECENT_TOOLS_KEY = "pashi:recent-tools";
 const MENU_GAP = 8;
@@ -22,6 +23,66 @@ interface ToolPickerProps {
 	activeTool: GeneratorInfoTool;
 	onChange: (toolId: string) => void;
 	tools: GeneratorInfoTool[];
+}
+
+interface MenuPlacement {
+	maxHeight: number;
+	side: "bottom" | "top";
+}
+
+type ToolMenuStyle = CSSProperties & {
+	"--tool-menu-max-height": string;
+};
+
+function nextOptionIndex(index: number, length: number, direction: 1 | -1) {
+	if (length === 0) {
+		return 0;
+	}
+
+	return (index + direction + length) % length;
+}
+
+function optionId(listboxId: string, toolId: string) {
+	return `${listboxId}-${toolId}`;
+}
+
+function groupTools(tools: GeneratorInfoTool[], recentToolIds: string[]) {
+	const recentTools = recentToolIds
+		.map((toolId) => tools.find((tool) => tool.id === toolId))
+		.filter((tool): tool is GeneratorInfoTool => Boolean(tool));
+	const groups = new Map<string, GeneratorInfoTool[]>();
+
+	for (const tool of tools) {
+		const group = groups.get(tool.display.category) ?? [];
+		group.push(tool);
+		groups.set(tool.display.category, group);
+	}
+
+	return [
+		...(recentTools.length > 0 ? [{ label: "Recent", tools: recentTools }] : []),
+		...Array.from(groups, ([label, groupedTools]) => ({ label, tools: groupedTools })),
+	];
+}
+
+function isTypingTarget(target: EventTarget | null) {
+	return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+}
+
+function readRecentToolIds() {
+	try {
+		const value = localStorage.getItem(RECENT_TOOLS_KEY);
+		return value ? (JSON.parse(value) as string[]) : [];
+	} catch {
+		return [];
+	}
+}
+
+function writeRecentToolIds(toolIds: string[]) {
+	try {
+		localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(toolIds));
+	} catch {
+		// Recent tools are a convenience only.
+	}
 }
 
 export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
@@ -38,7 +99,7 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	const searchRef = useRef<HTMLInputElement>(null);
 	const listboxId = useId();
 	const groups = useMemo(
-		() => groupTools(filterTools(tools, query), recentToolIds),
+		() => groupTools(searchTools(tools, query), recentToolIds),
 		[query, recentToolIds, tools],
 	);
 	const flatTools = useMemo(() => groups.flatMap((group) => group.tools), [groups]);
@@ -288,82 +349,4 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 			) : null}
 		</div>
 	);
-}
-
-interface MenuPlacement {
-	maxHeight: number;
-	side: "bottom" | "top";
-}
-
-type ToolMenuStyle = CSSProperties & {
-	"--tool-menu-max-height": string;
-};
-
-function nextOptionIndex(index: number, length: number, direction: 1 | -1) {
-	if (length === 0) {
-		return 0;
-	}
-
-	return (index + direction + length) % length;
-}
-
-function optionId(listboxId: string, toolId: string) {
-	return `${listboxId}-${toolId}`;
-}
-
-function filterTools(tools: GeneratorInfoTool[], query: string) {
-	const tokens = normalise(query).split(" ").filter(Boolean);
-	if (tokens.length === 0) {
-		return tools;
-	}
-
-	return tools.filter((tool) => {
-		const haystack = normalise(
-			`${tool.label} ${tool.aliases.join(" ")} ${tool.description} ${tool.display.category} ${tool.audience}`,
-		);
-		return tokens.every((token) => haystack.includes(token));
-	});
-}
-
-function groupTools(tools: GeneratorInfoTool[], recentToolIds: string[]) {
-	const recentTools = recentToolIds
-		.map((toolId) => tools.find((tool) => tool.id === toolId))
-		.filter((tool): tool is GeneratorInfoTool => Boolean(tool));
-	const groups = new Map<string, GeneratorInfoTool[]>();
-
-	for (const tool of tools) {
-		const group = groups.get(tool.display.category) ?? [];
-		group.push(tool);
-		groups.set(tool.display.category, group);
-	}
-
-	return [
-		...(recentTools.length > 0 ? [{ label: "Recent", tools: recentTools }] : []),
-		...Array.from(groups, ([label, groupedTools]) => ({ label, tools: groupedTools })),
-	];
-}
-
-function normalise(value: string) {
-	return value.trim().toLowerCase().replace(/\s+/g, " ");
-}
-
-function isTypingTarget(target: EventTarget | null) {
-	return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
-}
-
-function readRecentToolIds() {
-	try {
-		const value = localStorage.getItem(RECENT_TOOLS_KEY);
-		return value ? (JSON.parse(value) as string[]) : [];
-	} catch {
-		return [];
-	}
-}
-
-function writeRecentToolIds(toolIds: string[]) {
-	try {
-		localStorage.setItem(RECENT_TOOLS_KEY, JSON.stringify(toolIds));
-	} catch {
-		// Recent tools are a convenience only.
-	}
 }

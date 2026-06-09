@@ -7,6 +7,7 @@ export interface GeneratorValues {
 
 export interface ImageResult {
 	alt: string;
+	generatedAt?: string;
 	kind: "image";
 	src: string;
 }
@@ -16,6 +17,7 @@ export function createImageResult(
 	input: string,
 	fields: Record<string, string>,
 	generateId: number,
+	generatedAt = new Date().toISOString(),
 ): ImageResult {
 	const params = new URLSearchParams({
 		generate: `${generateId}`,
@@ -32,6 +34,7 @@ export function createImageResult(
 
 	return {
 		alt: `${tool.label} result`,
+		generatedAt,
 		kind: "image",
 		src: `${tool.endpoint}?${params.toString()}`,
 	};

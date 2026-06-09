@@ -16,6 +16,34 @@ interface GeneratorFormProps {
 	tools: GeneratorInfoTool[];
 }
 
+function applyExample(
+	tool: GeneratorInfoTool,
+	example: string,
+	onInputChange: (value: string) => void,
+	onFieldChange: (fieldId: string, value: string) => void,
+) {
+	const firstField = tool.input.fields?.[0];
+	if (!firstField) {
+		onInputChange(example);
+		return;
+	}
+
+	onFieldChange(firstField.id, example);
+}
+
+function shouldShowField(toolId: string, fieldId: string, fieldValues: Record<string, string>) {
+	if (toolId !== "uuid") {
+		return true;
+	}
+
+	if (fieldId !== "name" && fieldId !== "namespace") {
+		return true;
+	}
+
+	const format = fieldValues.format || "v4";
+	return format === "v3" || format === "v5";
+}
+
 export function GeneratorForm({
 	activeTool,
 	error,
@@ -32,6 +60,7 @@ export function GeneratorForm({
 	const hasPrimaryInput = !hasFields && activeTool.input.mode !== "none";
 	const visibleExamples =
 		activeTool.input.mode === "none" ? [] : activeTool.display.examples;
+	const visibleFields = activeTool.input.fields?.filter((field) => shouldShowField(activeTool.id, field.id, fieldValues));
 
 	return (
 		<form className="generator" onSubmit={onSubmit}>
@@ -42,7 +71,7 @@ export function GeneratorForm({
 
 			{hasFields ? (
 				<div className="field-grid">
-					{activeTool.input.fields?.map((field) => (
+					{visibleFields?.map((field) => (
 						<label className="field-control" key={field.id}>
 							<span>{field.label}</span>
 							<FieldInput
@@ -157,19 +186,4 @@ function FieldInput({
 			value={value}
 		/>
 	);
-}
-
-function applyExample(
-	tool: GeneratorInfoTool,
-	example: string,
-	onInputChange: (value: string) => void,
-	onFieldChange: (fieldId: string, value: string) => void,
-) {
-	const firstField = tool.input.fields?.[0];
-	if (!firstField) {
-		onInputChange(example);
-		return;
-	}
-
-	onFieldChange(firstField.id, example);
 }

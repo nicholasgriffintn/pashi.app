@@ -14,12 +14,20 @@ export async function createGeneratorResponse(
 		return json({ error: "Unknown generator type." }, 404);
 	}
 
+	const generatedAt = new Date().toISOString();
+
 	if (generator.result.kind === "image") {
-		return createImageResponse(generator, request, params);
+		const response = createImageResponse(generator, request, params);
+		response.headers.set("X-Generated-At", generatedAt);
+		return response;
 	}
 
 	try {
-		return json(await createJsonResult(generator, request));
+		const result = await createJsonResult(generator, request);
+		return json({
+			...result,
+			generatedAt,
+		});
 	} catch (error) {
 		return json(
 			{ error: error instanceof Error ? error.message : "Generation failed." },
