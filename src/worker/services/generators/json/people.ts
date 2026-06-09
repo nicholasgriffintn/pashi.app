@@ -12,7 +12,7 @@ import {
 } from "../../../utils/generation";
 import { fieldsResult } from "./result";
 
-const PERSON_LOCALES = ["en_US", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"] as const;
+const PERSON_LOCALES = ["en_GB", "en_US", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"] as const;
 const GENDERS = ["male", "female"] as const;
 const DIGITS = "0123456789";
 const FIRST_NAMES = {
@@ -23,7 +23,20 @@ const LAST_NAMES = ["Archer", "Blake", "Chen", "Diaz", "Ellis", "Foster", "Grant
 const STREETS = ["Arcade Road", "Beacon Street", "Circuit Lane", "Foundry Avenue", "Harbour Way", "Signal Street", "Vector Close", "Wave Terrace"] as const;
 const JOB_TITLES = ["Software Engineer", "Product Manager", "Design Lead", "QA Analyst", "Data Engineer", "Operations Manager", "Support Specialist", "Marketing Manager"] as const;
 const COMPANIES = ["Arc Labs", "Beacon Works", "Circuit Studio", "Foundry Systems", "Signal Dynamics", "Vector Analytics"] as const;
+const CITIES_BY_LOCALE: Record<(typeof PERSON_LOCALES)[number], readonly string[]> = {
+	en_GB: ["Aberdeen", "Belfast", "Birmingham", "Bristol", "Cardiff", "Edinburgh", "Glasgow", "Leeds", "Liverpool", "London", "Manchester", "Newcastle upon Tyne", "Nottingham", "Sheffield", "Southampton", "Swansea", "Bournemouth", "Bristol", "Bath", "Coventry", "Nottingham", "Leicester", "Liverpool", "Cambridge", "Oxford"],
+	de_DE: ["Aachen", "Berlin", "Bielefeld", "Bochum", "Bonn", "Braunschweig", "Bremen", "Cologne", "Dresden", "Düsseldorf", "Dortmund", "Duisburg", "Frankfurt", "Freiburg", "Hamburg", "Hannover", "Karlsruhe", "Leipzig", "Mannheim", "Munich", "Nuremberg", "Stuttgart", "Wiesbaden", "Wuppertal", "Kiel", "Essen"],
+	en_US: ["Austin", "Boston", "Chicago", "Denver", "Detroit", "Fort Worth", "Houston", "Indianapolis", "Jacksonville", "Los Angeles", "Miami", "New York", "Nashville", "Orlando", "Philadelphia", "Phoenix", "Portland", "Raleigh", "San Diego", "San Francisco", "Seattle", "San Antonio", "San Jose", "Charlotte", "Atlanta", "Las Vegas"],
+	fr_FR: ["Bordeaux", "Le Havre", "Lille", "Lyon", "Marseille", "Nantes", "Nice", "Paris", "Reims", "Rennes", "Rouen", "Saint-Étienne", "Strasbourg", "Toulouse", "Toulon", "Grenoble", "Montpellier", "Dijon", "Nîmes", "Limoges", "Angers"],
+	es_ES: ["Alicante", "Bilbao", "Burgos", "Gijón", "Granada", "Madrid", "Málaga", "Murcia", "Palma", "Seville", "Salamanca", "Santander", "Santiago de Compostela", "Toledo", "Valencia", "Zaragoza", "Vitoria-Gasteiz", "Córdoba", "Oviedo", "Valladolid", "A Coruña", "León"],
+	it_IT: ["Bari", "Bologna", "Catania", "Florence", "Genoa", "Milan", "Naples", "Palermo", "Padua", "Parma", "Rome", "Turin", "Venice", "Verona", "Trieste", "Brescia", "Reggio Calabria", "Modena", "Siena", "Pisa", "Vicenza"],
+	nl_NL: ["Amersfoort", "Amsterdam", "Arnhem", "Breda", "Eindhoven", "Enschede", "Groningen", "Haarlem", "Leeuwarden", "Maastricht", "Nijmegen", "Utrecht", "Rotterdam", "The Hague", "Tilburg", "Almere", "Zwolle", "Apeldoorn", "Delft", "Breda", "Venlo"],
+	pl_PL: ["Białystok", "Bydgoszcz", "Gdańsk", "Katowice", "Kraków", "Lublin", "Łódź", "Łódź", "Poznań", "Rzeszów", "Szczecin", "Torun", "Warsaw", "Wrocław", "Zabrze", "Bydgoszcz", "Częstochowa", "Gdynia", "Opole", "Olsztyn", "Poznań"],
+	pt_PT: ["Aveiro", "Coimbra", "Faro", "Funchal", "Guimarães", "Lisbon", "Madeira", "Porto", "Setúbal", "Sintra", "Vila Nova de Gaia", "Braga", "Évora", "Leiria", "Viseu", "Ponta Delgada", "Coimbra", "Covilhã", "Évora", "Faro", "Tomar"],
+};
+
 const LOCALE_DATA: Record<(typeof PERSON_LOCALES)[number], LocaleData> = {
+	en_GB: { country: "United Kingdom", countryCode: "GB", phoneCode: "44", postCode: () => `${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}${randomIntegerInRange(90) + 10} ${randomCharacters(DIGITS, 1)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}`, state: () => randomChoice(["ENG", "NIR", "SCT", "WAL"]), taxId: () => `${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}${randomIntegerInRange(10_000_000)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}` },
 	de_DE: { country: "Germany", countryCode: "DE", phoneCode: "49", postCode: () => randomCharacters(DIGITS, 5), state: () => randomChoice(["BE", "BY", "HH", "HE", "NW"]), taxId: () => `${randomCharacters(DIGITS, 11)}` },
 	en_US: { country: "United States", countryCode: "US", phoneCode: "1", postCode: () => `${randomIntegerInRange(90_000) + 10_000}`, state: () => randomChoice(["CA", "IL", "NY", "OR", "TX", "WA"]), taxId: () => `${randomCharacters(DIGITS, 3)}-${randomCharacters(DIGITS, 2)}-${randomCharacters(DIGITS, 4)}` },
 	es_ES: { country: "Spain", countryCode: "ES", phoneCode: "34", postCode: () => randomCharacters(DIGITS, 5), state: () => randomChoice(["AN", "CT", "MD", "VC", "PV"]), taxId: () => `${randomCharacters(DIGITS, 8)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}` },
@@ -221,24 +234,7 @@ function createPhone(localeData: LocaleData) {
 }
 
 function citiesFor(locale: (typeof PERSON_LOCALES)[number]) {
-	switch (locale) {
-		case "de_DE":
-			return ["Berlin", "Hamburg", "Munich", "Cologne"];
-		case "es_ES":
-			return ["Madrid", "Barcelona", "Valencia", "Seville"];
-		case "fr_FR":
-			return ["Paris", "Lyon", "Marseille", "Lille"];
-		case "it_IT":
-			return ["Rome", "Milan", "Turin", "Florence"];
-		case "nl_NL":
-			return ["Amsterdam", "Rotterdam", "Utrecht", "Eindhoven"];
-		case "pl_PL":
-			return ["Warsaw", "Krakow", "Gdansk", "Poznan"];
-		case "pt_PT":
-			return ["Lisbon", "Porto", "Braga", "Coimbra"];
-		case "en_US":
-			return ["Austin", "Chicago", "New York", "Portland", "Seattle"];
-	}
+	return CITIES_BY_LOCALE[locale];
 }
 
 function parseGender(input: string | undefined) {
@@ -249,7 +245,7 @@ function parseGender(input: string | undefined) {
 
 function parseLocale(input: string | undefined) {
 	const normalised = input?.trim();
-	return PERSON_LOCALES.find((option) => option === normalised) ?? "en_US";
+	return PERSON_LOCALES.find((option) => option === normalised) ?? "en_GB";
 }
 
 function randomCoordinate(min: number, max: number) {

@@ -12,7 +12,36 @@ import {
 const DIGITS = "0123456789";
 const PHONE_COUNTRIES = ["US", "CA", "GB", "DE", "FR", "ES", "IT", "NL", "AU", "JP", "CN", "IN", "BR", "MX"] as const;
 const PHONE_FORMATS = ["national", "international", "e164"] as const;
-const POSTAL_LOCALES = ["en_US", "en_GB", "en_CA", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"] as const;
+const POSTAL_LOCALES = [
+	"en_GB",
+	"en_US",
+	"en_CA",
+	"en_IN",
+	"en_AU",
+	"pt_BR",
+	"es_AR",
+	"fr_FR",
+	"es_ES",
+	"it_IT",
+	"de_DE",
+	"pt_PT",
+	"nl_NL",
+	"pl_PL",
+	"ru_RU",
+	"tr_TR",
+	"uk_UA",
+	"bn_BD",
+	"ja_JP",
+	"zh_CN",
+	"zh_TW",
+	"ko_KR",
+	"id_ID",
+	"th_TH",
+	"vi_VN",
+	"fa_IR",
+	"ar_SA",
+	"ar_EG",
+] as const;
 const POSTAL_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 export function createPhoneNumbers(request: GeneratorRequest) {
@@ -121,20 +150,49 @@ function createPostalCode(locale: (typeof POSTAL_LOCALES)[number]) {
 		case "es_ES":
 		case "fr_FR":
 		case "it_IT":
+		case "pt_BR":
+		case "es_AR":
+		case "ru_RU":
+		case "tr_TR":
+		case "uk_UA":
+		case "bn_BD":
+		case "fa_IR":
+		case "ar_SA":
+		case "ar_EG":
+		case "vi_VN":
 			return randomCharacters(DIGITS, 5);
+		case "en_IN":
+			return randomDigits(6);
 		case "en_CA":
 			return `${randomCharacters(POSTAL_LETTERS, 1)}${randomCharacters(DIGITS, 1)}${randomCharacters(POSTAL_LETTERS, 1)} ${randomCharacters(DIGITS, 1)}${randomCharacters(POSTAL_LETTERS, 1)}${randomCharacters(DIGITS, 1)}`;
 		case "en_GB":
 			return `${randomCharacters(POSTAL_LETTERS, 2)}${randomIntegerInRange(90) + 10} ${randomCharacters(DIGITS, 1)}${randomCharacters(POSTAL_LETTERS, 2)}`;
 		case "en_US":
 			return `${randomIntegerInRange(90_000) + 10_000}`;
+		case "en_AU":
+			return randomDigits(4);
 		case "nl_NL":
 			return `${randomIntegerInRange(9000) + 1000} ${randomCharacters(POSTAL_LETTERS, 2)}`;
+		case "id_ID":
+			return randomDigits(5);
+		case "ja_JP":
+			return `${randomDigits(3)}-${randomDigits(4)}`;
+		case "ko_KR":
+		case "th_TH":
+			return randomDigits(5);
+		case "zh_CN":
+			return randomDigits(6);
+		case "zh_TW":
+			return `${randomDigits(3)}-${randomDigits(2)}-${randomDigits(2)}`;
 		case "pl_PL":
 			return `${randomIntegerInRange(90) + 10}-${String(randomIntegerInRange(1000)).padStart(3, "0")}`;
 		case "pt_PT":
 			return `${randomIntegerInRange(9000) + 1000}-${String(randomIntegerInRange(1000)).padStart(3, "0")}`;
 	}
+}
+
+function randomDigits(length: number) {
+	return String(randomIntegerInRange(10 ** length)).padStart(length, "0");
 }
 
 function parseUpperChoice<T extends string>(input: string | undefined, options: readonly T[], fallback: T) {
@@ -144,5 +202,5 @@ function parseUpperChoice<T extends string>(input: string | undefined, options: 
 
 function parseLocale(input: string | undefined) {
 	const normalised = input?.trim();
-	return POSTAL_LOCALES.find((option) => option === normalised) ?? "en_US";
+	return POSTAL_LOCALES.find((option) => option === normalised) ?? "en_GB";
 }
