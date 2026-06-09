@@ -1,12 +1,14 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-	convertFileThing,
 	convertImageThing,
 	convertThing,
+	convertQueuedThing,
+	type SlackmojiBatchResult,
 	fetchConverterInfo,
 	type ConverterInfoTool,
 	type ConvertResult,
+	conversionJobStatus,
 } from "./converter-api";
 import { createConversionJobPoller, type ConversionJobPoller } from "./converter-polling";
 import {
@@ -17,6 +19,76 @@ import {
 	pushConverterRoute,
 } from "./converter-state";
 import type { ResultStageValue } from "./result-types";
+function normaliseSlackmojiEffects(value: string | undefined) {
+	const values = (value ?? "")
+		.split(",")
+		.map((item) => item.trim().toLowerCase().replace(/^:+/, "").replace(/:+$/, ""))
+		.filter((effect) => effect !== "" && effect !== "none");
+
+	const seen = new Set<string>();
+	const result = values.filter((effect) => {
+		if (seen.has(effect)) {
+			return false;
+		}
+		seen.add(effect);
+		return true;
+	});
+
+	if (result.length === 0) {
+		return [];
+	}
+
+	return result;
+}
+
+function defaultSlackmojiEffect(): string {
+	return "spinning";
+}
+
+function queuedConversionMeta(result: ConvertResult) {
+	if (
+		result.kind !== "fields" ||
+		typeof result.result === "string" ||
+		Array.isArray(result.result)
+	) {
+		return {
+			error: "",
+			jobId: "",
+			status: "",
+			downloadUrl: "",
+		};
+	}
+
+	return {
+		error: typeof result.result.error === "string" ? result.result.error : "",
+		jobId: typeof result.result.jobId === "string" ? result.result.jobId : "",
+		status: typeof result.result.status === "string" ? result.result.status : "",
+		downloadUrl: typeof result.result.downloadUrl === "string" ? result.result.downloadUrl : "",
+	};
+}
+
+function createInitialBatchResult(effect: string, result: ConvertResult, fallbackJobId: string) {
+	const meta = queuedConversionMeta(result);
+	const status = meta.status || conversionJobStatus(result) || "queued";
+
+	return {
+		error: meta.error,
+		effect,
+		jobId: meta.jobId || fallbackJobId,
+		result,
+		downloadUrl: meta.downloadUrl,
+		status,
+	};
+}
+
+function createSlackmojiBatchResult(items: SlackmojiBatchResult[]) {
+	return {
+		alt: "Generated Slackmoji animations",
+		generatedAt: new Date().toISOString(),
+		items,
+		kind: "slackmoji-batch" as const,
+	};
+}
 
 function createImageConverterResult(
 	activeTool: ConverterInfoTool,
@@ -41,6 +113,25 @@ function createImageConverterResult(
 	};
 }
 
+function defaultConverterFields(tool: ConverterInfoTool) {
+	const fields: Record<string, string> = {};
+	for (const field of tool.api?.fields ?? []) {
+		if (field.id === "outputFormat") {
+			continue;
+		}
+
+		if (field.values?.length) {
+			if (tool.id === "slackmoji" && field.id === "effect") {
+				fields[field.id] = field.values.find((value) => value !== "none") ?? field.values[0] ?? "";
+			} else {
+				fields[field.id] = field.values[0] ?? "";
+			}
+		}
+	}
+
+	return fields;
+}
+
 function pickInitialConverter(tools: readonly ConverterInfoTool[]) {
 	return (
 		findConverterByRoute(tools, getRouteConverterId()) ??
@@ -55,6 +146,7 @@ export function useConverterConsole() {
 	const [activeToolId, setActiveToolId] = useState(initialRouteConverterId ?? "");
 	const [input, setInput] = useState("");
 	const [outputFormat, setOutputFormat] = useState("");
+	const [converterFields, setConverterFields] = useState<Record<string, string>>({});
 	const [selectedFile, setSelectedFile] = useState<File | undefined>();
 	const [error, setError] = useState("");
 	const [isInfoLoading, setIsInfoLoading] = useState(true);
@@ -64,6 +156,9 @@ export function useConverterConsole() {
 	const objectUrlRef = useRef<string | undefined>(undefined);
 	const notificationTimer = useRef<number | undefined>(undefined);
 	const pollerRef = useRef<ConversionJobPoller | undefined>(undefined);
+	const slackmojiPollersRef = useRef<ConversionJobPoller[]>([]);
+	const slackmojiBatchResultsRef = useRef<SlackmojiBatchResult[]>([]);
+	const slackmojiPendingResults = useRef(0);
 
 	const activeTool = useMemo(
 		() => tools.find((tool) => tool.id === activeToolId),
@@ -76,8 +171,37 @@ export function useConverterConsole() {
 		notificationTimer.current = window.setTimeout(() => setNotification(""), 2400);
 	}, []);
 
+	const stopSlackmojiPollers = useCallback(() => {
+		for (const poller of slackmojiPollersRef.current) {
+			poller.stop();
+		}
+
+		slackmojiPollersRef.current = [];
+		slackmojiPendingResults.current = 0;
+	}, []);
+
 	const stopPolling = useCallback(() => {
 		pollerRef.current?.stop();
+		stopSlackmojiPollers();
+	}, [stopSlackmojiPollers]);
+
+	const syncSlackmojiBatchResults = useCallback((jobId: string, patch: Partial<SlackmojiBatchResult>) => {
+		const nextResults = slackmojiBatchResultsRef.current.map((batchItem) => (
+			batchItem.jobId === jobId
+				? { ...batchItem, ...patch }
+				: batchItem
+		));
+		slackmojiBatchResultsRef.current = nextResults;
+		setResult((previous) => {
+			if (previous?.kind !== "slackmoji-batch") {
+				return createSlackmojiBatchResult(nextResults);
+			}
+
+			return {
+				...previous,
+				items: nextResults,
+			};
+		});
 	}, []);
 
 	const pollConversionJob = useCallback((initialResult: ConvertResult) => {
@@ -104,6 +228,8 @@ export function useConverterConsole() {
 		stopPolling();
 		setActiveToolId(nextTool.id);
 		setInput(nextInput);
+		setConverterFields(defaultConverterFields(nextTool));
+		slackmojiBatchResultsRef.current = [];
 		setOutputFormat(nextTool.outputs[0] ?? "");
 		setSelectedFile(undefined);
 		setError("");
@@ -169,6 +295,68 @@ export function useConverterConsole() {
 		return () => window.removeEventListener("popstate", handlePopState);
 	}, [applyToolValues, tools]);
 
+	async function startSlackmojiBatchConversion(endpoint: string, fields: Record<string, string>, file?: File) {
+		const requestedEffects = normaliseSlackmojiEffects(fields.effect);
+		const effects = requestedEffects.length > 0 ? requestedEffects : [defaultSlackmojiEffect()];
+		const fieldJobs = effects.map((effect) => ({ ...fields, effect }));
+		const batchResults = await Promise.all(fieldJobs.map((fieldJob) =>
+			convertQueuedThing(endpoint, file, fieldJob),
+		));
+		const batchInitialResults = batchResults.map((batchResult, index) => (
+			createInitialBatchResult(fieldJobs[index]?.effect ?? "", batchResult, `slackmoji-batch-${index}`)
+		));
+
+		if (batchInitialResults.length === 0) {
+			throw new Error("No animations selected.");
+		}
+
+		setResult(createSlackmojiBatchResult(batchInitialResults));
+
+		slackmojiBatchResultsRef.current = batchInitialResults;
+		const finalize = () => {
+			const remaining = --slackmojiPendingResults.current;
+			if (remaining > 0) {
+				return;
+			}
+
+			setIsLoading(false);
+			const hasFailure = slackmojiBatchResultsRef.current.some((item) => item.status === "failed");
+			if (hasFailure) {
+				setError("One or more Slack animations failed.");
+			} else {
+				notify("Conversion ready");
+			}
+		};
+
+		slackmojiPendingResults.current = batchInitialResults.length;
+		slackmojiPollersRef.current = batchInitialResults.map((batchItem) =>
+			createConversionJobPoller({
+				onError: (caught) => {
+					syncSlackmojiBatchResults(batchItem.jobId, { status: "failed", error: caught.message });
+					setError(caught.message);
+				},
+				onResult: (nextResult) => {
+					const status = conversionJobStatus(nextResult) ?? batchItem.status;
+					const meta = queuedConversionMeta(nextResult);
+					syncSlackmojiBatchResults(batchItem.jobId, {
+						result: nextResult,
+						status: status || "queued",
+						downloadUrl: meta.downloadUrl,
+						error: meta.error,
+					});
+				},
+				onSettled: (status) => {
+					syncSlackmojiBatchResults(batchItem.jobId, { status: status ?? batchItem.status });
+					finalize();
+				},
+			}),
+		);
+
+		for (const [index, batchItem] of batchInitialResults.entries()) {
+			slackmojiPollersRef.current[index]?.start(batchItem.result);
+		}
+	}
+
 	async function convertActiveTool() {
 		stopPolling();
 		setError("");
@@ -181,8 +369,14 @@ export function useConverterConsole() {
 		}
 
 		if (activeTool.input.kind === "file") {
-			if (!selectedFile) {
-				setError(`Choose ${activeTool.input.label.toLowerCase()} to convert.`);
+			const sourceKey = activeTool.id === "slackmoji" ? converterFields.sourceKey?.trim() : "";
+			const hasSourceKey = Boolean(sourceKey);
+
+			if (!selectedFile && !hasSourceKey) {
+				const requirement = activeTool.id === "slackmoji"
+					? `${activeTool.input.label.toLowerCase()} or a preset`
+					: activeTool.input.label.toLowerCase();
+				setError(`Choose ${requirement} to convert.`);
 				setIsLoading(false);
 				return;
 			}
@@ -195,15 +389,19 @@ export function useConverterConsole() {
 
 			try {
 				const fields = {
+					...converterFields,
 					outputFormat: outputFormat || activeTool.outputs[0] || "txt",
-					sourceName: selectedFile.name,
+					...(selectedFile ? { sourceName: selectedFile.name } : {}),
 				};
-				const nextResult = activeTool.runtime === "container"
-					? await convertFileThing(activeTool.endpoint, selectedFile, fields)
-					: await convertThing(activeTool.endpoint, await selectedFile.text(), fields);
 				if (activeTool.runtime === "container") {
-					pollConversionJob(nextResult);
+					if (activeTool.id === "slackmoji") {
+						await startSlackmojiBatchConversion(activeTool.endpoint, fields, selectedFile);
+					} else {
+						const nextResult = await convertQueuedThing(activeTool.endpoint, selectedFile, fields);
+						pollConversionJob(nextResult);
+					}
 				} else {
+					const nextResult = await convertThing(activeTool.endpoint, await selectedFile.text(), fields);
 					setResult(nextResult);
 					setIsLoading(false);
 				}
@@ -227,6 +425,11 @@ export function useConverterConsole() {
 		}
 
 		try {
+			const fields = {
+				...converterFields,
+				...(outputFormat ? { outputFormat } : {}),
+			};
+
 			if (activeTool.id === "image-format") {
 				const format = outputFormat || activeTool.outputs[0] || "webp";
 				const blob = await convertImageThing(activeTool.endpoint, input, { outputFormat: format });
@@ -239,7 +442,7 @@ export function useConverterConsole() {
 				setResult(await convertThing(
 					activeTool.endpoint,
 					input,
-					outputFormat ? { outputFormat } : {},
+					fields,
 				));
 			}
 			setIsLoading(false);
@@ -266,11 +469,14 @@ export function useConverterConsole() {
 
 	function clearResult() {
 		stopPolling();
+		slackmojiBatchResultsRef.current = [];
 		if (objectUrlRef.current) {
 			URL.revokeObjectURL(objectUrlRef.current);
 			objectUrlRef.current = undefined;
 		}
 		setResult(undefined);
+		setError("");
+		setIsLoading(false);
 	}
 
 	return {
@@ -278,6 +484,7 @@ export function useConverterConsole() {
 		activeToolId,
 		clearResult,
 		convertActiveTool,
+		converterFields,
 		error,
 		handleSubmit,
 		handleToolChange,
@@ -294,9 +501,20 @@ export function useConverterConsole() {
 		outputFormat,
 		result,
 		selectedFile,
+		setConverterField: (fieldId: string, value: string) => {
+			setConverterFields((previous) => ({
+					...previous,
+					[fieldId]: value,
+				}));
+		},
 		setOutputFormat,
 		setInput,
-		setSelectedFile,
+		setSelectedFile: (file: File | undefined) => {
+			setSelectedFile(file);
+			if (file) {
+				setConverterFields((previous) => ({ ...previous, sourceKey: "" }));
+			}
+		},
 		tools,
 	};
 }

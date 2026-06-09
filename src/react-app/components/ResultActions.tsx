@@ -109,6 +109,28 @@ function copyableImageUrl(result: Extract<ResultStageValue, { kind: "image" }>) 
 	return result.sourceUrl ?? result.src;
 }
 
+function copyableImageSrc(result: ResultStageValue) {
+	if (result.kind === "image") {
+		return copyableImageUrl(result);
+	}
+
+	if (result.kind === "slackmoji-batch") {
+		return result.items[0]?.downloadUrl;
+	}
+
+	return undefined;
+}
+
+function createResultText(result: ResultStageValue) {
+	if (result.kind === "slackmoji-batch") {
+		return result.items
+			.map((item) => `${item.effect}: ${item.status}${item.downloadUrl ? ` (${item.downloadUrl})` : ""}`)
+			.join("\n");
+	}
+
+	return resultToText(result);
+}
+
 function resultDownloadUrl(result: ResultStageValue) {
 	if (
 		result.kind === "fields" &&
@@ -118,6 +140,10 @@ function resultDownloadUrl(result: ResultStageValue) {
 		result.result.downloadUrl
 	) {
 		return result.result.downloadUrl;
+	}
+
+	if (result.kind === "slackmoji-batch") {
+		return result.items.find((item) => item.downloadUrl)?.downloadUrl;
 	}
 
 	return undefined;
@@ -148,26 +174,44 @@ export function ResultActions({
 		}
 	}
 
-	if (result.kind === "image") {
+	if (result.kind === "image" || result.kind === "slackmoji-batch") {
+		const imageSrc = copyableImageSrc(result);
+		const downloadName = result.kind === "slackmoji-batch"
+			? `${result.items[0]?.effect ? `${result.items[0].effect}-` : ""}slackmoji`
+			: result.downloadName ?? `pashi-${tool.id}`;
+		const href = result.kind === "image" ? result.src : result.items[0]?.downloadUrl;
+
 		return (
 			<div className="result-actions" aria-label="Result actions">
-				<ActionLink
-					download={result.downloadName ?? `pashi-${tool.id}`}
-					href={result.src}
-					icon="↓"
-					label="Download image"
-				/>
+				{href ? (
+					<ActionLink
+						download={downloadName}
+						href={href}
+						icon="↓"
+						label="Download image"
+					/>
+				) : null}
 				<ActionButton
 					icon="⧉"
 					label="Copy image"
-					onClick={() => runAction(() => copyImage(result.src), "Image copied")}
+					onClick={() => runAction(() => {
+						if (!imageSrc) {
+							throw new Error("No image available.");
+						}
+						return copyImage(imageSrc);
+					}, "Image copied")}
 				/>
 				<ActionButton
 					icon="⌘"
 					label="Copy image URL"
-					onClick={() => runAction(() => copyText(copyableImageUrl(result)), "Image URL copied")}
+					onClick={() => runAction(() => {
+						if (!imageSrc) {
+							throw new Error("No image URL available.");
+						}
+						return copyText(imageSrc);
+					}, "Image URL copied")}
 				/>
-				<ActionLink href={result.src} icon="↗" label="Open image" rel="noreferrer" target="_blank" />
+				{href ? <ActionLink href={href} icon="↗" label="Open image" rel="noreferrer" target="_blank" /> : null}
 				<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
 				<ActionButton icon="×" label="Clear result" onClick={onClear} />
 			</div>
@@ -176,11 +220,11 @@ export function ResultActions({
 
 	return (
 		<div className="result-actions" aria-label="Result actions">
-			<ActionButton
-				icon="⧉"
-				label="Copy result"
-				onClick={() => runAction(() => copyText(resultToText(result)), "Copied")}
-			/>
+				<ActionButton
+					icon="⧉"
+					label="Copy result"
+					onClick={() => runAction(() => copyText(createResultText(result)), "Copied")}
+				/>
 			{exportHrefs.map(({ format, href }) => (
 				<ActionLink
 					download={`pashi-${tool.id}.${format}`}

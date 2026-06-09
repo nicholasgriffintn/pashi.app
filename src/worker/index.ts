@@ -53,7 +53,8 @@ app.get("/api/:type", (c) => {
 	const type = c.req.param("type");
 	const params = new URL(c.req.url).searchParams;
 
-	if (findGenerator(type)) {
+	const generatorTool = findGenerator(type);
+	if (generatorTool) {
 		return createGeneratorResponse(
 			type,
 			createGeneratorRequestFromSearchParams(params),
@@ -62,8 +63,9 @@ app.get("/api/:type", (c) => {
 		);
 	}
 
-	if (findConverterTool(type)) {
-		return createConverterResponse(type, createGeneratorRequestFromSearchParams(params), c.env);
+	const converterTool = findConverterTool(type);
+	if (converterTool) {
+		return createConverterResponse(type, createGeneratorRequestFromSearchParams(params), c.env, params);
 	}
 
 	return c.json({ error: "Unknown tool type." }, 404);

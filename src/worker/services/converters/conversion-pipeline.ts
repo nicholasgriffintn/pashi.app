@@ -1,6 +1,9 @@
 import { Container, getContainer } from "@cloudflare/containers";
 
 import { safeFilename } from "../../utils/text";
+import { appendConversionOperationSearchParams, createConversionOperationFields, type ConversionOperationFields } from "./conversion-options";
+import { applyConverterPresetFields } from "./presets";
+import { isAllowedPresetKey, SLACKMOJI_PRESET_PREFIX } from "./slackmoji-presets";
 import type { ConverterResult } from "./types";
 
 export type QueuedConversionKind = "audio" | "document" | "image" | "video";
@@ -11,6 +14,7 @@ export interface ConversionJobMessage {
 	inputContentType: string;
 	jobId: string;
 	kind: QueuedConversionKind;
+	operationFields?: ConversionOperationFields;
 	outputFormat: string;
 	outputKey: string;
 	sourceKey: string;
@@ -45,6 +49,15 @@ const KNOWN_DOCUMENT_OUTPUT_FORMATS = new Set(["docx", "epub", "html", "md", "od
 const MAX_UPLOAD_BYTES = 250 * 1024 * 1024;
 const CONTAINER_PORT = 8080;
 const JOB_PREFIX = "conversions";
+const MAX_PRESET_LIST = 150;
+
+export interface SlackmojiPreset {
+	key: string;
+	name: string;
+	contentType: string;
+	size: number;
+	url: string;
+}
 
 export class ConversionContainer extends Container<ConversionEnv> {
 	defaultPort = CONTAINER_PORT;
@@ -69,27 +82,30 @@ export async function createQueuedConversionUploadResponse(
 		return Response.json({ error: "Queued converter not found." }, { status: 404 });
 	}
 
-	const source = await readUploadedConversionSource(request);
+	const source = await readUploadedConversionSource(request, env);
 	if (!source) {
 		return Response.json({ error: "Upload a file to convert." }, { status: 400 });
 	}
 
-	const outputFormat = normaliseOutputFormat(kind, source.fields.outputFormat || source.fields.format);
+	const converterFields = applyConverterPresetFields(converterId, source.fields);
+	const outputFormat = normaliseOutputFormat(kind, converterFields.outputFormat || converterFields.format);
 	if (!outputFormat) {
 		return Response.json({ error: "Choose a safe ffmpeg output format such as webp, mp4, or mp3." }, { status: 400 });
 	}
+	const finalOutputFormat = converterId === "slackmoji" ? "gif" : outputFormat;
 
 	const now = new Date().toISOString();
 	const jobId = crypto.randomUUID();
 	const sourceName = safeFilename(source.name);
 	const sourceKey = `${JOB_PREFIX}/${jobId}/source-${sourceName}`;
-	const outputKey = `${JOB_PREFIX}/${jobId}/output.${extensionForFormat(outputFormat)}`;
+	const outputKey = `${JOB_PREFIX}/${jobId}/output.${extensionForFormat(finalOutputFormat)}`;
 	const message: ConversionJobMessage = {
 		converterId,
 		inputContentType: source.contentType,
 		jobId,
 		kind,
-		outputFormat,
+		operationFields: createConversionOperationFields(converterFields),
+		outputFormat: finalOutputFormat,
 		outputKey,
 		sourceKey,
 		sourceName,
@@ -174,6 +190,7 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	url.searchParams.set("kind", message.kind);
 	url.searchParams.set("outputFormat", message.outputFormat);
 	url.searchParams.set("sourceName", message.sourceName);
+	appendConversionOperationSearchParams(url, message.operationFields ?? {});
 	const response = await container.fetch(new Request(url, {
 		body: fixedLengthBody.readable,
 		headers: {
@@ -200,7 +217,53 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	});
 }
 
-async function readUploadedConversionSource(request: Request): Promise<UploadedConversionSource | undefined> {
+
+export async function listSlackmojiPresets(env: ConversionEnv): Promise<SlackmojiPreset[]> {
+	const presets = await loadPresetBatch(
+		env,
+		SLACKMOJI_PRESET_PREFIX,
+	);
+
+	return presets.sort((a, b) => a.name.localeCompare(b.name));
+}
+async function loadPresetBatch(env: ConversionEnv, prefix: string) {
+	const list = await env.CONVERSION_BUCKET.list({ prefix, limit: MAX_PRESET_LIST });
+	return list.objects
+		.filter((object) => isImageKey(object.key))
+		.map((object) => ({
+			key: object.key,
+			name: object.key.replace(/^.*\//, ""),
+			contentType: object.httpMetadata?.contentType ?? "image/png",
+			size: object.size,
+			url: `/api/slackmoji?preset=${encodeURIComponent(object.key)}`,
+		}));
+}
+
+function isImageKey(key: string) {
+	const value = key.toLowerCase();
+	return value.endsWith(".png") || value.endsWith(".jpg") || value.endsWith(".jpeg") || value.endsWith(".gif") || value.endsWith(".webp")
+		|| value.endsWith(".avif") || value.endsWith(".bmp") || value.endsWith(".tiff") || value.endsWith(".tif") || value.endsWith(".ico");
+}
+
+export async function readSlackmojiPresetSource(env: ConversionEnv, key: string): Promise<UploadedConversionSource | undefined> {
+	if (!isAllowedPresetKey(key)) {
+		return undefined;
+	}
+
+	const preset = await env.CONVERSION_BUCKET.get(key);
+	if (!preset || !preset.body) {
+		return undefined;
+	}
+
+	return {
+		body: preset.body,
+		contentType: preset.httpMetadata?.contentType ?? "image/png",
+		fields: { sourceKey: key },
+		name: key.replace(/^.*\//, "") || key,
+	};
+}
+
+async function readUploadedConversionSource(request: Request, env: ConversionEnv): Promise<UploadedConversionSource | undefined> {
 	const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
 	const contentLength = Number(request.headers.get("content-length") ?? 0);
 	if (contentLength > MAX_UPLOAD_BYTES) {
@@ -223,6 +286,17 @@ async function readUploadedConversionSource(request: Request): Promise<UploadedC
 
 		const file = formData.get("file");
 		if (!(file instanceof File) || file.size > MAX_UPLOAD_BYTES) {
+			const sourceKey = typeof fields.sourceKey === "string" ? fields.sourceKey : "";
+			if (sourceKey) {
+				const presetSource = await readSlackmojiPresetSource(env, sourceKey);
+				return presetSource
+					? {
+						...presetSource,
+						fields,
+					}
+					: undefined;
+			}
+
 			return undefined;
 		}
 
@@ -322,6 +396,9 @@ function jobRecordKey(jobId: string) {
 
 function queuedConversionKindForConverter(converterId: string): QueuedConversionKind | undefined {
 	if (converterId === "image-format") {
+		return "image";
+	}
+	if (converterId === "slackmoji") {
 		return "image";
 	}
 	if (converterId === "audio-format") {

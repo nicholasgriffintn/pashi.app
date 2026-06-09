@@ -2,7 +2,10 @@ import type { GeneratorTool, JsonResult } from "../types";
 import type { GeneratorRequest } from "../request";
 import { createDateResult } from "./dates";
 import { createDesignResult } from "./design";
+import { createDeveloperResult } from "./developer";
 import { createEngineeringResult } from "./engineering";
+import { createCssResult } from "./css";
+import { createChartResult } from "./charts";
 import { createGamingResult } from "./gaming";
 import { createIdentifierResult } from "./identifiers";
 import { createNumberResult } from "./numbers";
@@ -35,6 +38,9 @@ export async function createJsonResult(
 
 	const result =
 		createDateResult(generator, request) ??
+		createCssResult(generator, request) ??
+		createChartResult(generator, request) ??
+		createDeveloperResult(generator, request) ??
 		createDesignResult(generator, request) ??
 		createGamingResult(generator, request) ??
 		createIdentifierResult(generator, request) ??

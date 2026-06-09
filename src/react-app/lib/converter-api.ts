@@ -60,6 +60,23 @@ export interface ConverterInfo {
 	tools: ConverterInfoTool[];
 }
 
+export interface SlackmojiPreset {
+	key: string;
+	name: string;
+	size: number;
+	contentType: string;
+	url: string;
+}
+
+export interface SlackmojiBatchResult {
+	error: string;
+	effect: string;
+	jobId: string;
+	downloadUrl: string;
+	result: ConvertResult;
+	status: string;
+}
+
 type ApiInfoTool = ConverterInfoTool & {
 	toolType?: string;
 };
@@ -168,6 +185,44 @@ export async function convertFileThing(
 	}
 
 	return body as ConvertResult;
+}
+
+export async function convertQueuedThing(
+	endpoint: string,
+	file: File | undefined,
+	fields: Record<string, string> = {},
+): Promise<ConvertResult> {
+	const formData = new FormData();
+	if (file) {
+		formData.set("file", file);
+	}
+	for (const [key, value] of Object.entries(fields)) {
+		if (value) {
+			formData.set(key, value);
+		}
+	}
+
+	const response = await fetch(endpoint, {
+		body: formData,
+		method: "POST",
+	});
+
+	const body = (await response.json()) as ConvertResult | { error?: string };
+	if (!response.ok) {
+		throw new Error("error" in body && body.error ? body.error : "Conversion failed.");
+	}
+
+	return body as ConvertResult;
+}
+
+export async function fetchSlackmojiPresets(): Promise<SlackmojiPreset[]> {
+	const response = await fetch("/api/slackmoji?presets=1");
+	const body = (await response.json()) as SlackmojiPreset[] | { error?: string };
+	if (!response.ok) {
+		throw new Error("error" in body && body.error ? body.error : "Could not load presets.");
+	}
+
+	return body as SlackmojiPreset[];
 }
 
 export async function convertImageThing(

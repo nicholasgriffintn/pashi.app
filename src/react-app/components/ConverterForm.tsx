@@ -1,6 +1,8 @@
-import type { FormEvent } from "react";
+import { type FormEvent } from "react";
 
 import type { ConverterInfoTool } from "../lib/converter-api";
+import { FileConverterControls } from "./FileConverterControls";
+import { ConverterOutputControl } from "./ConverterOutputControl";
 import { ToolPicker } from "./ToolPicker";
 
 interface ConverterFormProps {
@@ -8,6 +10,8 @@ interface ConverterFormProps {
 	error: string;
 	input: string;
 	isLoading: boolean;
+	converterFields: Record<string, string>;
+	onConverterFieldChange: (id: string, value: string) => void;
 	onFileChange: (file: File | undefined) => void;
 	onInputChange: (value: string) => void;
 	onOutputFormatChange: (value: string) => void;
@@ -29,15 +33,13 @@ function shouldShowOutputControl(tool: ConverterInfoTool) {
 	return tool.outputs.length > 1;
 }
 
-function supportsCustomOutputFormat(tool: ConverterInfoTool) {
-	return tool.runtime === "container" && tool.input.kind === "file";
-}
-
 export function ConverterForm({
 	activeTool,
 	error,
+	converterFields,
 	input,
 	isLoading,
+	onConverterFieldChange,
 	onFileChange,
 	onInputChange,
 	onOutputFormatChange,
@@ -85,6 +87,8 @@ export function ConverterForm({
 				</div>
 			) : isAvailable && activeTool.input.kind === "file" ? (
 				<FileConverterControls
+					converterFields={converterFields}
+					onConverterFieldChange={onConverterFieldChange}
 					onFileChange={onFileChange}
 					onOutputFormatChange={onOutputFormatChange}
 					outputFormat={outputFormat}
@@ -117,96 +121,5 @@ export function ConverterForm({
 			) : null}
 			{error ? <p className="error">{error}</p> : null}
 		</form>
-	);
-}
-
-function ConverterOutputControl({
-	onOutputFormatChange,
-	outputFormat,
-	tool,
-}: {
-	onOutputFormatChange: (value: string) => void;
-	outputFormat: string;
-	tool: ConverterInfoTool;
-}) {
-	if (supportsCustomOutputFormat(tool)) {
-		const listId = `${tool.id}-output-formats`;
-
-		return (
-			<label className="field-control">
-				<span>Output</span>
-				<input
-					list={listId}
-					onChange={(event) => onOutputFormatChange(event.target.value)}
-					pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,31}"
-					placeholder={tool.outputs[0] ?? "mp4"}
-					required
-					title="Use an ffmpeg output extension such as webp, tiff, mp4, flac, or mp3."
-					value={outputFormat}
-				/>
-				<datalist id={listId}>
-					{tool.outputs.map((output) => (
-						<option key={output} value={output}>
-							{output.toUpperCase()}
-						</option>
-					))}
-				</datalist>
-			</label>
-		);
-	}
-
-	return (
-		<label className="field-control">
-			<span>Output</span>
-			<select
-				onChange={(event) => onOutputFormatChange(event.target.value)}
-				required
-				value={outputFormat}
-			>
-				{tool.outputs.map((output) => (
-					<option key={output} value={output}>
-						{output.toUpperCase()}
-					</option>
-				))}
-			</select>
-		</label>
-	);
-}
-
-function FileConverterControls({
-	onFileChange,
-	onOutputFormatChange,
-	outputFormat,
-	selectedFile,
-	tool,
-}: {
-	onFileChange: (file: File | undefined) => void;
-	onOutputFormatChange: (value: string) => void;
-	outputFormat: string;
-	selectedFile?: File;
-	tool: ConverterInfoTool;
-}) {
-	return (
-		<div className="field-grid">
-			<label className="field-control">
-				<span>{tool.input.label}</span>
-				<input
-					accept={tool.input.accept?.join(",")}
-					onChange={(event) => onFileChange(event.target.files?.[0])}
-					required={tool.input.required}
-					type="file"
-				/>
-			</label>
-			<ConverterOutputControl
-				onOutputFormatChange={onOutputFormatChange}
-				outputFormat={outputFormat}
-				tool={tool}
-			/>
-			{selectedFile ? (
-				<p className="selected-file">
-					{selectedFile.name} / {Math.ceil(selectedFile.size / 1024)} KB
-				</p>
-			) : null}
-		</div>
 	);
 }

@@ -648,6 +648,89 @@ h1 {
 	overflow-wrap: anywhere;
 }
 
+.slackmoji-preset-status {
+	color: #f0d9bb;
+	font-size: 0.72rem;
+	font-weight: 800;
+}
+
+.slackmoji-effect-grid {
+	align-items: stretch;
+	display: grid;
+	gap: 0.35rem;
+	grid-column: 1 / -1;
+	grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
+	max-height: 14rem;
+	overflow: auto;
+	padding-bottom: 0.15rem;
+}
+
+.slackmoji-effect-item {
+	align-items: center;
+	background: rgba(255, 247, 215, 0.08);
+	border: 1px solid rgba(255, 247, 215, 0.24);
+	color: #f0d9bb;
+	font-size: 0.74rem;
+	font-weight: 800;
+	min-height: 2.3rem;
+	padding: 0.35rem 0.45rem;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.slackmoji-effect-item[aria-pressed="true"] {
+	background: rgba(37, 255, 230, 0.15);
+	border-color: #25ffe6;
+}
+
+.slackmoji-preset-grid {
+	align-items: stretch;
+	display: grid;
+	gap: 0.35rem;
+	grid-column: 1 / -1;
+	grid-template-columns: repeat(auto-fill, minmax(7.25rem, 1fr));
+	max-height: 18rem;
+	overflow: auto;
+	padding-bottom: 0.15rem;
+}
+
+.slackmoji-preset-item {
+	align-items: center;
+	background: rgba(255, 247, 215, 0.08);
+	border: 1px solid rgba(255, 247, 215, 0.24);
+	color: #f0d9bb;
+	display: grid;
+	gap: 0.35rem;
+	grid-template-columns: auto 1fr;
+	justify-items: center;
+	min-height: 3.2rem;
+	padding: 0.3rem 0.45rem;
+	text-align: left;
+	width: 100%;
+}
+
+.slackmoji-preset-item img {
+	background: #11142e;
+	border: 1px solid rgba(37, 255, 230, 0.5);
+	height: 2.4rem;
+	object-fit: contain;
+	width: 2.4rem;
+}
+
+.slackmoji-preset-item span {
+	color: #f0d9bb;
+	font-size: 0.67rem;
+	font-weight: 800;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.slackmoji-preset-item[aria-pressed="true"] {
+	border-color: #25ffe6;
+}
+
 .converter-output-list {
 	display: flex;
 	flex-wrap: wrap;
@@ -706,7 +789,7 @@ h1 {
 		12px 12px 0 #25ffe6,
 		-10px -10px 0 #ff2f78;
 	display: grid;
-	grid-template-rows: minmax(0, 1fr) auto;
+	grid-template-rows: minmax(0, 1fr) auto auto;
 	justify-items: stretch;
 	overflow: hidden;
 	padding: 0;
@@ -1054,6 +1137,95 @@ h1 {
 	opacity: 1;
 	pointer-events: auto;
 	transform: translateY(0);
+}
+
+.slackmoji-batch {
+	width: 100%;
+}
+
+.slackmoji-batch h3 {
+	background: #11142e;
+	border: 1px solid rgba(37, 255, 230, 0.42);
+	color: #25ffe6;
+	display: inline-flex;
+	font-size: 0.74rem;
+	margin: 0 0 0.42rem;
+	padding: 0.35rem 0.6rem;
+}
+
+.slackmoji-batch-grid {
+	display: grid;
+	gap: 0.45rem;
+	grid-template-columns: repeat(auto-fill, minmax(3.75rem, 1fr));
+}
+
+.slackmoji-batch-item {
+	align-items: start;
+	background: #fff7d7;
+	border: 1px solid #11142e;
+	box-shadow: 4px 4px 0 #ff2f78;
+	display: grid;
+	gap: 0.28rem;
+	justify-items: center;
+	min-width: 0;
+	padding: 0.35rem;
+}
+
+.slackmoji-batch-meta {
+	align-items: center;
+	color: #11142e;
+	display: grid;
+	gap: 0.16rem;
+	justify-items: center;
+	width: 100%;
+}
+
+.slackmoji-batch-effect,
+.slackmoji-batch-status {
+	font: 800 0.58rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	text-transform: uppercase;
+	text-align: center;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	width: 100%;
+}
+
+.slackmoji-batch-thumb,
+.slackmoji-batch-thumb img {
+	border: 0;
+	display: block;
+	line-height: 1;
+}
+
+.slackmoji-batch-thumb img {
+	background: #11142e;
+	height: 3.5rem;
+	object-fit: contain;
+	width: 3.5rem;
+}
+
+.slackmoji-batch-status {
+	color: #ff2f78;
+}
+
+.slackmoji-batch-error {
+	color: #ff2f78;
+	font: 800 0.55rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	margin: 0;
+	padding: 0 0.2rem;
+	text-align: center;
+}
+
+@media (min-width: 900px) {
+	.slackmoji-batch-grid {
+		grid-template-columns: repeat(auto-fill, minmax(4.25rem, 1fr));
+	}
+
+	.slackmoji-batch-thumb img {
+		height: 4rem;
+		width: 4rem;
+	}
 }
 
 .result-actions a,

@@ -10,6 +10,7 @@ import {
 	uniqueKeys,
 } from "../lib/result-format";
 import { createFieldDisplayModel } from "../lib/result-field-display";
+import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
 
 interface ResultStageProps {
 	actions?: React.ReactNode;
@@ -44,6 +45,8 @@ export function ResultStage({
 				<div className="result-content" key={result?.generatedAt ?? result?.kind ?? "empty"}>
 					{!result ? (
 						<p className="empty-result">{emptyMessage}</p>
+					) : result.kind === "slackmoji-batch" ? (
+						<SlackmojiBatchResults items={result.items} />
 					) : result.kind === "image" ? (
 						<img
 							alt={result.alt}

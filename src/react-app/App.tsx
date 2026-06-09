@@ -58,7 +58,8 @@ function App() {
 			return;
 		}
 
-		const nextPath = nextMode === "convert" ? "/convert/markdown-to-jira" : "/";
+	const nextPath =
+			nextMode === "convert" ? "/convert/markdown-to-jira" : "/";
 		if (window.location.pathname !== nextPath) {
 			window.history.pushState(null, "", nextPath);
 		}
@@ -73,9 +74,10 @@ function App() {
 		/>
 	);
 
-	return effectiveMode === "convert"
-		? <ConverterConsole modeTabs={modeTabs} />
-		: <GeneratorConsole modeTabs={modeTabs} />;
+	if (effectiveMode === "convert") {
+		return <ConverterConsole modeTabs={modeTabs} />;
+	}
+	return <GeneratorConsole modeTabs={modeTabs} />;
 }
 
 export default App;

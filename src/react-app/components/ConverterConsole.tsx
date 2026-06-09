@@ -17,6 +17,7 @@ export function ConverterConsole({ modeTabs }: ConverterConsoleProps) {
 		clearResult,
 		convertActiveTool,
 		error,
+		converterFields,
 		handleSubmit,
 		handleToolChange,
 		handleImageError,
@@ -27,6 +28,7 @@ export function ConverterConsole({ modeTabs }: ConverterConsoleProps) {
 		notification,
 		notify,
 		outputFormat,
+		setConverterField,
 		result,
 		selectedFile,
 		setOutputFormat,
@@ -48,7 +50,6 @@ export function ConverterConsole({ modeTabs }: ConverterConsoleProps) {
 			tool={activeTool}
 		/>
 	) : undefined;
-
 	return (
 		<PashiShell
 			actions={actions}
@@ -76,7 +77,9 @@ export function ConverterConsole({ modeTabs }: ConverterConsoleProps) {
 					activeTool={activeTool}
 					error={error}
 					input={input}
+					converterFields={converterFields}
 					isLoading={isLoading}
+					onConverterFieldChange={setConverterField}
 					onInputChange={setInput}
 					onOutputFormatChange={setOutputFormat}
 					onSubmit={handleSubmit}
