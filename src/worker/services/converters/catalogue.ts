@@ -745,10 +745,19 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				},
 				{
 					description: "Optional bucket preset source key.",
+					display: {
+						control: "source-presets",
+						width: "full",
+					},
 					id: "sourceKey",
 				},
 				{
+					defaultValue: "spinning",
 					description: "Optional animation preset.",
+					display: {
+						control: "effect-presets",
+						width: "full",
+					},
 					id: "effect",
 					values: [
 						"none",

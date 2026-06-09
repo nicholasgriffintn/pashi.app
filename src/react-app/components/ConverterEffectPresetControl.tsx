@@ -1,4 +1,5 @@
 interface ConverterEffectPresetControlProps {
+	className?: string;
 	description: string;
 	selectedValues: string[];
 	onChange: (value: string) => void;
@@ -6,6 +7,7 @@ interface ConverterEffectPresetControlProps {
 }
 
 export function ConverterEffectPresetControl({
+	className = "field-control",
 	description,
 	selectedValues,
 	onChange,
@@ -34,7 +36,7 @@ export function ConverterEffectPresetControl({
 	}
 
 	return (
-		<div className="field-control">
+		<div className={className}>
 			<span>{description}</span>
 			<div className="slackmoji-effect-grid" role="listbox" aria-label="Animation presets">
 				{options.map((option) => {

@@ -19,6 +19,7 @@ import {
 	pushConverterRoute,
 } from "./converter-state";
 import type { ResultStageValue } from "./result-types";
+
 function normaliseSlackmojiEffects(value: string | undefined) {
 	const values = (value ?? "")
 		.split(",")
@@ -120,16 +121,18 @@ function defaultConverterFields(tool: ConverterInfoTool) {
 			continue;
 		}
 
-		if (field.values?.length) {
-			if (tool.id === "slackmoji" && field.id === "effect") {
-				fields[field.id] = field.values.find((value) => value !== "none") ?? field.values[0] ?? "";
-			} else {
-				fields[field.id] = field.values[0] ?? "";
-			}
+		if (field.defaultValue !== undefined) {
+			fields[field.id] = field.defaultValue;
+		} else if (field.values?.length) {
+			fields[field.id] = field.values[0] ?? "";
 		}
 	}
 
 	return fields;
+}
+
+function findSourcePresetField(tool: ConverterInfoTool) {
+	return tool.api?.fields.find((field) => field.display?.control === "source-presets");
 }
 
 function pickInitialConverter(tools: readonly ConverterInfoTool[]) {
@@ -369,11 +372,12 @@ export function useConverterConsole() {
 		}
 
 		if (activeTool.input.kind === "file") {
-			const sourceKey = activeTool.id === "slackmoji" ? converterFields.sourceKey?.trim() : "";
+			const sourcePresetField = findSourcePresetField(activeTool);
+			const sourceKey = sourcePresetField ? converterFields[sourcePresetField.id]?.trim() : "";
 			const hasSourceKey = Boolean(sourceKey);
 
 			if (!selectedFile && !hasSourceKey) {
-				const requirement = activeTool.id === "slackmoji"
+				const requirement = sourcePresetField
 					? `${activeTool.input.label.toLowerCase()} or a preset`
 					: activeTool.input.label.toLowerCase();
 				setError(`Choose ${requirement} to convert.`);
@@ -401,6 +405,12 @@ export function useConverterConsole() {
 						pollConversionJob(nextResult);
 					}
 				} else {
+					if (!selectedFile) {
+						setError(`Choose ${activeTool.input.label.toLowerCase()} to convert.`);
+						setIsLoading(false);
+						return;
+					}
+
 					const nextResult = await convertThing(activeTool.endpoint, await selectedFile.text(), fields);
 					setResult(nextResult);
 					setIsLoading(false);

@@ -1,6 +1,7 @@
-import type { ConverterInfoTool } from "../lib/converter-api";
+import type { ConverterApiField, ConverterInfoTool } from "../lib/converter-api";
 
 interface ConverterOutputControlProps {
+	field?: ConverterApiField;
 	onOutputFormatChange: (value: string) => void;
 	outputFormat: string;
 	tool: ConverterInfoTool;
@@ -11,15 +12,18 @@ function supportsCustomOutputFormat(tool: ConverterInfoTool) {
 }
 
 export function ConverterOutputControl({
+	field,
 	onOutputFormatChange,
 	outputFormat,
 	tool,
 }: ConverterOutputControlProps) {
+	const className = field?.display?.width === "full" ? "field-control field-control-full" : "field-control";
+
 	if (supportsCustomOutputFormat(tool)) {
 		const listId = `${tool.id}-output-formats`;
 
 		return (
-			<label className="field-control">
+			<label className={className}>
 				<span>Output</span>
 				<input
 					list={listId}
@@ -42,7 +46,7 @@ export function ConverterOutputControl({
 	}
 
 	return (
-		<label className="field-control">
+		<label className={className}>
 			<span>Output</span>
 			<select
 				onChange={(event) => onOutputFormatChange(event.target.value)}

@@ -8,13 +8,13 @@ interface SlackmojiPresetsState {
 	presets: SlackmojiPreset[];
 }
 
-export function useSlackmojiPresets(toolId: string): SlackmojiPresetsState {
+export function useSlackmojiPresets(enabled: boolean): SlackmojiPresetsState {
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [presets, setPresets] = useState<SlackmojiPreset[]>([]);
 
 	useEffect(() => {
-		if (toolId !== "slackmoji") {
+		if (!enabled) {
 			setError("");
 			setIsLoading(false);
 			setPresets([]);
@@ -45,7 +45,7 @@ export function useSlackmojiPresets(toolId: string): SlackmojiPresetsState {
 		return () => {
 			ignore = true;
 		};
-	}, [toolId]);
+	}, [enabled]);
 
 	return {
 		error,

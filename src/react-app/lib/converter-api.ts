@@ -3,9 +3,18 @@ import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./
 export type ConverterStatus = "available";
 export type ConverterRuntime = "container" | "worker";
 export type ConverterMethod = "GET" | "POST";
+export type ConverterApiFieldControl = "effect-presets" | "select" | "source-presets" | "text";
+export type ConverterApiFieldWidth = "auto" | "full";
+
+export interface ConverterApiFieldDisplay {
+	control?: ConverterApiFieldControl;
+	width?: ConverterApiFieldWidth;
+}
 
 export interface ConverterApiField {
+	defaultValue?: string;
 	description: string;
+	display?: ConverterApiFieldDisplay;
 	id: string;
 	required?: boolean;
 	values?: string[];

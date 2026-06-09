@@ -1,21 +1,39 @@
 import type { ConverterApiField } from "../lib/converter-api";
 
 import { ConverterEffectPresetControl } from "./ConverterEffectPresetControl";
+import { ConverterSourcePresetControl } from "./ConverterSourcePresetControl";
 
 interface ConverterFieldControlProps {
-	actionToolId: string;
 	field: ConverterApiField;
 	onChange: (value: string) => void;
+	onFileChange?: (file: File | undefined) => void;
 	value: string;
 }
 
+function fieldControlClassName(field: ConverterApiField) {
+	return field.display?.width === "full" ? "field-control field-control-full" : "field-control";
+}
+
 export function ConverterFieldControl({
-	actionToolId,
 	field,
 	onChange,
+	onFileChange,
 	value,
 }: ConverterFieldControlProps) {
-	if (actionToolId === "slackmoji" && field.id === "effect" && field.values && field.values.length > 0) {
+	if (field.display?.control === "source-presets") {
+		return (
+			<div className={fieldControlClassName(field)}>
+				<ConverterSourcePresetControl
+					field={field}
+					onChange={onChange}
+					onFileChange={onFileChange}
+					selectedSourceKey={value}
+				/>
+			</div>
+		);
+	}
+
+	if (field.display?.control === "effect-presets" && field.values && field.values.length > 0) {
 		const selected = value
 			.split(",")
 			.map((item) => item.trim())
@@ -23,6 +41,7 @@ export function ConverterFieldControl({
 
 		return (
 			<ConverterEffectPresetControl
+				className={fieldControlClassName(field)}
 				description={field.description}
 				options={field.values}
 				onChange={onChange}
@@ -33,7 +52,7 @@ export function ConverterFieldControl({
 
 	if (field.values && field.values.length > 0) {
 		return (
-			<label className="field-control">
+			<label className={fieldControlClassName(field)}>
 				<span>{field.description}</span>
 				<select
 					onChange={(event) => onChange(event.target.value)}
@@ -51,7 +70,7 @@ export function ConverterFieldControl({
 	}
 
 	return (
-		<label className="field-control">
+		<label className={fieldControlClassName(field)}>
 			<span>{field.description}</span>
 			<input
 				onChange={(event) => onChange(event.target.value)}

@@ -127,6 +127,9 @@ function createResultText(result: ResultStageValue) {
 			.map((item) => `${item.effect}: ${item.status}${item.downloadUrl ? ` (${item.downloadUrl})` : ""}`)
 			.join("\n");
 	}
+	if (result.kind === "image") {
+		return "";
+	}
 
 	return resultToText(result);
 }

@@ -551,6 +551,10 @@ h1 {
 	gap: 0.35rem;
 }
 
+.field-control-full {
+	grid-column: 1 / -1;
+}
+
 .field-control span {
 	color: #ffd14c;
 	font-size: 0.78rem;
@@ -652,13 +656,26 @@ h1 {
 	color: #f0d9bb;
 	font-size: 0.72rem;
 	font-weight: 800;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.slackmoji-preset-control {
+	align-items: start;
+	display: grid;
+	gap: 0.75rem;
+	grid-template-columns: minmax(11rem, 0.34fr) minmax(0, 1fr);
+}
+
+.slackmoji-preset-copy {
+	display: grid;
+	gap: 0.35rem;
 }
 
 .slackmoji-effect-grid {
 	align-items: stretch;
 	display: grid;
 	gap: 0.35rem;
-	grid-column: 1 / -1;
 	grid-template-columns: repeat(auto-fill, minmax(5.2rem, 1fr));
 	max-height: 14rem;
 	overflow: auto;
@@ -688,7 +705,6 @@ h1 {
 	align-items: stretch;
 	display: grid;
 	gap: 0.35rem;
-	grid-column: 1 / -1;
 	grid-template-columns: repeat(auto-fill, minmax(7.25rem, 1fr));
 	max-height: 18rem;
 	overflow: auto;
@@ -1491,6 +1507,10 @@ h1 {
 	}
 
 	.field-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.slackmoji-preset-control {
 		grid-template-columns: 1fr;
 	}
 
