@@ -10,7 +10,7 @@
 		"dev": "vite",
 		"lint": "eslint .",
 		"preview": "npm run build && vite preview",
-		"test": "node --test 'src/**/*.test.ts'"
+		"test": "echo \"Error: DO NOT ADD UNIT TESTS, THIS PROJECT IS SUPPOSED TO BE FUN! (E2E / INTEGRATION MAY BE ACCEPTABLE, NOT UNIT, EVER)\" && exit 1"
 	},
 	"type": "module",
 	"dependencies": {
