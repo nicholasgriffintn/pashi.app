@@ -1,6 +1,7 @@
 import type { SlackmojiBatchResult } from "../lib/converter-api";
 
 interface SlackmojiBatchResultsProps {
+	compact?: boolean;
 	items: SlackmojiBatchResult[];
 }
 
@@ -12,16 +13,19 @@ function statusLabel(status: string) {
 	return status;
 }
 
-export function SlackmojiBatchResults({ items }: SlackmojiBatchResultsProps) {
+export function SlackmojiBatchResults({ compact = false, items }: SlackmojiBatchResultsProps) {
 	if (items.length === 0) {
 		return null;
 	}
 
+	const visibleItems = compact ? items.slice(0, 3) : items;
+	const hiddenCount = items.length - visibleItems.length;
+
 	return (
-		<section className="slackmoji-batch">
+		<section className="slackmoji-batch" data-compact={compact}>
 			<h3>Generated animations</h3>
 			<div className="slackmoji-batch-grid">
-				{items.map((item) => (
+				{visibleItems.map((item) => (
 					<article className="slackmoji-batch-item" key={`${item.jobId}-${item.effect}`}>
 						{item.downloadUrl ? (
 							<a className="slackmoji-batch-thumb" href={item.downloadUrl} rel="noreferrer" target="_blank">
@@ -36,6 +40,7 @@ export function SlackmojiBatchResults({ items }: SlackmojiBatchResultsProps) {
 					</article>
 				))}
 			</div>
+			{hiddenCount > 0 ? <p className="slackmoji-batch-more">+{hiddenCount} more</p> : null}
 		</section>
 	);
 }

@@ -16,6 +16,7 @@ const MAX_BYTES = 250 * 1024 * 1024;
 const SLACKMOJI_DURATION_SECONDS = 1.6;
 const SLACKMOJI_FPS = 12;
 const SLACKMOJI_DEFAULT_EFFECT = "spin_right";
+const HDR_REC2020_PROFILE_PATH = "/app/2020_profile.icc";
 const SLACKMOJI_EFFECT_ALIASES = Object.freeze({
 	"none": "none",
 	"spinning": "spin_right",
@@ -217,6 +218,58 @@ export function ffmpegArgs(kind, inputPath, outputPath, outputFormat, options = 
 	}
 }
 
+function hdrEmojiSourceFfmpegArgs(inputPath, outputPath) {
+	const filter = [
+		"format=rgba",
+		"scale=128:128:force_original_aspect_ratio=decrease",
+		"pad=128:128:(ow-iw)/2:(oh-ih)/2:color=0x00000000",
+		"format=rgba",
+	].join(",");
+
+	return [
+		"-hide_banner",
+		"-loglevel",
+		"error",
+		"-y",
+		"-i",
+		inputPath,
+		"-vf",
+		filter,
+		"-frames:v",
+		"1",
+		"-compression_level",
+		"9",
+		outputPath,
+	];
+}
+
+function hdrEmojiMagickArgs(inputPath, outputPath, options) {
+	const intensity = numberOption(options.intensity, 1, 2.5, 1.5);
+	const gamma = numberOption(options.gamma, 0.6, 1.4, 0.9);
+
+	return [
+		inputPath,
+		"-define",
+		"quantum:format=floating-point",
+		"-colorspace",
+		"RGB",
+		"-auto-gamma",
+		"-evaluate",
+		"Multiply",
+		intensity.toFixed(2),
+		"-evaluate",
+		"Pow",
+		gamma.toFixed(2),
+		"-colorspace",
+		"sRGB",
+		"-depth",
+		"16",
+		"-profile",
+		HDR_REC2020_PROFILE_PATH,
+		outputPath,
+	];
+}
+
 function slackmojiFfmpegArgs(inputPath, outputPath, options) {
 	const effect = slackmojiEffect(options.effect);
 	const [effectFilter, overlay] = slackmojiEffectFilter(effect);
@@ -392,8 +445,18 @@ async function runFfmpeg(args) {
 	await runCommand("ffmpeg", args);
 }
 
+async function runMagick(args) {
+	await runCommand("convert", args);
+}
+
 async function runPandoc(args) {
 	await runCommand("pandoc", args);
+}
+
+async function runHdrEmoji(inputPath, outputPath, options, workDir) {
+	const normalizedInputPath = join(workDir, "hdr-source.png");
+	await runFfmpeg(hdrEmojiSourceFfmpegArgs(inputPath, normalizedInputPath));
+	await runMagick(hdrEmojiMagickArgs(normalizedInputPath, outputPath, options));
 }
 
 async function handleConvert(request, response) {
@@ -425,6 +488,8 @@ async function handleConvert(request, response) {
 		await pipeline(request, createWriteStream(inputPath));
 		if (kind === "document") {
 			await runPandoc(pandocArgs(inputPath, outputPath));
+		} else if (kind === "image" && outputFormat === "png" && operationFields.operation === "hdr-emoji") {
+			await runHdrEmoji(inputPath, outputPath, operationFields, workDir);
 		} else {
 			await runFfmpeg(ffmpegArgs(kind, inputPath, outputPath, outputFormat, operationFields));
 		}

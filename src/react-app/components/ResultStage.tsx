@@ -1,4 +1,5 @@
 import type React from "react";
+import { useEffect, useState } from "react";
 
 import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
 import {
@@ -12,6 +13,12 @@ import {
 import { createFieldDisplayModel } from "../lib/result-field-display";
 import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
 
+interface ImagePreviewItem {
+	alt: string;
+	label: string;
+	src: string;
+}
+
 interface ResultStageProps {
 	actions?: React.ReactNode;
 	emptyMessage: string;
@@ -21,6 +28,9 @@ interface ResultStageProps {
 	onImageLoad: () => void;
 	result?: ResultStageValue;
 }
+
+const IMAGE_OUTPUT_FORMATS = new Set(["avif", "bmp", "gif", "ico", "jpeg", "jpg", "mjpeg", "png", "svg", "tif", "tiff", "webp"]);
+const IMAGE_URL_KEYS = ["downloadUrl", "imageUrl", "image", "previewUrl", "thumbnailUrl", "url", "src"] as const;
 
 export function ResultStage({
 	actions,
@@ -32,6 +42,23 @@ export function ResultStage({
 	result,
 }: ResultStageProps) {
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
+	const [isExpanded, setIsExpanded] = useState(false);
+	const expandedResult = result && isExpanded ? result : undefined;
+
+	useEffect(() => {
+		if (!expandedResult) {
+			return undefined;
+		}
+
+		function handleKeyDown(event: KeyboardEvent) {
+			if (event.key === "Escape") {
+				setIsExpanded(false);
+			}
+		}
+
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [expandedResult]);
 
 	return (
 		<section
@@ -41,12 +68,23 @@ export function ResultStage({
 			data-has-result={Boolean(result)}
 		>
 			<div className="result-box" data-result-kind={result?.kind}>
+				{result ? (
+					<button
+						aria-label="Expand result"
+						className="result-expand-button"
+						onClick={() => setIsExpanded(true)}
+						title="Expand result"
+						type="button"
+					>
+						<span aria-hidden="true">↗</span>
+					</button>
+				) : null}
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
 				<div className="result-content" key={result?.generatedAt ?? result?.kind ?? "empty"}>
 					{!result ? (
 						<p className="empty-result">{emptyMessage}</p>
 					) : result.kind === "slackmoji-batch" ? (
-						<SlackmojiBatchResults items={result.items} />
+						<SlackmojiBatchResults compact items={result.items} />
 					) : result.kind === "image" ? (
 						<img
 							alt={result.alt}
@@ -56,7 +94,7 @@ export function ResultStage({
 							src={result.src}
 						/>
 					) : (
-						<ResultBody result={result} />
+						<ResultBody result={result} compact />
 					)}
 				</div>
 				{generatedAt ? <p className="result-generated-at">{generatedAtLabel} {generatedAt}</p> : null}
@@ -64,11 +102,52 @@ export function ResultStage({
 			<div className="result-action-slot" data-visible={Boolean(result && actions)}>
 				{result ? actions : null}
 			</div>
+			{expandedResult ? (
+				<div className="result-dialog-backdrop" role="presentation">
+					<div
+						aria-label="Expanded result"
+						aria-modal="true"
+						className="result-dialog"
+						role="dialog"
+					>
+						<div className="result-dialog-header">
+							<span>Result detail</span>
+							<button
+								aria-label="Close result detail"
+								onClick={() => setIsExpanded(false)}
+								type="button"
+							>
+								<span aria-hidden="true">×</span>
+							</button>
+						</div>
+						<div className="result-dialog-content">
+							{expandedResult.kind === "slackmoji-batch" ? (
+								<SlackmojiBatchResults items={expandedResult.items} />
+							) : expandedResult.kind === "image" ? (
+								<img
+									alt={expandedResult.alt}
+									className="image-result"
+									onError={onImageError}
+									onLoad={onImageLoad}
+									src={expandedResult.src}
+								/>
+							) : (
+								<ResultBody result={expandedResult} />
+							)}
+						</div>
+					</div>
+				</div>
+			) : null}
 		</section>
 	);
 }
 
-function ResultBody({ result }: { result: TextResultStageValue }) {
+function ResultBody({ compact = false, result }: { compact?: boolean; result: TextResultStageValue }) {
+	const imagePreview = createImagePreview(result);
+	if (imagePreview.length > 0) {
+		return <ImagePreviewResult compact={compact} items={imagePreview} />;
+	}
+
 	if (result.kind === "palette" && Array.isArray(result.result) && isStringArray(result.result)) {
 		return (
 			<div className="palette-result">
@@ -166,4 +245,106 @@ function ResultBody({ result }: { result: TextResultStageValue }) {
 	}
 
 	return <pre className="text-result">{formatTextResult(result.result)}</pre>;
+}
+
+function ImagePreviewResult({ compact, items }: { compact: boolean; items: ImagePreviewItem[] }) {
+	const visibleItems = compact ? items.slice(0, 4) : items;
+
+	return (
+		<div className="image-preview-result" data-compact={compact}>
+			<div className="image-preview-grid">
+				{visibleItems.map((item) => (
+					<a className="image-preview-item" href={item.src} key={`${item.label}-${item.src}`} rel="noreferrer" target="_blank">
+						<img alt={item.alt} src={item.src} />
+						<span>{item.label}</span>
+					</a>
+				))}
+			</div>
+			{compact && items.length > 4 ? <p className="image-preview-more">+{items.length - 4} more</p> : null}
+		</div>
+	);
+}
+
+function createImagePreview(result: TextResultStageValue): ImagePreviewItem[] {
+	if (typeof result.result === "string") {
+		return imageUrlFromString(result.result)
+			? [{ alt: `${result.label} result`, label: result.label, src: result.result }]
+			: [];
+	}
+
+	if (Array.isArray(result.result)) {
+		if (isStringArray(result.result)) {
+			return result.result
+				.filter(imageUrlFromString)
+				.map((src, index) => ({ alt: `${result.label} image ${index + 1}`, label: imageLabel(src, index), src }));
+		}
+
+		if (isRecordArray(result.result)) {
+			return result.result.flatMap((record, index) => {
+				const src = imageUrlFromRecord(record);
+				return src ? [{ alt: `${result.label} image ${index + 1}`, label: imageLabel(record.name || record.label || src, index), src }] : [];
+			});
+		}
+
+		return [];
+	}
+
+	const src = imageUrlFromRecord(result.result);
+	if (!src || !isImageResultRecord(result.result)) {
+		return [];
+	}
+
+	return [{
+		alt: `${result.label} preview`,
+		label: result.result.outputFormat ? result.result.outputFormat.toUpperCase() : result.label,
+		src,
+	}];
+}
+
+function imageUrlFromRecord(record: Record<string, string>) {
+	for (const key of IMAGE_URL_KEYS) {
+		const value = record[key];
+		if (value) {
+			return value;
+		}
+	}
+
+	return undefined;
+}
+
+function isImageResultRecord(record: Record<string, string>) {
+	return isImageOutputFormat(record.outputFormat || record.format || record.mimeType) || Boolean(imageUrlFromString(imageUrlFromRecord(record) ?? ""));
+}
+
+function isImageOutputFormat(value: string | undefined) {
+	if (!value) {
+		return false;
+	}
+
+	const normalized = value.toLowerCase().replace(/^image\//, "").replace(/^.*\./, "");
+	return IMAGE_OUTPUT_FORMATS.has(normalized);
+}
+
+function imageUrlFromString(value: string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+
+	try {
+		const url = new URL(value, window.location.origin);
+		const pathParts = url.pathname.toLowerCase().split(".");
+		const extension = pathParts[pathParts.length - 1];
+		return extension && IMAGE_OUTPUT_FORMATS.has(extension) ? value : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+function imageLabel(value: string, index: number) {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return `Image ${index + 1}`;
+	}
+
+	return trimmed.replace(/^.*\//, "") || `Image ${index + 1}`;
 }

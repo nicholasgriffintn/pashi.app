@@ -92,7 +92,7 @@ export async function createQueuedConversionUploadResponse(
 	if (!outputFormat) {
 		return Response.json({ error: "Choose a safe ffmpeg output format such as webp, mp4, or mp3." }, { status: 400 });
 	}
-	const finalOutputFormat = converterId === "slackmoji" ? "gif" : outputFormat;
+	const finalOutputFormat = converterId === "slackmoji" ? "gif" : converterId === "slack-hdr-emoji" ? "png" : outputFormat;
 
 	const now = new Date().toISOString();
 	const jobId = crypto.randomUUID();
@@ -399,6 +399,9 @@ function queuedConversionKindForConverter(converterId: string): QueuedConversion
 		return "image";
 	}
 	if (converterId === "slackmoji") {
+		return "image";
+	}
+	if (converterId === "slack-hdr-emoji") {
 		return "image";
 	}
 	if (converterId === "audio-format") {

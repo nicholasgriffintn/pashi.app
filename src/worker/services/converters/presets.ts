@@ -7,6 +7,7 @@ const CONVERTER_FIELD_PRESETS: Record<string, Record<string, string>> = {
 	"audio-thumbnail-generator": { operation: "waveform", outputFormat: "png" },
 	"audio-trimmer": { duration: "10", operation: "trim" },
 	"audio-waveform-generator": { operation: "waveform", outputFormat: "png" },
+	"slack-hdr-emoji": { gamma: "0.9", intensity: "1.5", operation: "hdr-emoji", outputFormat: "png" },
 	"slackmoji": { operation: "slackmoji", outputFormat: "gif" },
 	"change-video-fps": { fps: "30" },
 	"extract-audio-from-video": { operation: "extract-audio", outputFormat: "mp3" },

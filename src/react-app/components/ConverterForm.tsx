@@ -54,72 +54,74 @@ export function ConverterForm({
 
 	return (
 		<form className="generator converter-panel" onSubmit={onSubmit}>
-			<label>Converter</label>
-			<ToolPicker
-				activeTool={activeTool}
-				label="converters"
-				onChange={onToolChange}
-				recentKey="pashi:recent-converter-tools"
-				tools={tools}
-			/>
-
-			<p className="tool-description">{activeTool.description}</p>
-
-			{isAvailable && activeTool.input.kind === "text" ? (
-				<div className="field-grid">
-					<label className="field-control converter-input">
-						<span>{activeTool.input.label}</span>
-						<textarea
-							onChange={(event) => onInputChange(event.target.value)}
-							placeholder={activeTool.placeholder}
-							required={activeTool.input.required}
-							rows={activeTool.id === "image-format" ? 3 : 9}
-							value={input}
-						/>
-					</label>
-					{shouldShowOutputControl(activeTool) ? (
-						<ConverterOutputControl
-							onOutputFormatChange={onOutputFormatChange}
-							outputFormat={outputFormat}
-							tool={activeTool}
-						/>
-					) : null}
-				</div>
-			) : isAvailable && activeTool.input.kind === "file" ? (
-				<FileConverterControls
-					converterFields={converterFields}
-					onConverterFieldChange={onConverterFieldChange}
-					onFileChange={onFileChange}
-					onOutputFormatChange={onOutputFormatChange}
-					outputFormat={outputFormat}
-					selectedFile={selectedFile}
-					tool={activeTool}
+			<div className="generator-content">
+				<label>Converter</label>
+				<ToolPicker
+					activeTool={activeTool}
+					label="converters"
+					onChange={onToolChange}
+					recentKey="pashi:recent-converter-tools"
+					tools={tools}
 				/>
-			) : (
-				<p className="error">{activeTool.label} is not available.</p>
-			)}
+
+				<p className="tool-description">{activeTool.description}</p>
+
+				{isAvailable && activeTool.input.kind === "text" ? (
+					<div className="field-grid">
+						<label className="field-control converter-input">
+							<span>{activeTool.input.label}</span>
+							<textarea
+								onChange={(event) => onInputChange(event.target.value)}
+								placeholder={activeTool.placeholder}
+								required={activeTool.input.required}
+								rows={activeTool.id === "image-format" ? 3 : 9}
+								value={input}
+							/>
+						</label>
+						{shouldShowOutputControl(activeTool) ? (
+							<ConverterOutputControl
+								onOutputFormatChange={onOutputFormatChange}
+								outputFormat={outputFormat}
+								tool={activeTool}
+							/>
+						) : null}
+					</div>
+				) : isAvailable && activeTool.input.kind === "file" ? (
+					<FileConverterControls
+						converterFields={converterFields}
+						onConverterFieldChange={onConverterFieldChange}
+						onFileChange={onFileChange}
+						onOutputFormatChange={onOutputFormatChange}
+						outputFormat={outputFormat}
+						selectedFile={selectedFile}
+						tool={activeTool}
+					/>
+				) : (
+					<p className="error">{activeTool.label} is not available.</p>
+				)}
+
+				{visibleExamples.length > 0 ? (
+					<div className="examples" aria-label="Examples">
+						<span>Try</span>
+						{visibleExamples.map((example) => (
+							<button
+								key={example}
+								onClick={() => applyExample(example, onInputChange)}
+								type="button"
+							>
+								{example}
+							</button>
+						))}
+					</div>
+				) : null}
+			</div>
 
 			<div className="generate-actions">
+				{error ? <p className="error">{error}</p> : null}
 				<button disabled={isLoading || !isAvailable} type="submit">
 					{isLoading ? "Converting" : activeTool.display.actionLabel}
 				</button>
 			</div>
-
-			{visibleExamples.length > 0 ? (
-				<div className="examples" aria-label="Examples">
-					<span>Try</span>
-					{visibleExamples.map((example) => (
-						<button
-							key={example}
-							onClick={() => applyExample(example, onInputChange)}
-							type="button"
-						>
-							{example}
-						</button>
-					))}
-				</div>
-			) : null}
-			{error ? <p className="error">{error}</p> : null}
 		</form>
 	);
 }

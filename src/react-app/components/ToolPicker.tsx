@@ -8,6 +8,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { searchTools } from "../lib/tool-search";
 
@@ -37,8 +38,12 @@ export interface ToolPickerTool {
 }
 
 interface MenuPlacement {
+	bottom?: number;
+	left: number;
 	maxHeight: number;
 	side: "bottom" | "top";
+	top?: number;
+	width: number;
 }
 
 type ToolMenuStyle = CSSProperties & {
@@ -100,12 +105,16 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
+		left: 0,
 		maxHeight: 320,
 		side: "bottom",
+		top: 0,
+		width: 320,
 	});
 	const [query, setQuery] = useState("");
 	const [recentToolIds, setRecentToolIds] = useState<string[]>(() => readRecentToolIds(recentKey));
 	const triggerRef = useRef<HTMLButtonElement>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
 	const rootRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLInputElement>(null);
 	const listboxId = useId();
@@ -117,6 +126,10 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 	const activeOptionId = flatTools[activeIndex] ? optionId(listboxId, flatTools[activeIndex].id) : undefined;
 	const menuStyle = useMemo<ToolMenuStyle>(
 		() => ({
+			bottom: menuPlacement.bottom,
+			left: menuPlacement.left,
+			top: menuPlacement.top,
+			width: menuPlacement.width,
 			"--tool-menu-max-height": `${menuPlacement.maxHeight}px`,
 		}),
 		[menuPlacement],
@@ -135,10 +148,15 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 		const side = below >= MENU_MIN_HEIGHT || below >= above ? "bottom" : "top";
 		const available = Math.max(0, side === "bottom" ? below : above);
 		const maxHeight = Math.max(96, Math.min(MENU_MAX_HEIGHT, available));
+		const left = Math.max(MENU_VIEWPORT_PADDING, Math.min(rect.left, window.innerWidth - MENU_VIEWPORT_PADDING - rect.width));
 
 		setMenuPlacement({
+			bottom: side === "top" ? window.innerHeight - rect.top + MENU_GAP : undefined,
+			left,
 			maxHeight,
 			side,
+			top: side === "bottom" ? rect.bottom + MENU_GAP : undefined,
+			width: rect.width,
 		});
 	}, []);
 	const openPicker = useCallback(() => {
@@ -189,7 +207,8 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 
 	useEffect(() => {
 		function handlePointerDown(event: MouseEvent) {
-			if (!rootRef.current?.contains(event.target as Node)) {
+			const target = event.target as Node;
+			if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) {
 				setIsOpen(false);
 			}
 		}
@@ -284,6 +303,58 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 		}
 	}
 
+	const menu = isOpen ? (
+		<div
+			className="tool-menu"
+			data-side={menuPlacement.side}
+			ref={menuRef}
+			style={menuStyle}
+		>
+			<input
+				aria-label={`Search ${label.toLowerCase()}`}
+				aria-activedescendant={activeOptionId}
+				aria-controls={listboxId}
+				aria-expanded={isOpen}
+				aria-haspopup="listbox"
+				className="tool-search"
+				onChange={(event) => {
+					setQuery(event.target.value);
+					setActiveIndex(0);
+				}}
+				onKeyDown={handlePickerKeyDown}
+				placeholder={`Search ${label.toLowerCase()}`}
+				role="combobox"
+				ref={searchRef}
+				type="search"
+				value={query}
+			/>
+			<div className="tool-list" id={listboxId} role="listbox">
+				{groups.map((group) => (
+					<div className="tool-group" key={group.label}>
+						<p>{group.label}</p>
+						{group.tools.map((tool) => (
+							<button
+								id={optionId(listboxId, tool.id)}
+								aria-selected={tool.id === activeTool.id}
+								className="tool-option"
+								data-active={flatTools[activeIndex]?.id === tool.id ? "true" : undefined}
+								key={`${group.label}-${tool.id}`}
+								onClick={() => selectTool(tool.id)}
+								role="option"
+								tabIndex={-1}
+								type="button"
+							>
+								<span>{tool.label}</span>
+								<small>{tool.description}</small>
+							</button>
+						))}
+					</div>
+				))}
+				{groups.length === 0 ? <p className="tool-empty">No tool found.</p> : null}
+			</div>
+		</div>
+	) : null;
+
 	return (
 		<div className="tool-picker" ref={rootRef}>
 			<button
@@ -308,56 +379,7 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 				<kbd>/</kbd>
 			</button>
 
-			{isOpen ? (
-				<div
-					className="tool-menu"
-					data-side={menuPlacement.side}
-					style={menuStyle}
-				>
-					<input
-						aria-label={`Search ${label.toLowerCase()}`}
-						aria-activedescendant={activeOptionId}
-						aria-controls={listboxId}
-						aria-expanded={isOpen}
-						aria-haspopup="listbox"
-						className="tool-search"
-						onChange={(event) => {
-							setQuery(event.target.value);
-							setActiveIndex(0);
-						}}
-						onKeyDown={handlePickerKeyDown}
-						placeholder={`Search ${label.toLowerCase()}`}
-						role="combobox"
-						ref={searchRef}
-						type="search"
-						value={query}
-					/>
-					<div className="tool-list" id={listboxId} role="listbox">
-						{groups.map((group) => (
-							<div className="tool-group" key={group.label}>
-								<p>{group.label}</p>
-								{group.tools.map((tool) => (
-									<button
-										id={optionId(listboxId, tool.id)}
-										aria-selected={tool.id === activeTool.id}
-										className="tool-option"
-										data-active={flatTools[activeIndex]?.id === tool.id ? "true" : undefined}
-										key={`${group.label}-${tool.id}`}
-										onClick={() => selectTool(tool.id)}
-										role="option"
-										tabIndex={-1}
-										type="button"
-									>
-										<span>{tool.label}</span>
-										<small>{tool.description}</small>
-									</button>
-								))}
-							</div>
-						))}
-						{groups.length === 0 ? <p className="tool-empty">No tool found.</p> : null}
-					</div>
-				</div>
-			) : null}
+			{menu ? createPortal(menu, document.body) : null}
 		</div>
 	);
 }

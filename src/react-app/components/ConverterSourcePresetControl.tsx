@@ -29,7 +29,7 @@ export function ConverterSourcePresetControl({
 							: selectedSourceKey
 								? `Using preset: ${selectedPreset?.name ?? selectedSourceKey}`
 								: presets.length > 0
-									? "Or choose a preset from the gallery"
+									? "Choose one of the built-in images."
 									: "No presets available."}
 				</p>
 			</div>

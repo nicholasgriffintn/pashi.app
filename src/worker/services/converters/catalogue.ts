@@ -744,7 +744,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: ["gif"],
 				},
 				{
-					description: "Optional bucket preset source key.",
+					description: "Preset image.",
 					display: {
 						control: "source-presets",
 						width: "full",
@@ -838,6 +838,83 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "Slack-style GIF generator",
 		outputs: ["gif"],
 		placeholder: "Upload an image to animate as GIF",
+		runtime: "container",
+		status: "available",
+	},
+	{
+		aliases: [
+			"slack-hdr-emoji",
+			"hdr-emoji",
+			"hdr-slack-emoji",
+			"bright-slack-emoji",
+			"glowing-slack-emoji",
+			"slack-emoji-hdr",
+		],
+		api: {
+			accepts: IMAGE_REQUEST_FORMATS,
+			examples: [
+				{
+					body: "file=@emoji.png; intensity=2.1; gamma=1.1",
+					contentType: "multipart/form-data",
+					description: "Upload an image and generate an HDR-style Slack emoji PNG.",
+					method: "POST",
+					url: "/api/slack-hdr-emoji",
+				},
+				{
+					description: "Check a queued HDR emoji conversion job.",
+					method: "GET",
+					url: "/api/slack-hdr-emoji?job=<job-id>",
+				},
+			],
+			fields: [
+				{
+					description: "Target output format.",
+					id: "outputFormat",
+					required: true,
+					values: ["png"],
+				},
+				{
+					description: "Preset image.",
+					display: {
+						control: "source-presets",
+						width: "full",
+					},
+					id: "sourceKey",
+				},
+				{
+					defaultValue: "2.1",
+					description: "Brightness intensity.",
+					id: "intensity",
+					values: ["1.2", "1.5", "1.8", "2.1"],
+				},
+				{
+					defaultValue: "1.1",
+					description: "Gamma shaping.",
+					id: "gamma",
+					values: ["0.8", "0.9", "1.0", "1.1"],
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Media",
+		description: "Create bright HDR-style Slack emoji PNGs from uploaded images or presets.",
+		display: {
+			actionLabel: "Generate HDR emoji",
+			category: "Media",
+			examples: [],
+		},
+		endpoint: "/api/slack-hdr-emoji",
+		id: "slack-hdr-emoji",
+		input: {
+			accept: ["image/*", ".avif", ".bmp", ".gif", ".ico", ".jpg", ".jpeg", ".mjpeg", ".png", ".tif", ".tiff", ".webp"],
+			label: "Image file",
+			kind: "file",
+			required: true,
+		},
+		label: "HDR Slack emoji generator",
+		outputs: ["png"],
+		placeholder: "Upload an image or choose a preset for an HDR-style Slack emoji",
 		runtime: "container",
 		status: "available",
 	},

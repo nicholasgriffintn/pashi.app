@@ -71,87 +71,76 @@ export function GeneratorForm({
 
 	return (
 		<form className="generator" onSubmit={onSubmit}>
-			<label>Generator</label>
-			<ToolPicker
-				activeTool={activeTool}
-				label="generators"
-				onChange={onToolChange}
-				recentKey="pashi:recent-generator-tools"
-				tools={tools}
-			/>
+			<div className="generator-content">
+				<label>Generator</label>
+				<ToolPicker
+					activeTool={activeTool}
+					label="generators"
+					onChange={onToolChange}
+					recentKey="pashi:recent-generator-tools"
+					tools={tools}
+				/>
 
-			<p className="tool-description">{activeTool.description}</p>
+				<p className="tool-description">{activeTool.description}</p>
 
-			{hasFields ? (
-				<div className="field-grid">
-					{visibleFields?.map((field) => (
-						<label className="field-control" key={field.id}>
-							<span>{field.label}</span>
-							<FieldInput
-								field={field}
-								onChange={(value) => onFieldChange(field.id, value)}
-								value={fieldValues[field.id] ?? ""}
-							/>
-						</label>
-					))}
-				</div>
-			) : hasPrimaryInput ? (
-				<>
-					<label htmlFor="generate-input">{activeTool.input.label}</label>
-					<div className="input-row">
-						<input
-							id="generate-input"
-							name="generate-input"
-							onChange={(event) => onInputChange(event.target.value)}
-							placeholder={activeTool.placeholder}
-							type="text"
-							value={input}
-						/>
+				{hasFields ? (
+					<div className="field-grid">
+						{visibleFields?.map((field) => (
+							<label className="field-control" key={field.id}>
+								<span>{field.label}</span>
+								<FieldInput
+									field={field}
+									onChange={(value) => onFieldChange(field.id, value)}
+									value={fieldValues[field.id] ?? ""}
+								/>
+							</label>
+						))}
 					</div>
-				</>
-			) : (
-				<div className="generate-actions">
-					{supportsAiMode ? (
-						<GenerationModeToggle
-							mode={generationMode}
-							onChange={onGenerationModeChange}
-						/>
-					) : null}
-					<GenerateButton
-						activeTool={activeTool}
-						isLoading={isLoading}
+				) : hasPrimaryInput ? (
+					<>
+						<label htmlFor="generate-input">{activeTool.input.label}</label>
+						<div className="input-row">
+							<input
+								id="generate-input"
+								name="generate-input"
+								onChange={(event) => onInputChange(event.target.value)}
+								placeholder={activeTool.placeholder}
+								type="text"
+								value={input}
+							/>
+						</div>
+					</>
+				) : null}
+
+				{visibleExamples.length > 0 ? (
+					<div className="examples" aria-label="Examples">
+						<span>Try</span>
+						{visibleExamples.map((example) => (
+							<button
+								key={example}
+								onClick={() => applyExample(activeTool, example, onInputChange, onFieldChange)}
+								type="button"
+							>
+								{example}
+							</button>
+						))}
+					</div>
+				) : null}
+			</div>
+
+			<div className="generate-actions">
+				{error ? <p className="error">{error}</p> : null}
+				{supportsAiMode ? (
+					<GenerationModeToggle
+						mode={generationMode}
+						onChange={onGenerationModeChange}
 					/>
-				</div>
-			)}
-			{hasFields || hasPrimaryInput ? (
-				<div className="generate-actions">
-					{supportsAiMode ? (
-						<GenerationModeToggle
-							mode={generationMode}
-							onChange={onGenerationModeChange}
-						/>
-					) : null}
-					<GenerateButton
-						activeTool={activeTool}
-						isLoading={isLoading}
-					/>
-				</div>
-			) : null}
-			{visibleExamples.length > 0 ? (
-				<div className="examples" aria-label="Examples">
-					<span>Try</span>
-					{visibleExamples.map((example) => (
-						<button
-							key={example}
-							onClick={() => applyExample(activeTool, example, onInputChange, onFieldChange)}
-							type="button"
-						>
-							{example}
-						</button>
-					))}
-				</div>
-			) : null}
-			{error ? <p className="error">{error}</p> : null}
+				) : null}
+				<GenerateButton
+					activeTool={activeTool}
+					isLoading={isLoading}
+				/>
+			</div>
 		</form>
 	);
 }

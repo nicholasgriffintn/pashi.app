@@ -42,6 +42,7 @@ export async function createConverterResponse(
 		tool.id === "audio-format" ||
 		tool.id === "document-format" ||
 		tool.id === "image-format" ||
+		tool.id === "slack-hdr-emoji" ||
 		tool.id === "slackmoji" ||
 		tool.id === "video-format"
 	)) {

@@ -10,6 +10,11 @@ export function isQueuedConversionUploadRequest(converterId: string, contentType
 			contentType.includes("multipart/form-data") ||
 			contentType.includes("application/octet-stream")
 		)) ||
+		(converterId === "slack-hdr-emoji" && (
+			contentType.includes("image/") ||
+			contentType.includes("multipart/form-data") ||
+			contentType.includes("application/octet-stream")
+		)) ||
 		(converterId === "audio-format" && (
 			contentType.includes("audio/") ||
 			contentType.includes("multipart/form-data") ||
