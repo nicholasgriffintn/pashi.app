@@ -12,7 +12,8 @@ export type UuidFormat = "v1" | "v3" | "v4" | "v5" | "v7";
 export type UuidOutputFormat = "standard" | "uppercase" | "no-hyphens" | "braced" | "urn";
 
 let lastV1Timestamp = 0n;
-let lastV1ClockSeq = randomBytes(2).reduce((value, byte, index) => value + (byte << (index * 8)), 0) & 0x3fff;
+let lastV1ClockSeq = 0;
+let lastV1ClockSeqInitialized = false;
 
 export async function createUuid(format: UuidFormat, name = "name", namespace = "url") {
 	switch (format) {
@@ -59,6 +60,11 @@ export function parseUuidNamespace(value: string) {
 }
 
 function createV1Uuid() {
+	if (!lastV1ClockSeqInitialized) {
+		lastV1ClockSeq = randomBytes(2).reduce((value, byte, index) => value + (byte << (index * 8)), 0) & 0x3fff;
+		lastV1ClockSeqInitialized = true;
+	}
+
 	const timestamp = BigInt(Date.now()) * 10_000n + UUID_EPOCH_OFFSET;
 	if (timestamp <= lastV1Timestamp) {
 		lastV1ClockSeq = (lastV1ClockSeq + 1) & 0x3fff;
