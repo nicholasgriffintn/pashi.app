@@ -72,6 +72,17 @@ export function getRouteToolId() {
 	return toolId && toolId !== "api" ? toolId : undefined;
 }
 
+export function findToolByRoute(tools: readonly GeneratorInfoTool[], routeToolId: string | undefined) {
+	const normalisedRouteToolId = routeToolId?.trim().toLowerCase();
+	if (!normalisedRouteToolId) {
+		return undefined;
+	}
+
+	return tools.find((tool) =>
+		tool.id === normalisedRouteToolId || tool.aliases.includes(normalisedRouteToolId),
+	);
+}
+
 export function pushGeneratorRoute(toolId: string) {
 	const nextPath = `/${toolId}`;
 	if (window.location.pathname !== nextPath) {

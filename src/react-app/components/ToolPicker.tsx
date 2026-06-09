@@ -12,6 +12,11 @@ import {
 import type { GeneratorInfoTool } from "../lib/generator-info";
 
 const RECENT_TOOLS_KEY = "pashi:recent-tools";
+const MENU_GAP = 8;
+const MENU_MAX_HEIGHT = 448;
+const MENU_MIN_HEIGHT = 220;
+const MENU_VIEWPORT_PADDING = 12;
+const MENU_SHADOW_SPACE = 12;
 
 interface ToolPickerProps {
 	activeTool: GeneratorInfoTool;
@@ -23,7 +28,6 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
-		left: 0,
 		maxHeight: 320,
 		side: "bottom",
 	});
@@ -41,7 +45,6 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 	const activeOptionId = flatTools[activeIndex] ? optionId(listboxId, flatTools[activeIndex].id) : undefined;
 	const menuStyle = useMemo<ToolMenuStyle>(
 		() => ({
-			"--tool-menu-left": `${menuPlacement.left}px`,
 			"--tool-menu-max-height": `${menuPlacement.maxHeight}px`,
 		}),
 		[menuPlacement],
@@ -53,20 +56,16 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 		}
 
 		const rect = trigger.getBoundingClientRect();
-		const rootRect = rootRef.current?.getBoundingClientRect();
-		const gap = 8;
-		const padding = 12;
-		const pageBottom = document.querySelector(".shell")?.getBoundingClientRect().bottom ?? window.innerHeight;
-		const usableBottom = Math.min(window.innerHeight, pageBottom) - padding;
-		const usableTop = padding;
-		const below = usableBottom - rect.bottom - gap;
-		const above = rect.top - usableTop - gap;
-		const side = below >= above ? "bottom" : "top";
-		const available = Math.max(160, side === "bottom" ? below : above);
+		const usableBottom = window.innerHeight - MENU_VIEWPORT_PADDING;
+		const usableTop = MENU_VIEWPORT_PADDING;
+		const below = usableBottom - rect.bottom - MENU_GAP - MENU_SHADOW_SPACE;
+		const above = rect.top - usableTop - MENU_GAP - MENU_SHADOW_SPACE;
+		const side = below >= MENU_MIN_HEIGHT || below >= above ? "bottom" : "top";
+		const available = Math.max(0, side === "bottom" ? below : above);
+		const maxHeight = Math.max(96, Math.min(MENU_MAX_HEIGHT, available));
 
 		setMenuPlacement({
-			left: rootRect ? rect.left - rootRect.left : 0,
-			maxHeight: Math.min(448, available),
+			maxHeight,
 			side,
 		});
 	}, []);
@@ -292,13 +291,11 @@ export function ToolPicker({ activeTool, onChange, tools }: ToolPickerProps) {
 }
 
 interface MenuPlacement {
-	left: number;
 	maxHeight: number;
 	side: "bottom" | "top";
 }
 
 type ToolMenuStyle = CSSProperties & {
-	"--tool-menu-left": string;
 	"--tool-menu-max-height": string;
 };
 
@@ -322,7 +319,7 @@ function filterTools(tools: GeneratorInfoTool[], query: string) {
 
 	return tools.filter((tool) => {
 		const haystack = normalise(
-			`${tool.label} ${tool.description} ${tool.display.category} ${tool.audience}`,
+			`${tool.label} ${tool.aliases.join(" ")} ${tool.description} ${tool.display.category} ${tool.audience}`,
 		);
 		return tokens.every((token) => haystack.includes(token));
 	});

@@ -25,6 +25,7 @@ export interface GeneratorInputField {
 }
 
 export interface GeneratorTool {
+	aliases: readonly string[];
 	audience: Audience;
 	description: string;
 	display: {

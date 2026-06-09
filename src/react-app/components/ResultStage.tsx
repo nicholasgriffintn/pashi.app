@@ -44,6 +44,37 @@ function ResultBody({ result }: { result: GenerateResult }) {
 	}
 
 	if (result.kind === "fields" && Array.isArray(result.result) && isRecordArray(result.result)) {
+		if (isColourRecordArray(result.result)) {
+			return (
+				<div className="colour-records-result">
+					{result.result.map((record) => (
+						<article className="colour-card" key={`${record.hex}-${record.rgb}`} style={{ background: record.primary }}>
+							<strong>{record.primary}</strong>
+							<span>{record.palette} / {record.format}</span>
+							<dl>
+								<div>
+									<dt>HEX</dt>
+									<dd>{record.hex}</dd>
+								</div>
+								<div>
+									<dt>RGB</dt>
+									<dd>{record.rgb}</dd>
+								</div>
+								<div>
+									<dt>Contrast</dt>
+									<dd>W {record.contrastWhite} / B {record.contrastBlack}</dd>
+								</div>
+								<div>
+									<dt>AA</dt>
+									<dd>{record.wcagAaNormal}</dd>
+								</div>
+							</dl>
+						</article>
+					))}
+				</div>
+			);
+		}
+
 		const columns = uniqueKeys(result.result);
 		return (
 			<div className="records-result">
@@ -107,6 +138,10 @@ function isRecordArray(value: unknown[]): value is Record<string, string>[] {
 
 function isStringArray(value: unknown[]): value is string[] {
 	return value.every((item) => typeof item === "string");
+}
+
+function isColourRecordArray(records: Record<string, string>[]) {
+	return records.every((record) => record.primary && record.hex && record.rgb);
 }
 
 function uniqueKeys(records: Record<string, string>[]) {

@@ -1,6 +1,7 @@
 export type ResultDisplayKind = "fields" | "image" | "palette" | "text";
 
 export interface GeneratorInfoTool {
+	aliases: string[];
 	audience:
 		| "Design"
 		| "Engineering"

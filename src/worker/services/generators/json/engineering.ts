@@ -3,12 +3,10 @@ import type { GeneratorRequest } from "../request";
 import {
 	base64Encode,
 	bytesToBase64,
-	createDigest,
-	type DigestAlgorithm,
-	parseDate,
 	parseCount,
 	parseLength,
 	randomBytes,
+	randomDateInRange,
 	requireInput,
 	singleOrList,
 	slugify,
@@ -23,14 +21,10 @@ export async function createEngineeringResult(
 	switch (generator.id) {
 		case "base64":
 			return textResult(generator, input, base64Encode(requireInput(input)));
-		case "hash":
-			return textResult(generator, input, await createHash(request));
-		case "password":
-			return textResult(generator, input, createPasswords(request));
 		case "slug":
 			return textResult(generator, input, slugify(requireInput(input)));
 		case "timestamp":
-			return fieldsResult(generator, input, createTimestamp(input));
+			return fieldsResult(generator, input, createTimestamps(request));
 		case "token":
 			return textResult(generator, input, createTokens(request));
 		case "url":
@@ -40,12 +34,6 @@ export async function createEngineeringResult(
 		default:
 			return undefined;
 	}
-}
-
-function createPasswords(request: GeneratorRequest) {
-	const length = parseLength(request.fields.length ?? request.input, 24, 12, 64);
-	const count = parseCount(request.fields.count ?? "", 1, 1000);
-	return singleOrList(Array.from({ length: count }, () => createPassword(length)));
 }
 
 function createTokens(request: GeneratorRequest) {
@@ -59,38 +47,27 @@ function createUuids(request: GeneratorRequest) {
 	return singleOrList(Array.from({ length: count }, () => crypto.randomUUID()));
 }
 
-function createHash(request: GeneratorRequest) {
-	const value = request.fields.value?.trim() || requireInput(request.input);
-	const algorithm = normaliseHashAlgorithm(request.fields.algorithm);
-	return createDigest(value, algorithm);
+function createTimestamps(request: GeneratorRequest) {
+	const count = parseCount(request.fields.count ?? "", 1, 1000);
+	return singleOrList(Array.from({ length: count }, () => createTimestamp(request)));
 }
 
-function normaliseHashAlgorithm(value: string | undefined): DigestAlgorithm {
-	switch (value) {
-		case "SHA-1":
-		case "SHA-384":
-		case "SHA-512":
-			return value;
-		default:
-			return "SHA-256";
-	}
-}
-
-function createTimestamp(input: string) {
-	const date = parseDate(input);
+function createTimestamp(request: GeneratorRequest) {
+	const date = randomDateInRange(
+		request.fields.start || "2000-01-01T00:00:00.000Z",
+		request.fields.end || "2030-12-31T23:59:59.999Z",
+	);
+	const unit = request.fields.unit === "milliseconds" ? "milliseconds" : "seconds";
 	return {
 		epochMilliseconds: `${date.getTime()}`,
 		epochSeconds: `${Math.floor(date.getTime() / 1000)}`,
 		iso: date.toISOString(),
+		timestamp: unit === "milliseconds" ? `${date.getTime()}` : `${Math.floor(date.getTime() / 1000)}`,
+		unit,
 		utc: date.toUTCString(),
 	};
 }
 
 function createToken(length: number) {
 	return bytesToBase64(randomBytes(length)).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
-}
-
-function createPassword(length: number) {
-	const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*_-+=";
-	return Array.from(randomBytes(length), (byte) => alphabet[byte % alphabet.length]).join("");
 }

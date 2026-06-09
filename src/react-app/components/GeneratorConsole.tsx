@@ -10,6 +10,7 @@ import { generateThing } from "../lib/generate-api";
 import { fetchGeneratorInfo, type GeneratorInfoTool } from "../lib/generator-info";
 import {
 	createImageResult,
+	findToolByRoute,
 	getDefaultFieldValues,
 	getDefaultInput,
 	getInitialValues,
@@ -59,7 +60,7 @@ export function GeneratorConsole() {
 
 				const routeToolId = getRouteToolId();
 				const nextTool =
-					info.tools.find((tool) => tool.id === routeToolId) ?? info.tools[0];
+					findToolByRoute(info.tools, routeToolId) ?? info.tools[0];
 				setTools(info.tools);
 				setExportFormats(info.exportFormats);
 				setActiveToolId(nextTool.id);

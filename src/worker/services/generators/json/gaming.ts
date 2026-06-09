@@ -2,7 +2,7 @@ import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import { KANTO_POKEMON, POKEMON_TYPES, type Pokemon } from "../data/pokemon";
 import { parseInteger, randomIntegerInRange, shuffle } from "../../../utils/generation";
-import { calculateDiceProbability } from "./dice";
+import { calculateDiceProbability, rollDice } from "./dice";
 import { fieldsResult, textResult } from "./result";
 
 export function createGamingResult(
@@ -10,6 +10,10 @@ export function createGamingResult(
 	request: GeneratorRequest,
 ): JsonResult | undefined {
 	switch (generator.id) {
+		case "coinflip":
+			return textResult(generator, request.input, createCoinFlips(request));
+		case "dice":
+			return fieldsResult(generator, request.input, rollDice(request));
 		case "dice-probability":
 			return fieldsResult(generator, request.input, calculateDiceProbability(request));
 		case "lottery":
@@ -21,6 +25,11 @@ export function createGamingResult(
 		default:
 			return undefined;
 	}
+}
+
+function createCoinFlips(request: GeneratorRequest) {
+	const count = parseInteger(request.fields.count ?? request.input, 1, 1, 100);
+	return Array.from({ length: count }, () => randomIntegerInRange(2) === 1 ? "HEADS" : "TAILS");
 }
 
 function createLottery(request: GeneratorRequest) {

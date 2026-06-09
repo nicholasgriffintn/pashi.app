@@ -20,6 +20,7 @@ const NO_INPUT_TOOL_IDS = new Set([
 	"company",
 	"coordinates",
 	"iban",
+	"ip-address",
 	"ipv4",
 	"ipv6",
 	"mac",
@@ -31,6 +32,52 @@ const NO_INPUT_TOOL_IDS = new Set([
 	"zodiac",
 	"zip",
 ]);
+const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
+	"api-key": ["api-keys"],
+	"api-token": ["api-tokens"],
+	"barcode": ["barcodes"],
+	"bearer-token": ["bearer-tokens"],
+	"card": ["credit-cards"],
+	"coinflip": ["coin-flip"],
+	"colour": ["color", "colors", "colours"],
+	"company": ["company-names"],
+	"date": ["dates"],
+	"datetime": ["date-time", "datetimes"],
+	"emoji": ["emojis"],
+	"emoji-image": ["emoji-images"],
+	"encryption-key": ["encryption-keys"],
+	"fraction": ["fractions"],
+	"hash": ["hashes"],
+	"hex-number": ["hexadecimal-number", "hexadecimal-numbers"],
+	"iban": ["ibans"],
+	"ip-address": ["ip", "ip-addresses"],
+	"ipv4": ["ipv4-address", "ipv4-addresses"],
+	"ipv6": ["ipv6-address", "ipv6-addresses"],
+	"jwt-token": ["jwt-tokens"],
+	"mac": ["mac-address", "mac-addresses"],
+	"minecraft-seed": ["minecraft-seeds"],
+	"number": ["numbers"],
+	"octal-number": ["octal-numbers"],
+	"oauth-token": ["oauth-tokens"],
+	"passphrase": ["passphrases"],
+	"password": ["passwords"],
+	"person": ["persons"],
+	"phone": ["phone-number", "phone-numbers"],
+	"pin": ["pin-code", "pin-codes"],
+	"port-number": ["port-numbers"],
+	"qr": ["qr-code", "qr-codes"],
+	"salt": ["salts"],
+	"ssh-key": ["ssh-keys"],
+	"string": ["strings"],
+	"time": ["times"],
+	"timestamp": ["timestamps"],
+	"us-state": ["us-states"],
+	"username": ["usernames"],
+	"uuid": ["uuids"],
+	"webhook-secret": ["webhook-secrets"],
+	"zodiac": ["zodiac-sign", "zodiac-signs"],
+	"zip": ["zip-code", "zip-codes"],
+};
 
 export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("qr", "QR image", "Engineering", "QR image for links and notes.", "Input", true, "https://pashi.app", "image", "generate QR", ["https://pashi.app", "https://nicholasgriffin.dev/docs"]),
@@ -52,40 +99,89 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("length", "Length", "32", true),
 		field("count", "Count", "1", true),
 	]),
-	tool("password", "Password", "Engineering", "Strong random passwords.", "Length", false, "24", "text", "Generate password", ["24", "32"], [
-		field("length", "Length", "24", true),
+	tool("api-token", "API token", "Security", "API tokens with selectable encoding.", "Length", false, "32", "text", "Generate API token", ["32", "64"], [
+		field("count", "Count", "10", true),
+		field("length", "Length", "32", true),
+		field("format", "Format", "alphanumeric", false, "select", ["alphanumeric", "hex", "base64", "base64url"]),
+		field("prefix", "Prefix", "token_", false),
+	]),
+	tool("password", "Password", "Security", "Strong passwords with configurable character sets.", "Length", false, "16", "text", "Generate password", ["16", "32"], [
+		field("length", "Length", "16", true),
+		field("count", "Count", "5", true),
+		field("uppercase", "Uppercase", "true", false, "select", ["true", "false"]),
+		field("lowercase", "Lowercase", "true", false, "select", ["true", "false"]),
+		field("numbers", "Numbers", "true", false, "select", ["true", "false"]),
+		field("symbols", "Symbols", "true", false, "select", ["true", "false"]),
+		field("excludeSimilar", "Exclude similar", "false", false, "select", ["false", "true"]),
+		field("customSymbols", "Custom symbols", "!@#$%^&*()_+-=[]{}|;:,.<>?", false),
+	]),
+	tool("hash", "Hash", "Security", "MD5 and SHA hashes for text or random data.", "Input", false, "Text to hash", "fields", "Generate hash", ["hello world", "sha256"], [
+		field("value", "Text", "hello world", false, "textarea"),
+		field("algorithm", "Algorithm", "sha256", true, "select", ["md5", "sha1", "sha256", "sha512"]),
 		field("count", "Count", "1", true),
+		field("uppercase", "Uppercase", "false", false, "select", ["false", "true"]),
+		field("includeInput", "Include input", "false", false, "select", ["false", "true"]),
 	]),
-	tool("hash", "Hash", "Engineering", "SHA digest with selectable algorithm.", "Input", true, "Text to hash", "text", "Hash it", ["hello world", "release-v1"], [
-		field("value", "Text", "hello world", true, "textarea"),
-		field("algorithm", "Algorithm", "SHA-256", true, "select", ["SHA-256", "SHA-384", "SHA-512", "SHA-1"]),
-	]),
-	tool("api-key", "API key", "Security", "Random API key with prefix.", "Prefix", false, "pk_live", "text", "Generate key", ["pk_live", "sk_test"], [
-		field("prefix", "Prefix", "pk_live", false),
-		field("bytes", "Bytes", "32", true),
+	tool("api-key", "API key", "Security", "API keys with selectable formats and optional secrets.", "Length", false, "32", "fields", "Generate key", ["32", "64"], [
 		field("count", "Count", "1", true),
+		field("length", "Length", "32", true),
+		field("format", "Format", "alphanumeric", false, "select", ["alphanumeric", "hex", "base64", "base64url", "uuid", "numeric"]),
+		field("prefix", "Prefix", "sk_", false),
+		field("includeSecret", "Include secret", "false", false, "select", ["false", "true"]),
+		field("keyLength", "Key length", "32", true),
+		field("secretLength", "Secret length", "64", true),
+		field("keyPrefix", "Key prefix", "key_", false),
+		field("secretPrefix", "Secret prefix", "secret_", false),
 	]),
-	tool("jwt-token", "JWT token", "Security", "Valid HS256 signed JWT with matching secret.", "Subject", false, "user_123", "fields", "Sign JWT", ["user_123"], [
+	tool("jwt-token", "JWT token", "Security", "Signed JWTs with HMAC or RSA algorithms and configurable claims.", "Subject", false, "user_123", "fields", "Sign JWT", ["user_123", "RS256"], [
+		field("count", "Count", "1", true),
+		field("algorithm", "Algorithm", "HS256", false, "select", ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512"]),
 		field("subject", "Subject", "user_123", true),
 		field("issuer", "Issuer", "pashi", true),
+		field("audience", "Audience", "https://api.example.com", false),
 		field("expiresIn", "Expires in seconds", "3600", true),
+		field("includeNbf", "Include nbf", "false", false, "select", ["false", "true"]),
+		field("includeJti", "Include jti", "true", false, "select", ["true", "false"]),
+		field("customClaims", "Custom claims JSON", "{\"role\":\"admin\"}", false, "textarea"),
 	]),
-	tool("oauth-token", "OAuth token", "Security", "OAuth-style bearer access token.", "Bytes", false, "64", "text", "Generate OAuth", ["64"], [
-		field("bytes", "Bytes", "64", true),
+	tool("oauth-token", "OAuth token", "Security", "OAuth 2.0 token response with optional refresh token.", "Length", false, "64", "fields", "Generate OAuth", ["64"], [
 		field("count", "Count", "1", true),
+		field("tokenType", "Token type", "bearer", false, "select", ["bearer", "mac", "basic"]),
+		field("format", "Format", "base64url", false, "select", ["base64", "base64url", "hex", "alphanumeric"]),
+		field("accessTokenLength", "Access length", "64", true),
+		field("refreshTokenLength", "Refresh length", "128", true),
+		field("expiresIn", "Expires in seconds", "3600", true),
+		field("scope", "Scope", "read write", false),
+		field("includeRefresh", "Include refresh", "true", false, "select", ["true", "false"]),
 	]),
-	tool("webhook-secret", "Webhook secret", "Security", "Webhook signing secret.", "Bytes", false, "32", "text", "Generate secret", ["32"], [
-		field("bytes", "Bytes", "32", true),
+	tool("webhook-secret", "Webhook secret", "Security", "Webhook HMAC secret with optional signature example.", "Length", false, "32", "fields", "Generate secret", ["32"], [
 		field("count", "Count", "1", true),
+		field("length", "Length", "32", true),
+		field("algorithm", "Algorithm", "sha256", false, "select", ["sha256", "sha384", "sha512"]),
+		field("format", "Format", "hex", false, "select", ["hex", "base64", "alphanumeric"]),
+		field("includeExample", "Include example", "true", false, "select", ["true", "false"]),
+		field("includeTimestamp", "Include timestamp", "false", false, "select", ["false", "true"]),
 	]),
-	tool("encryption-key", "Encryption key", "Security", "Random key material in hex and base64url.", "Bits", false, "256", "fields", "Generate key", ["128", "256"], [
-		field("bits", "Bits", "256", true, "select", ["128", "192", "256", "512"]),
-	]),
-	tool("salt", "Salt", "Security", "Random salt value.", "Bytes", false, "24", "text", "Generate salt", ["16", "24"], [
-		field("bytes", "Bytes", "24", true),
+	tool("encryption-key", "Encryption key", "Security", "AES, HMAC, and RSA key material with selectable output formats.", "Algorithm", false, "aes", "fields", "Generate key", ["aes", "rsa"], [
 		field("count", "Count", "1", true),
+		field("algorithm", "Algorithm", "aes", false, "select", ["aes", "hmac", "rsa"]),
+		field("keySize", "Key size", "256", true, "select", ["128", "192", "256", "384", "512", "2048", "4096"]),
+		field("format", "Format", "hex", false, "select", ["hex", "base64", "base64url", "pem"]),
+		field("includeIv", "Include IV", "true", false, "select", ["true", "false"]),
 	]),
-	tool("ssh-key", "Key pair", "Security", "Real ECDSA P-256 PEM key pair.", "Input", false, "", "fields", "Generate keys", ["ECDSA P-256"]),
+	tool("salt", "Salt", "Security", "Cryptographic salt with selectable encoding.", "Length", false, "32", "fields", "Generate salt", ["16", "32"], [
+		field("length", "Length", "32", true),
+		field("encoding", "Encoding", "base64", false, "select", ["base64", "base64url", "hex", "alphanumeric"]),
+		field("count", "Count", "1", true),
+		field("includeLength", "Include length", "false", false, "select", ["false", "true"]),
+	]),
+	tool("ssh-key", "SSH key", "Security", "RSA SSH key pair with authorized_keys public output.", "Options", false, "", "fields", "Generate SSH", ["rsa", "deploy@ci-server"], [
+		field("count", "Count", "1", true),
+		field("type", "Type", "rsa", false, "select", ["rsa"]),
+		field("bits", "Bits", "2048", false, "select", ["2048", "4096"]),
+		field("format", "Format", "both", false, "select", ["both", "pem"]),
+		field("comment", "Comment", "pashi@localhost", false),
+	]),
 	tool("bearer-token", "Bearer token", "Security", "Ready-to-paste bearer token header value.", "Bytes", false, "48", "text", "Generate bearer", ["48"], [
 		field("bytes", "Bytes", "48", true),
 		field("count", "Count", "1", true),
@@ -98,44 +194,76 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("base64", "Base64", "Engineering", "Base64 encode text.", "Input", true, "Text to encode", "text", "Encode", ["hello world", "{\"ok\":true}"]),
 	tool("url", "URL encode", "Engineering", "URL encode text.", "Input", true, "Text or URL", "text", "Encode URL", ["hello world", "https://nicholasgriffin.dev/?q=hello world"]),
 	tool("slug", "Slug", "Engineering", "Safe URL slug.", "Input", true, "Launch notes v2", "text", "Make slug", ["My Great Blog Post", "Launch notes v2"]),
-	tool("timestamp", "Timestamp", "Engineering", "Epoch and ISO date values.", "Input", false, "Optional date or epoch", "fields", "Convert time", ["now", "2026-06-08"]),
-	tool("date", "Date", "Engineering", "Random date in a range.", "Range", false, "2020-2030", "text", "Generate date", ["2020-01-01 to 2030-12-31"], [
-		field("start", "Start", "2020-01-01", true),
-		field("end", "End", "2030-12-31", true),
-		field("format", "Format", "iso-date", false, "select", ["iso-date", "uk", "us"]),
-		field("count", "Count", "1", true),
-	]),
-	tool("time", "Time", "Engineering", "Random time in a range.", "Range", false, "Any", "text", "Generate time", ["24h", "12h"], [
-		field("start", "Start", "2000-01-01T00:00:00Z", false),
-		field("end", "End", "2000-01-01T23:59:59Z", false),
-		field("format", "Format", "24h", false, "select", ["24h", "12h"]),
-		field("count", "Count", "1", true),
-	]),
-	tool("datetime", "Date/time", "Engineering", "Random date/time with useful formats.", "Range", false, "2020-2030", "fields", "Generate datetime", ["2020-2030"], [
+	tool("timestamp", "Timestamp", "Engineering", "Random timestamp records.", "Range", false, "2020-2030", "fields", "Generate timestamp", ["2020-2030", "unix seconds"], [
 		field("start", "Start", "2020-01-01T00:00:00Z", true),
 		field("end", "End", "2030-12-31T23:59:59Z", true),
+		field("unit", "Unit", "seconds", false, "select", ["seconds", "milliseconds"]),
 		field("count", "Count", "1", true),
 	]),
-	tool("ipv4", "IPv4 address", "Identifiers", "Random IPv4 addresses.", "Count", false, "1", "text", "Generate IPv4", ["1", "10"], [
+	tool("date", "Date", "Engineering", "Random dates in multiple formats.", "Range", false, "1970-01-01", "text", "Generate date", ["2020-01-01", "unix"], [
+		field("startDate", "Start date", "1970-01-01", true),
+		field("endDate", "End date", new Date().toISOString().slice(0, 10), true),
+		field("format", "Format", "iso8601", false, "select", ["iso8601", "us", "eu", "long", "short", "unix"]),
+		field("count", "Count", "10", true),
+	]),
+	tool("time", "Time", "Engineering", "Random times with hour range and second controls.", "Format", false, "24-hour", "fields", "Generate time", ["24-hour", "12-hour"], [
+		field("format", "Format", "24-hour", false, "select", ["24-hour", "12-hour"]),
+		field("startHour", "Start hour", "0", true),
+		field("endHour", "End hour", "23", true),
+		field("includeSeconds", "Include seconds", "true", false, "select", ["true", "false"]),
 		field("count", "Count", "1", true),
 	]),
-	tool("ipv6", "IPv6 address", "Identifiers", "Random IPv6 addresses.", "Count", false, "1", "text", "Generate IPv6", ["1", "10"], [
+	tool("datetime", "Timestamp", "Engineering", "Random Unix or ISO 8601 timestamps.", "Format", false, "unix", "fields", "Generate timestamp", ["unix", "iso8601"], [
+		field("format", "Format", "unix", false, "select", ["unix", "iso8601"]),
+		field("startDate", "Start date", "1970-01-01", true),
+		field("endDate", "End date", new Date().toISOString().slice(0, 10), true),
 		field("count", "Count", "1", true),
 	]),
-	tool("mac", "MAC address", "Identifiers", "Random locally administered MAC addresses.", "Count", false, "1", "text", "Generate MAC", ["1", "10"], [
-		field("count", "Count", "1", true),
+	tool("ip-address", "IP address", "Identifiers", "Random IPv4 and IPv6 addresses with uniqueness and range controls.", "Version", false, "ipv4", "text", "Generate IP", ["ipv4", "ipv6"], [
+		field("version", "Version", "ipv4", false, "select", ["ipv4", "ipv6", "both"]),
+		field("count", "Count", "10", true),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
+		field("includePrivate", "Private ranges", "true", false, "select", ["true", "false"]),
+		field("includeLocalhost", "Localhost", "false", false, "select", ["false", "true"]),
 	]),
-	tool("phone", "Phone number", "Identifiers", "Random formatted phone number.", "Country", false, "US", "text", "Generate phone", ["US", "GB"], [
-		field("country", "Country", "US", false),
-		field("count", "Count", "1", true),
+	tool("ipv4", "IPv4 address", "Identifiers", "Random IPv4 addresses.", "Count", false, "10", "text", "Generate IPv4", ["10", "25"], [
+		field("count", "Count", "10", true),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
+		field("includePrivate", "Private ranges", "true", false, "select", ["true", "false"]),
+		field("includeLocalhost", "Localhost", "false", false, "select", ["false", "true"]),
 	]),
-	tool("username", "Username", "Identifiers", "Random readable username.", "Input", false, "", "text", "Generate username", ["neon-snap"], [
-		field("separator", "Separator", "-", false),
-		field("suffix", "Suffix digits", "3", false),
-		field("count", "Count", "1", true),
+	tool("ipv6", "IPv6 address", "Identifiers", "Random IPv6 addresses.", "Count", false, "10", "text", "Generate IPv6", ["10", "25"], [
+		field("count", "Count", "10", true),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
+		field("includePrivate", "Private ranges", "true", false, "select", ["true", "false"]),
+		field("includeLocalhost", "Localhost", "false", false, "select", ["false", "true"]),
 	]),
-	tool("company", "Company name", "Identifiers", "Random company names.", "Count", false, "1", "text", "Generate company", ["1", "10"], [
-		field("count", "Count", "1", true),
+	tool("mac", "MAC address", "Identifiers", "IEEE 802 MAC addresses with format and address-bit controls.", "Format", false, "colon", "text", "Generate MAC", ["colon", "cisco"], [
+		field("format", "Format", "colon", false, "select", ["colon", "hyphen", "dot", "cisco", "plain"]),
+		field("count", "Count", "10", true),
+		field("uppercase", "Uppercase", "false", false, "select", ["false", "true"]),
+		field("local", "Locally administered", "true", false, "select", ["true", "false"]),
+		field("unicast", "Unicast", "true", false, "select", ["true", "false"]),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
+	]),
+	tool("phone", "Phone number", "Identifiers", "Random country-specific test phone numbers.", "Country", false, "US", "text", "Generate phone", ["US", "GB"], [
+		field("country", "Country", "US", false, "select", ["US", "CA", "GB", "DE", "FR", "ES", "IT", "NL", "AU", "JP", "CN", "IN", "BR", "MX"]),
+		field("format", "Format", "national", false, "select", ["national", "international", "e164"]),
+		field("count", "Count", "10", true),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
+	]),
+	tool("username", "Username", "Identifiers", "Random usernames with style, length, and uniqueness controls.", "Style", false, "mixed", "text", "Generate username", ["mixed", "gamer"], [
+		field("style", "Style", "mixed", false, "select", ["professional", "gamer", "quirky", "simple", "cool", "mixed"]),
+		field("count", "Count", "10", true),
+		field("minLength", "Min length", "6", true),
+		field("maxLength", "Max length", "15", true),
+		field("includeNumbers", "Include numbers", "true", false, "select", ["true", "false"]),
+		field("unique", "Unique", "true", false, "select", ["true", "false"]),
+	]),
+	tool("company", "Company name", "Identifiers", "Random company names by style and industry.", "Style", false, "mixed", "text", "Generate company", ["mixed", "tech"], [
+		field("style", "Style", "mixed", false, "select", ["professional", "creative", "modern", "traditional", "tech", "mixed"]),
+		field("industry", "Industry", "general", false, "select", ["general", "tech", "finance", "retail", "healthcare", "consulting", "food", "fashion", "construction", "education"]),
+		field("count", "Count", "10", true),
 	]),
 	tool("minecraft-uuid", "Minecraft UUID", "Identifiers", "Random Minecraft UUID formats.", "Count", false, "1", "fields", "Generate UUID", ["1", "10"], [
 		field("count", "Count", "1", true),
@@ -146,52 +274,86 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("zodiac", "Zodiac sign", "Identifiers", "Random zodiac signs.", "Count", false, "1", "text", "Generate sign", ["1", "5"], [
 		field("count", "Count", "1", true),
 	]),
-	tool("person", "Person", "People", "Generated person test data.", "Locale", false, "GB", "fields", "Generate person", ["GB", "US"], [
-		field("locale", "Locale", "GB", false, "select", ["GB", "US"]),
-		field("minAge", "Min age", "18", true),
-		field("maxAge", "Max age", "65", true),
+	tool("person", "Person", "People", "Generated fictional identities with optional financial and professional data.", "Locale", false, "en_US", "fields", "Generate person", ["en_US", "de_DE"], [
+		field("locale", "Locale", "en_US", false, "select", ["en_US", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"]),
 		field("count", "Count", "1", true),
+		field("gender", "Gender", "mixed", false, "select", ["mixed", "male", "female"]),
+		field("ageMin", "Min age", "18", true),
+		field("ageMax", "Max age", "80", true),
+		field("includeFinancial", "Financial data", "true", false, "select", ["true", "false"]),
+		field("includeProfessional", "Professional data", "true", false, "select", ["true", "false"]),
 	]),
-	tool("number", "Number", "Random", "Random integers or decimals in a range.", "Range", false, "1-100", "text", "Generate number", ["1-100", "0-1 decimal"], [
+	tool("number", "Number", "Random", "Random numbers by type, range, and precision.", "Type", false, "integer", "text", "Generate number", ["integer", "percentage"], [
 		field("min", "Min", "1", true),
 		field("max", "Max", "100", true),
-		field("mode", "Mode", "integer", true, "select", ["integer", "decimal"]),
-		field("decimals", "Decimals", "4", true),
-		field("count", "Count", "1", true),
+		field("type", "Type", "integer", true, "select", ["integer", "decimal", "prime", "percentage", "even", "odd", "negative"]),
+		field("decimals", "Decimals", "2", true),
+		field("count", "Count", "10", true),
 	]),
-	tool("hex-number", "Hex number", "Random", "Random hexadecimal number in a range.", "Range", false, "0-65535", "text", "Generate hex", ["0-65535"], [
-		field("min", "Min", "0", true),
-		field("max", "Max", "65535", true),
+	tool("hex-number", "Hex number", "Random", "Random hexadecimal numbers with length and format controls.", "Length", false, "8", "text", "Generate hex", ["8", "16"], [
+		field("count", "Count", "10", true),
+		field("length", "Length", "8", true),
+		field("prefix", "0x prefix", "true", false, "select", ["true", "false"]),
+		field("uppercase", "Uppercase", "true", false, "select", ["true", "false"]),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
 	]),
-	tool("octal-number", "Octal number", "Random", "Random octal number in a range.", "Range", false, "0-65535", "text", "Generate octal", ["0-65535"], [
-		field("min", "Min", "0", true),
-		field("max", "Max", "65535", true),
+	tool("octal-number", "Octal number", "Random", "Random octal numbers with length and prefix controls.", "Length", false, "8", "text", "Generate octal", ["8", "16"], [
+		field("count", "Count", "10", true),
+		field("length", "Length", "8", true),
+		field("prefix", "0o prefix", "true", false, "select", ["true", "false"]),
+		field("unique", "Unique", "false", false, "select", ["false", "true"]),
 	]),
-	tool("fraction", "Fraction", "Random", "Random simplified fraction.", "Denominator", false, "12", "fields", "Generate fraction", ["12", "100"], [
+	tool("fraction", "Fraction", "Random", "Random fraction records.", "Type", false, "proper", "fields", "Generate fraction", ["proper", "mixed"], [
+		field("type", "Type", "proper", true, "select", ["proper", "improper", "mixed"]),
+		field("maxNumerator", "Max numerator", "12", true),
 		field("maxDenominator", "Max denominator", "12", true),
-	]),
-	tool("string", "String", "Random", "Random string from a chosen alphabet.", "Length", false, "16", "text", "Generate string", ["16", "32"], [
-		field("length", "Length", "16", true),
-		field("alphabet", "Alphabet", "alphanumeric", false, "select", ["alphanumeric", "letters", "numeric", "hex"]),
+		field("simplify", "Simplify", "yes", false, "select", ["yes", "no"]),
 		field("count", "Count", "1", true),
+	]),
+	tool("string", "String", "Strings", "Random strings, words, sentences, binary, hex, and base64.", "Length", false, "32", "text", "Generate string", ["alphanumeric", "lorem"], [
+		field("type", "Type", "alphanumeric", false, "select", ["alphanumeric", "letters", "words", "sentences", "paragraphs", "hex", "base64", "binary", "lorem"]),
+		field("count", "Count", "1", true),
+		field("length", "Length", "32", true),
+		field("wordCount", "Words", "5", true),
+		field("sentenceCount", "Sentences", "3", true),
+		field("paragraphCount", "Paragraphs", "2", true),
+		field("byteCount", "Bytes", "32", true),
+		field("case", "Case", "mixed", false, "select", ["mixed", "lower", "upper"]),
+		field("uppercase", "Uppercase", "true", false, "select", ["true", "false"]),
+		field("lowercase", "Lowercase", "true", false, "select", ["true", "false"]),
+		field("numbers", "Numbers", "true", false, "select", ["true", "false"]),
 	]),
 	tool("emoji", "Emoji", "Strings", "Random emoji string.", "Count", false, "6", "text", "Generate emoji", ["6", "12"], [
 		field("count", "Count", "6", true),
 		field("separator", "Separator", "", false),
 	]),
-	tool("pin", "PIN code", "Random", "Numeric PIN code.", "Length", false, "6", "text", "Generate PIN", ["4", "6"], [
-		field("length", "Length", "6", true),
-		field("count", "Count", "1", true),
+	tool("pin", "PIN code", "Security", "Numeric PINs with pattern filters.", "Length", false, "4", "text", "Generate PIN", ["4", "6"], [
+		field("length", "Length", "4", true),
+		field("count", "Count", "10", true),
+		field("uniqueDigits", "Unique digits", "false", false, "select", ["false", "true"]),
+		field("excludeSequential", "Exclude sequential", "false", false, "select", ["false", "true"]),
+		field("excludeRepeating", "Exclude repeating", "false", false, "select", ["false", "true"]),
 	]),
-	tool("passphrase", "Passphrase", "Random", "Memorable random word passphrase.", "Words", false, "4", "text", "Generate phrase", ["4", "6"], [
-		field("words", "Words", "4", true),
+	tool("passphrase", "Passphrase", "Security", "Memorable passphrases with word and suffix controls.", "Words", false, "5", "text", "Generate phrase", ["5", "6"], [
+		field("wordCount", "Words", "5", true),
 		field("separator", "Separator", "-", false),
-		field("count", "Count", "1", true),
+		field("count", "Count", "5", true),
+		field("capitalize", "Capitalize", "false", false, "select", ["false", "true"]),
+		field("includeNumbers", "Include number", "false", false, "select", ["false", "true"]),
 	]),
-	tool("colour", "Colour", "Design", "Random hexadecimal colour values.", "Count", false, "1", "palette", "Generate colour", ["1", "5"], [
-		field("count", "Count", "1", true),
+	tool("colour", "Colour", "Design", "Random colours with formats and contrast checks.", "Count", false, "10", "fields", "Generate colours", ["5", "10"], [
+		field("count", "Count", "10", true),
+		field("format", "Format", "hex", false, "select", ["hex", "rgb", "hsl", "rgba", "hsla", "all"]),
+		field("palette", "Palette", "random", false, "select", ["random", "pastel", "vibrant", "dark", "light", "grayscale"]),
+		field("alpha", "Alpha", "1", true),
 	]),
-	tool("palette", "Palette", "Design", "Seeded five-colour palette.", "Input", false, "Cyber citrus checkout", "palette", "Make palette", ["Cyber citrus checkout", "Neon ink docs"]),
+	tool("palette", "Palette", "Design", "Configurable colour palette with harmony controls.", "Seed", false, "Cyber citrus checkout", "palette", "Make palette", ["Cyber citrus checkout", "Neon ink docs"], [
+		field("seed", "Seed", "Cyber citrus checkout", false),
+		field("count", "Count", "5", true),
+		field("harmony", "Harmony", "analogous", false, "select", ["analogous", "complementary", "triadic", "split", "monochrome", "random"]),
+		field("saturation", "Saturation", "72", true),
+		field("lightness", "Lightness", "52", true),
+	]),
 	tool("lorem", "Lorem ipsum", "Design", "Placeholder copy with configurable length.", "Topic", false, "Pashi interface", "text", "Generate lorem", ["Pashi interface", "Checkout flow"], [
 		field("topic", "Topic", "Pashi interface", false),
 		field("paragraphs", "Paragraphs", "2", true),
@@ -203,22 +365,40 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("medium", "Medium", "email", true),
 		field("campaign", "Campaign", "launch", true),
 	]),
-	tool("coordinates", "Coordinates", "Geographic", "Random latitude and longitude records.", "Count", false, "1", "fields", "Generate coords", ["1", "10"], [
+	tool("coordinates", "Coordinates", "Geographic", "Random coordinates with region, format, and custom bounds.", "Region", false, "global", "fields", "Generate coords", ["global", "uk"], [
+		field("region", "Region", "global", false, "select", ["global", "north-america", "south-america", "europe", "africa", "asia", "oceania", "usa", "canada", "uk", "australia"]),
 		field("count", "Count", "1", true),
+		field("format", "Format", "decimal", false, "select", ["decimal", "dms", "dm"]),
+		field("precision", "Precision", "6", true),
+		field("minLat", "Min latitude", "", false),
+		field("maxLat", "Max latitude", "", false),
+		field("minLon", "Min longitude", "", false),
+		field("maxLon", "Max longitude", "", false),
 	]),
-	tool("zip", "ZIP code", "Geographic", "Random US ZIP codes.", "Count", false, "1", "text", "Generate ZIP", ["1", "10"], [
+	tool("zip", "ZIP code", "Geographic", "Random postal codes for multiple locales.", "Locale", false, "en_US", "text", "Generate ZIP", ["en_US", "en_GB"], [
+		field("locale", "Locale", "en_US", false, "select", ["en_US", "en_GB", "en_CA", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"]),
+		field("count", "Count", "10", true),
+	]),
+	tool("card", "Card number", "TestData", "Brand-valid, Luhn-valid test card details.", "Type", false, "visa", "fields", "Generate card", ["visa", "mastercard"], [
+		field("type", "Type", "visa", false, "select", ["visa", "mastercard", "amex", "discover"]),
 		field("count", "Count", "1", true),
+		field("includeDetails", "Include details", "true", false, "select", ["true", "false"]),
+		field("includeName", "Include name", "true", false, "select", ["true", "false"]),
 	]),
-	tool("card", "Card number", "TestData", "Luhn-valid test card details.", "Brand", false, "visa", "fields", "Generate card", ["visa", "mastercard"], [
-		field("brand", "Brand", "visa", false, "select", ["visa", "mastercard", "amex"]),
-		field("count", "Count", "1", true),
+	tool("iban", "IBAN", "TestData", "Valid-checksum IBANs for selected countries.", "Country", false, "GB", "text", "Generate IBAN", ["GB", "DE"], [
+		field("country", "Country", "GB", false, "select", ["GB", "DE", "FR", "IT", "ES", "NL"]),
+		field("count", "Count", "10", true),
 	]),
-	tool("iban", "IBAN", "TestData", "Valid-format GB IBANs for testing.", "Count", false, "1", "text", "Generate IBAN", ["1", "10"], [
-		field("count", "Count", "1", true),
-	]),
-	tool("dice", "Dice", "Gaming", "Roll dice with notation, modifier, and multiple rolls.", "Notation", false, "1d6", "fields", "Roll dice", ["1d6", "2d20+5", "4d6 drop lowest"], [
-		field("notation", "Notation", "1d6", true),
-		field("rolls", "Rolls", "1", true),
+	tool("dice", "Dice", "Gaming", "Roll RPG dice with drop, keep, modifier, and bulk controls.", "Dice type", false, "d6", "fields", "Roll dice", ["d20", "4d6", "2d20"], [
+		field("count", "Rolls", "1", true),
+		field("dice_type", "Dice type", "d6", false, "select", ["d4", "d6", "d8", "d10", "d12", "d20", "d100", "custom"]),
+		field("dice_sides", "Custom sides", "6", true),
+		field("num_dice", "Dice count", "1", true),
+		field("modifier", "Modifier", "0", true),
+		field("drop_lowest", "Drop lowest", "0", true),
+		field("drop_highest", "Drop highest", "0", true),
+		field("keep_highest", "Keep highest", "0", true),
+		field("show_individual", "Show rolls", "true", false, "select", ["true", "false"]),
 	]),
 	tool("dice-probability", "Dice probability", "Gaming", "Exact probability for dice notation and target.", "Notation", false, "2d6", "fields", "Calculate odds", ["2d6 >= 7", "4d6 drop lowest >= 12"], [
 		field("notation", "Notation", "2d6", true),
@@ -235,7 +415,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 		field("type", "Type", "any", false, "select", POKEMON_TYPES),
 		field("count", "Count", "1", true),
 	]),
-	tool("coinflip", "Coin flip", "Gaming", "Random heads or tails.", "Count", false, "1", "text", "Flip coin", ["1", "10"], [
+	tool("coinflip", "Coin flip", "Gaming", "Independent CSPRNG HEADS or TAILS flips.", "Count", false, "1", "text", "Flip coin", ["1", "10"], [
 		field("count", "Count", "1", true),
 	]),
 	tool("list-randomizer", "List randomizer", "Tools", "Shuffle a comma or newline list.", "Items", true, "Ada\nGrace\nMargaret", "text", "Shuffle list", ["Ada, Grace, Margaret"], [
@@ -257,7 +437,10 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 ];
 
 export function findGenerator(type: string) {
-	return GENERATOR_TOOLS.find((generator) => generator.id === type);
+	const normalisedType = type.trim().toLowerCase();
+	return GENERATOR_TOOLS.find((generator) =>
+		generator.id === normalisedType || generator.aliases.includes(normalisedType),
+	);
 }
 
 export function listGeneratorTools() {
@@ -278,6 +461,7 @@ function tool(
 	fields?: readonly GeneratorInputField[],
 ): GeneratorTool {
 	return {
+		aliases: GENERATOR_ALIASES[id] ?? [],
 		audience,
 		description,
 		display: {

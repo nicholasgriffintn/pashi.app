@@ -8,7 +8,6 @@ import { createIdentifierResult } from "./identifiers";
 import { createNumberResult } from "./numbers";
 import { createPeopleResult } from "./people";
 import { createProductResult } from "./product";
-import { createRandomResult } from "./random";
 import { createSecurityResult } from "./security";
 import { createStringResult } from "./strings";
 import { createToolsResult } from "./tools";
@@ -35,7 +34,6 @@ export async function createJsonResult(
 		createNumberResult(generator, request) ??
 		createPeopleResult(generator, request) ??
 		createProductResult(generator, request) ??
-		createRandomResult(generator, request) ??
 		createStringResult(generator, request) ??
 		createToolsResult(generator, request);
 

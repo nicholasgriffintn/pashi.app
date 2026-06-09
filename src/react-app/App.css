@@ -279,20 +279,21 @@ h1 {
 	display: grid;
 	gap: 0.6rem;
 	grid-template-rows: auto minmax(0, 1fr);
-	left: var(--tool-menu-left);
-	max-height: var(--tool-menu-max-height);
+	left: 0;
+	max-height: min(var(--tool-menu-max-height), calc(100dvh - 2rem));
 	overflow: hidden;
 	padding: 0.75rem;
 	position: absolute;
-	right: 0;
 	top: calc(100% + 0.5rem);
-	width: auto;
-	z-index: 40;
+	transform-origin: top center;
+	width: 100%;
+	z-index: 80;
 }
 
 .tool-menu[data-side="top"] {
 	bottom: calc(100% + 0.5rem);
 	top: auto;
+	transform-origin: bottom center;
 }
 
 .tool-search {
@@ -743,6 +744,72 @@ h1 {
 	width: 100%;
 }
 
+.colour-records-result {
+	display: grid;
+	gap: 0.65rem;
+	grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+	max-height: 100%;
+	overflow: auto;
+	padding: 1rem;
+	scrollbar-color: #ff2f78 rgba(17, 20, 46, 0.12);
+	scrollbar-width: thin;
+	width: 100%;
+}
+
+.colour-card {
+	aspect-ratio: 1;
+	border: 1px solid #11142e;
+	color: #fff7d7;
+	display: grid;
+	min-width: 0;
+	padding: 0.6rem;
+}
+
+.colour-card > strong,
+.colour-card > span,
+.colour-card dl {
+	align-self: end;
+	background: rgba(7, 10, 28, 0.86);
+	overflow-wrap: anywhere;
+	padding: 0.28rem 0.35rem;
+}
+
+.colour-card > strong {
+	font-size: clamp(0.74rem, 2.4vw, 0.92rem);
+	line-height: 1.1;
+}
+
+.colour-card > span {
+	color: #25ffe6;
+	font-size: 0.66rem;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+.colour-card dl {
+	display: grid;
+	gap: 0.24rem;
+	margin: 0;
+}
+
+.colour-card dl div {
+	display: grid;
+	gap: 0.2rem;
+	grid-template-columns: 3.4rem minmax(0, 1fr);
+}
+
+.colour-card dt,
+.colour-card dd {
+	font-size: 0.62rem;
+	line-height: 1.15;
+	margin: 0;
+}
+
+.colour-card dt {
+	color: #ffd14c;
+	font-weight: 900;
+}
+
 .result-actions {
 	display: flex;
 	flex-wrap: wrap;
@@ -962,14 +1029,10 @@ h1 {
 	}
 
 	.tool-menu {
-		bottom: 1rem;
-		left: 1rem;
-		max-height: none !important;
-		position: fixed;
-		right: 1rem;
-		top: 1rem;
-		width: auto;
-		z-index: 40;
+		box-shadow:
+			6px 6px 0 #ff2f78,
+			0 0 32px rgba(47, 255, 241, 0.16);
+		max-height: min(var(--tool-menu-max-height), calc(100dvh - 1.5rem));
 	}
 }
 
