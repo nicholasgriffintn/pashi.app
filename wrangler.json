@@ -9,7 +9,7 @@
 		"nodejs_compat"
 	],
 	"vars": {
-		"ENABLE_AI": "true",
+		"ENABLE_AI": "false",
 		"ENABLE_CONVERSIONS": "true"
 	},
 	"ai": {
