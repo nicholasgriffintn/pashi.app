@@ -595,6 +595,7 @@ h1 {
 	filter: drop-shadow(18px 20px 0 rgba(255, 47, 120, 0.42));
 	max-width: 100%;
 	position: relative;
+	transform: translateY(-1.6rem);
 	width: 100%;
 	z-index: 2;
 }
@@ -1135,6 +1136,22 @@ h1 {
 
 	.field-grid {
 		grid-template-columns: 1fr;
+	}
+
+	.generate-actions {
+		align-items: stretch;
+		flex-direction: column;
+	}
+
+	.mode-control {
+		align-items: stretch;
+		flex-direction: column;
+		gap: 0.35rem;
+		width: 100%;
+	}
+
+	.mode-toggle {
+		width: 100%;
 	}
 
 	.generate-actions button,

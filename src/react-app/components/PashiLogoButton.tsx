@@ -36,7 +36,7 @@ export function PashiLogoButton({
 			onClick={handleClick}
 			type="button"
 		>
-			<img alt="" aria-hidden="true" className={imageClassName} src="/logo.svg" />
+			<img alt="" aria-hidden="true" className={imageClassName} src="/logo-v2-stylised.svg" />
 		</button>
 	);
 }
