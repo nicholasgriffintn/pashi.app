@@ -1,7 +1,7 @@
 import { type AnchorHTMLAttributes, useMemo } from "react";
 
 import type { GeneratorInfoTool } from "../lib/generator-info";
-import type { ResultStageValue } from "./ResultStage";
+import type { ResultStageValue } from "../lib/result-types";
 import { resultToText } from "../lib/result-format";
 
 interface ResultActionsProps {

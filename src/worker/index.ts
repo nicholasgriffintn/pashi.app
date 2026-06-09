@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { blockBots } from "./middleware/bot-blocker";
 import { createExportResponse, listExportFormats } from "./services/export";
 import { createGeneratorResponse, listGeneratorTools } from "./services/generators/index";
 import {
@@ -10,6 +11,8 @@ import { createSitemapResponse } from "./services/sitemap";
 import { readGeneratorBody } from "./utils/body";
 
 const app = new Hono<{ Bindings: Env }>({ strict: false });
+
+app.use("*", blockBots);
 
 function createApiIndexResponse() {
 	const tools = listGeneratorTools();

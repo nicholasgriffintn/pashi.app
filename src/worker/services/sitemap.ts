@@ -1,3 +1,4 @@
+import { escapeXml } from "../../shared/text";
 import { listGeneratorTools } from "./generators/index";
 
 export function createSitemapResponse(origin: string) {
@@ -23,13 +24,4 @@ function createSitemapXml(origin: string) {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${entries}
 </urlset>`;
-}
-
-function escapeXml(value: string) {
-	return value
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll("\"", "&quot;")
-		.replaceAll("'", "&apos;");
 }

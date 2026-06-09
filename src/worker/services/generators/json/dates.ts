@@ -1,5 +1,6 @@
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
+import { todayIsoDate } from "../../../../shared/text";
 import {
 	parseBoolean,
 	parseChoice,
@@ -129,8 +130,4 @@ function format12Hour(hour: number, minute: number, second: number, includeSecon
 
 function pad(value: number) {
 	return String(value).padStart(2, "0");
-}
-
-function todayIsoDate() {
-	return new Date().toISOString().slice(0, 10);
 }

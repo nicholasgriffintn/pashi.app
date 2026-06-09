@@ -574,7 +574,8 @@ h1 {
 		12px 12px 0 #25ffe6,
 		-10px -10px 0 #ff2f78;
 	display: grid;
-	justify-items: center;
+	grid-template-rows: minmax(0, 1fr) auto;
+	justify-items: stretch;
 	overflow: hidden;
 	padding: 0;
 	position: relative;
@@ -585,31 +586,54 @@ h1 {
 	width: 100%;
 }
 
+.result-content {
+	display: grid;
+	height: 100%;
+	justify-items: stretch;
+	min-height: 0;
+	place-items: center;
+	width: 100%;
+}
+
 .result-generated-at {
-	backdrop-filter: blur(2px);
-	background: rgba(17, 20, 46, 0.72);
-	pointer-events: none;
+	align-items: center;
+	background: linear-gradient(90deg, #11142e 0 72%, rgba(17, 20, 46, 0.92));
+	border-top: 2px solid rgba(17, 20, 46, 0.2);
 	color: #fff7d7;
+	display: flex;
 	font-size: 0.68rem;
 	font-weight: 900;
-	letter-spacing: 0.02em;
+	gap: 0.35rem;
+	justify-self: stretch;
+	letter-spacing: 0.04em;
 	margin: 0;
-	max-width: calc(100% - 1rem);
+	min-height: 1.55rem;
 	overflow: hidden;
-	padding: 0.26rem 0.5rem;
+	padding: 0.3rem 0.65rem;
+	pointer-events: none;
 	position: relative;
 	text-transform: uppercase;
 	text-overflow: ellipsis;
-	width: 100%;
+	white-space: nowrap;
 	z-index: 3;
+}
+
+.result-generated-at::before {
+	background: #ffd14c;
+	content: "";
+	flex: 0 0 0.45rem;
+	height: 0.45rem;
 }
 
 .result-box::after {
 	border: 1px solid rgba(255, 247, 215, 0.42);
+	bottom: 2rem;
 	content: "";
-	inset: 0.55rem;
+	left: 0.55rem;
 	pointer-events: none;
 	position: absolute;
+	right: 0.55rem;
+	top: 0.55rem;
 }
 
 .result-stage:hover .result-box {
@@ -622,6 +646,11 @@ h1 {
 
 .result-box[data-result-kind="image"] {
 	background: #ffffff;
+}
+
+.result-box[data-result-kind="image"] .result-content {
+	background: #ffffff;
+	padding: 0.75rem;
 }
 
 .loading-generate {
@@ -644,7 +673,8 @@ h1 {
 .image-result {
 	display: block;
 	height: 100%;
-	object-fit: cover;
+	min-height: 0;
+	object-fit: contain;
 	width: 100%;
 }
 

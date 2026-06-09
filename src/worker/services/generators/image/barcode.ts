@@ -1,4 +1,5 @@
 import type { GeneratorRequest } from "../request";
+import { escapeXml } from "../../../../shared/text";
 import { parseInteger } from "../../../utils/generation";
 import { json } from "../../../utils/http";
 
@@ -155,13 +156,4 @@ function createCode128Modules(value: string) {
 
 function isCode128BValue(value: string) {
 	return value.length > 0 && value.length <= 80 && /^[ -~]+$/.test(value);
-}
-
-function escapeXml(value: string) {
-	return value
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll("\"", "&quot;")
-		.replaceAll("'", "&apos;");
 }

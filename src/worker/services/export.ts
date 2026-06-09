@@ -1,7 +1,10 @@
 import { findGenerator } from "./generators/catalogue";
 import type { GeneratorRequest } from "./generators/request";
 import { createJsonResult } from "./generators/json";
-import type { GeneratorResultRecord, GeneratorResultValue, JsonResult } from "./generators/types";
+import type { GeneratorResultValue, JsonResult } from "./generators/types";
+import { isRecordArray, recordToText, uniqueKeys } from "../../shared/records";
+import { safeFilename } from "../../shared/text";
+import { csvRow } from "../utils/csv";
 import { json } from "../utils/http";
 
 const EXPORT_FORMATS = ["csv", "json", "txt"] as const;
@@ -105,26 +108,8 @@ function formatText(result: JsonResult) {
 	return `${formatRecordText(value)}\n`;
 }
 
-function formatRecordText(record: GeneratorResultRecord) {
-	return Object.entries(record)
-		.map(([key, entryValue]) => `${key}: ${entryValue}`)
-		.join("\n");
-}
-
-function isRecordArray(value: unknown[]): value is GeneratorResultRecord[] {
-	return value.every((item) => typeof item === "object" && item !== null && !Array.isArray(item));
-}
-
-function uniqueKeys(records: GeneratorResultRecord[]) {
-	return [...new Set(records.flatMap((record) => Object.keys(record)))];
-}
-
-function csvRow(values: readonly string[]) {
-	return values.map(csvValue).join(",");
-}
-
-function csvValue(value: string) {
-	return `"${value.replaceAll("\"", "\"\"")}"`;
+function formatRecordText(record: Record<string, string>) {
+	return recordToText(record);
 }
 
 function contentTypeFor(format: (typeof EXPORT_FORMATS)[number]) {
@@ -136,8 +121,4 @@ function contentTypeFor(format: (typeof EXPORT_FORMATS)[number]) {
 		case "txt":
 			return "text/plain; charset=utf-8";
 	}
-}
-
-function safeFilename(value: string) {
-	return value.replace(/[^a-z0-9_-]/gi, "-").toLowerCase() || "pashi";
 }

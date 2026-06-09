@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { GenerateResult } from "../lib/generate-api";
-import type { ImageResult } from "../lib/generator-state";
+import type { ResultStageValue } from "../lib/result-types";
 import {
 	formatGeneratedAt,
 	formatTextResult,
@@ -11,29 +11,42 @@ import {
 	uniqueKeys,
 } from "../lib/result-format";
 
-export type ResultStageValue = GenerateResult | ImageResult;
-
 interface ResultStageProps {
 	actions?: React.ReactNode;
 	isLoading: boolean;
+	onImageError: () => void;
 	onImageLoad: () => void;
 	result?: ResultStageValue;
 }
 
-export function ResultStage({ actions, isLoading, onImageLoad, result }: ResultStageProps) {
+export function ResultStage({
+	actions,
+	isLoading,
+	onImageError,
+	onImageLoad,
+	result,
+}: ResultStageProps) {
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
 
 	return (
 		<section className="result-stage" aria-busy={isLoading} aria-live="polite">
 			<div className="result-box" data-result-kind={result?.kind}>
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
-				{!result ? (
-					<p className="empty-result">Pick a generator, paste something, generate.</p>
-				) : result.kind === "image" ? (
-					<img alt={result.alt} className="image-result" onLoad={onImageLoad} src={result.src} />
-				) : (
-					<ResultBody result={result} />
-				)}
+				<div className="result-content">
+					{!result ? (
+						<p className="empty-result">Pick a generator, paste something, generate.</p>
+					) : result.kind === "image" ? (
+						<img
+							alt={result.alt}
+							className="image-result"
+							onError={onImageError}
+							onLoad={onImageLoad}
+							src={result.src}
+						/>
+					) : (
+						<ResultBody result={result} />
+					)}
+				</div>
 				{generatedAt ? <p className="result-generated-at">Generated {generatedAt}</p> : null}
 			</div>
 			{result ? actions : null}

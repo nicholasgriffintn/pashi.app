@@ -1,10 +1,12 @@
 import type { GeneratorRequest } from "../request";
+import { escapeXml } from "../../../../shared/text";
+import { normaliseHexColour } from "../../../utils/color";
 import { parseInteger } from "../../../utils/generation";
 
 export function createEmojiImageResponse(request: GeneratorRequest) {
 	const emoji = request.fields.emoji?.trim() || request.input || "⚡";
 	const size = parseInteger(request.fields.size ?? "", 512, 128, 1024);
-	const background = normaliseColour(request.fields.background) || "0d1024";
+	const background = normaliseHexColour(request.fields.background) || "0d1024";
 
 	return createEmojiSvgResponse(emoji, { background, size });
 }
@@ -24,18 +26,4 @@ function createEmojiSvgResponse(emoji: string, options: { background: string; si
 			"X-Content-Type-Options": "nosniff",
 		},
 	});
-}
-
-function normaliseColour(value: string | undefined) {
-	const colour = value?.trim().replace(/^#/, "");
-	return colour && /^[0-9a-fA-F]{6}$/.test(colour) ? colour : undefined;
-}
-
-function escapeXml(value: string) {
-	return value
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll("\"", "&quot;")
-		.replaceAll("'", "&apos;");
 }

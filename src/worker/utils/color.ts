@@ -54,3 +54,8 @@ export function contrastRatio(firstLuminance: number, secondLuminance: number) {
 	const darker = Math.min(firstLuminance, secondLuminance);
 	return (lighter + 0.05) / (darker + 0.05);
 }
+
+export function normaliseHexColour(value: string | undefined) {
+	const colour = value?.trim().replace(/^#/, "");
+	return colour && /^[0-9a-fA-F]{6}$/.test(colour) ? colour : undefined;
+}

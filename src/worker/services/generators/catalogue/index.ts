@@ -1,5 +1,6 @@
 import type { Audience, GeneratorInputField, GeneratorTool, ResultKind } from "../types";
 import { POKEMON_TYPES } from "../data/pokemon";
+import { todayIsoDate } from "../../../../shared/text";
 
 const CATEGORY_LABELS: Record<Audience, string> = {
 	Design: "Design",
@@ -80,7 +81,8 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	"zip": ["zip-code", "zip-codes", "post-code", "postcodes", "postcode", "postal-code", "postal-codes"],
 };
 
-export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
+function createGeneratorTools(): readonly GeneratorTool[] {
+	return [
 	tool("qr", "QR image", "Engineering", "QR image for links and notes.", "Input", true, "https://pashi.app", "image", "generate QR", ["https://pashi.app", "https://nicholasgriffin.dev/docs"]),
 	tool("barcode", "Barcode", "Engineering", "Code 128 barcode SVG.", "Value", true, "PASHI-12345", "image", "Generate barcode", ["PASHI-12345", "ORDER-2048"], [
 		field("value", "Value", "PASHI-12345", true),
@@ -207,7 +209,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	]),
 	tool("date", "Date", "Engineering", "Random dates in multiple formats.", "Range", false, "1970-01-01", "text", "Generate date", ["2020-01-01", "unix"], [
 		field("startDate", "Start date", "1970-01-01", true),
-		field("endDate", "End date", new Date().toISOString().slice(0, 10), true),
+		field("endDate", "End date", todayIsoDate(), true),
 		field("format", "Format", "iso8601", false, "select", ["iso8601", "us", "eu", "long", "short", "unix"]),
 		field("count", "Count", "10", true),
 	]),
@@ -221,7 +223,7 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("datetime", "Timestamp", "Engineering", "Random Unix or ISO 8601 timestamps.", "Format", false, "unix", "fields", "Generate timestamp", ["unix", "iso8601"], [
 		field("format", "Format", "unix", false, "select", ["unix", "iso8601"]),
 		field("startDate", "Start date", "1970-01-01", true),
-		field("endDate", "End date", new Date().toISOString().slice(0, 10), true),
+		field("endDate", "End date", todayIsoDate(), true),
 		field("count", "Count", "1", true),
 	]),
 	tool("ip-address", "IP address", "Identifiers", "Random IPv4 and IPv6 addresses with uniqueness and range controls.", "Version", false, "ipv4", "text", "Generate IP", ["ipv4", "ipv6"], [
@@ -472,17 +474,18 @@ export const GENERATOR_TOOLS: readonly GeneratorTool[] = [
 	tool("name-picker", "Name picker", "Tools", "Pick one item from a comma or newline list.", "Items", true, "Ada\nGrace\nMargaret", "text", "Pick one", ["Ada, Grace, Margaret"], [
 		field("items", "Items", "Ada\nGrace\nMargaret", true, "textarea"),
 	]),
-];
+	];
+}
 
 export function findGenerator(type: string) {
 	const normalisedType = type.trim().toLowerCase();
-	return GENERATOR_TOOLS.find((generator) =>
+	return createGeneratorTools().find((generator) =>
 		generator.id === normalisedType || generator.aliases.includes(normalisedType),
 	);
 }
 
 export function listGeneratorTools() {
-	return GENERATOR_TOOLS;
+	return createGeneratorTools();
 }
 
 function tool(
