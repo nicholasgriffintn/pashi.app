@@ -41,6 +41,7 @@ export function useGeneratorConsole() {
 	const [error, setError] = useState("");
 	const [isInfoLoading, setIsInfoLoading] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
+	const [resultMode, setResultMode] = useState<"ai" | "standard">("standard");
 	const [generateId, setGenerateId] = useState(0);
 	const [notification, setNotification] = useState("");
 	const [result, setResult] = useState<ResultStageValue | undefined>();
@@ -63,6 +64,7 @@ export function useGeneratorConsole() {
 			setInput(values.input);
 			setFieldValues(values.fields);
 			setError("");
+			setResultMode("standard");
 			setIsLoading(false);
 			setResult(createInitialResult(nextTool, values, 0));
 		},
@@ -119,7 +121,7 @@ export function useGeneratorConsole() {
 		return () => window.removeEventListener("popstate", handlePopState);
 	}, [applyToolValues, tools]);
 
-	async function generateActiveTool() {
+	async function generateActiveTool(aiMode = resultMode === "ai") {
 		setError("");
 		setIsLoading(true);
 
@@ -139,12 +141,18 @@ export function useGeneratorConsole() {
 
 			const nextGenerateId = generateId + 1;
 			setGenerateId(nextGenerateId);
+			setResultMode("standard");
 			setResult(createImageResult(activeTool, input, fieldValues, nextGenerateId));
 			return;
 		}
 
 		try {
-			setResult(await generateThing(activeTool.endpoint, input, fieldValues));
+			setResult(await generateThing(
+				activeTool.endpoint,
+				input,
+				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
+			));
+			setResultMode(aiMode ? "ai" : "standard");
 			setIsLoading(false);
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Generation failed.");
@@ -209,6 +217,8 @@ export function useGeneratorConsole() {
 		notification,
 		notify,
 		result,
+		resultMode,
+		setResultMode,
 		setInput,
 		tools,
 	};

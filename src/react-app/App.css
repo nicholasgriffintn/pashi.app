@@ -391,7 +391,7 @@ h1 {
 .input-row {
 	display: grid;
 	gap: 0.75rem;
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr);
 }
 
 .generate-actions button,
@@ -435,8 +435,51 @@ h1 {
 }
 
 .generate-actions {
+	align-items: center;
 	display: flex;
+	gap: 0.75rem;
 	justify-content: flex-end;
+}
+
+.mode-toggle {
+	background: #10132d;
+	border: 2px solid #25ffe6;
+	display: inline-grid;
+	grid-template-columns: 1fr 1fr;
+	min-height: 2.25rem;
+}
+
+.mode-control {
+	align-items: center;
+	display: inline-flex;
+	gap: 0.5rem;
+}
+
+.mode-control > span {
+	color: #ffd14c;
+	font-size: 0.76rem;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+.mode-toggle button {
+	background: transparent;
+	color: #25ffe6;
+	font-size: 0.76rem;
+	min-height: auto;
+	min-width: 5.25rem;
+	padding: 0 0.65rem;
+}
+
+.mode-toggle button[aria-pressed="true"] {
+	background: #25ffe6;
+	color: #10132d;
+}
+
+.mode-toggle button:hover {
+	background: #ffd14c;
+	color: #10132d;
+	transform: none;
 }
 
 .field-grid {

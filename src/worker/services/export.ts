@@ -17,6 +17,7 @@ export async function createExportResponse(
 	type: string,
 	format: string,
 	request: GeneratorRequest,
+	env?: Pick<Env, "AI">,
 ) {
 	const generator = findGenerator(type);
 	if (!generator) {
@@ -32,7 +33,7 @@ export async function createExportResponse(
 	}
 
 	try {
-		const result = await createJsonResult(generator, request);
+		const result = await createJsonResult(generator, request, env);
 		return new Response(formatExportResult(result, format), {
 			headers: {
 				"Content-Disposition": `attachment; filename="${safeFilename(type)}.${format}"`,

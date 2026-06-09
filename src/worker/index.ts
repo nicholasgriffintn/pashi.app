@@ -36,6 +36,7 @@ app.get("/export/:type/:format", (c) =>
 		c.req.param("type"),
 		c.req.param("format"),
 		createGeneratorRequestFromSearchParams(new URL(c.req.url).searchParams),
+		c.env,
 	),
 );
 
@@ -45,6 +46,7 @@ app.post("/export/:type/:format", async (c) => {
 		c.req.param("type"),
 		c.req.param("format"),
 		createGeneratorRequest(body.input, body.fields),
+		c.env,
 	);
 });
 
@@ -53,6 +55,7 @@ app.get("/api/:type", (c) =>
 		c.req.param("type"),
 		createGeneratorRequestFromSearchParams(new URL(c.req.url).searchParams),
 		new URL(c.req.url).searchParams,
+		c.env,
 	),
 );
 
@@ -61,6 +64,8 @@ app.post("/api/:type", async (c) => {
 	return createGeneratorResponse(
 		c.req.param("type"),
 		createGeneratorRequest(body.input, body.fields),
+		new URLSearchParams(),
+		c.env,
 	);
 });
 

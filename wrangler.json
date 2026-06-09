@@ -11,6 +11,9 @@
 	"observability": {
 		"enabled": true
 	},
+	"ai": {
+		"binding": "AI"
+	},
 	"upload_source_maps": true,
 	"assets": {
 		"directory": "./dist/client",

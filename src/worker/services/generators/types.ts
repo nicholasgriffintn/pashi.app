@@ -12,6 +12,7 @@ export type Audience =
 	| "TestData"
 	| "Tools";
 export type ResultKind = "fields" | "image" | "palette" | "text";
+export type GeneratorMode = "ai";
 export type GeneratorResultRecord = Record<string, string>;
 export type GeneratorResultValue = string | string[] | GeneratorResultRecord | GeneratorResultRecord[];
 
@@ -42,6 +43,7 @@ export interface GeneratorTool {
 		required: boolean;
 	};
 	label: string;
+	modes?: readonly GeneratorMode[];
 	placeholder: string;
 	result: {
 		kind: ResultKind;

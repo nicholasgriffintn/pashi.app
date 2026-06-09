@@ -11,11 +11,18 @@ import { createProductResult } from "./product";
 import { createSecurityResult } from "./security";
 import { createStringResult } from "./strings";
 import { createToolsResult } from "./tools";
+import { createAiResult } from "./ai";
 
 export async function createJsonResult(
 	generator: GeneratorTool,
 	request: GeneratorRequest,
+	env?: Pick<Env, "AI">,
 ): Promise<JsonResult> {
+	const aiResult = await createAiResult(generator, request, env?.AI);
+	if (aiResult) {
+		return aiResult;
+	}
+
 	const engineeringResult = await createEngineeringResult(generator, request);
 	if (engineeringResult) {
 		return engineeringResult;

@@ -33,9 +33,12 @@ export function GeneratorConsole() {
 		notification,
 		notify,
 		result,
+		resultMode,
+		setResultMode,
 		setInput,
 		tools,
 	} = consoleState;
+	const resultFields = resultMode === "ai" ? { ...fieldValues, mode: "ai" } : fieldValues;
 
 	return (
 		<main className="shell">
@@ -61,9 +64,11 @@ export function GeneratorConsole() {
 							activeTool={activeTool}
 							error={error}
 							fieldValues={fieldValues}
+							generationMode={resultMode}
 							input={input}
 							isLoading={isLoading}
 							onFieldChange={handleFieldChange}
+							onGenerationModeChange={setResultMode}
 							onInputChange={setInput}
 							onSubmit={handleSubmit}
 							onToolChange={handleToolChange}
@@ -86,7 +91,7 @@ export function GeneratorConsole() {
 							result && activeTool ? (
 								<ResultActions
 									exportFormats={exportFormats}
-									fields={fieldValues}
+									fields={resultFields}
 									input={input}
 									onClear={clearResult}
 									onNotify={notify}

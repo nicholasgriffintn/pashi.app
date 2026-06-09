@@ -1,4 +1,5 @@
 export type ResultDisplayKind = "fields" | "image" | "palette" | "text";
+export type GeneratorMode = "ai";
 
 export interface GeneratorInfoTool {
 	aliases: string[];
@@ -30,6 +31,7 @@ export interface GeneratorInfoTool {
 		required: boolean;
 	};
 	label: string;
+	modes?: GeneratorMode[];
 	placeholder: string;
 	result: {
 		kind: ResultDisplayKind;

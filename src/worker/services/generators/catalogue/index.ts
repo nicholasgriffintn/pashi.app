@@ -519,6 +519,7 @@ function tool(
 			required,
 		},
 		label,
+		modes: resultKind === "image" ? [] : ["ai"],
 		placeholder,
 		result: { kind: resultKind },
 	};

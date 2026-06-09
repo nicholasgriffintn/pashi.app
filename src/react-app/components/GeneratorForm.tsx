@@ -3,13 +3,17 @@ import type { FormEvent } from "react";
 import type { GeneratorInfoTool, GeneratorInputField } from "../lib/generator-info";
 import { ToolPicker } from "./ToolPicker";
 
+type GenerationMode = "ai" | "standard";
+
 interface GeneratorFormProps {
 	activeTool: GeneratorInfoTool;
 	error: string;
 	fieldValues: Record<string, string>;
+	generationMode: GenerationMode;
 	input: string;
 	isLoading: boolean;
 	onFieldChange: (fieldId: string, value: string) => void;
+	onGenerationModeChange: (mode: GenerationMode) => void;
 	onInputChange: (value: string) => void;
 	onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 	onToolChange: (toolId: string) => void;
@@ -48,9 +52,11 @@ export function GeneratorForm({
 	activeTool,
 	error,
 	fieldValues,
+	generationMode,
 	input,
 	isLoading,
 	onFieldChange,
+	onGenerationModeChange,
 	onInputChange,
 	onSubmit,
 	onToolChange,
@@ -61,6 +67,7 @@ export function GeneratorForm({
 	const visibleExamples =
 		activeTool.input.mode === "none" ? [] : activeTool.display.examples;
 	const visibleFields = activeTool.input.fields?.filter((field) => shouldShowField(activeTool.id, field.id, fieldValues));
+	const supportsAiMode = activeTool.modes?.includes("ai") ?? false;
 
 	return (
 		<form className="generator" onSubmit={onSubmit}>
@@ -94,17 +101,34 @@ export function GeneratorForm({
 							type="text"
 							value={input}
 						/>
-						<GenerateButton activeTool={activeTool} isLoading={isLoading} />
 					</div>
 				</>
 			) : (
 				<div className="generate-actions">
-					<GenerateButton activeTool={activeTool} isLoading={isLoading} />
+					{supportsAiMode ? (
+						<GenerationModeToggle
+							mode={generationMode}
+							onChange={onGenerationModeChange}
+						/>
+					) : null}
+					<GenerateButton
+						activeTool={activeTool}
+						isLoading={isLoading}
+					/>
 				</div>
 			)}
-			{hasFields ? (
+			{hasFields || hasPrimaryInput ? (
 				<div className="generate-actions">
-					<GenerateButton activeTool={activeTool} isLoading={isLoading} />
+					{supportsAiMode ? (
+						<GenerationModeToggle
+							mode={generationMode}
+							onChange={onGenerationModeChange}
+						/>
+					) : null}
+					<GenerateButton
+						activeTool={activeTool}
+						isLoading={isLoading}
+					/>
 				</div>
 			) : null}
 			{visibleExamples.length > 0 ? (
@@ -137,6 +161,36 @@ function GenerateButton({
 		<button disabled={isLoading} type="submit">
 			{isLoading ? "Generating" : activeTool.display.actionLabel}
 		</button>
+	);
+}
+
+function GenerationModeToggle({
+	mode,
+	onChange,
+}: {
+	mode: GenerationMode;
+	onChange: (mode: GenerationMode) => void;
+}) {
+	return (
+		<div className="mode-control">
+			<span id="generation-mode-label">Mode</span>
+			<div aria-labelledby="generation-mode-label" className="mode-toggle" role="group">
+				<button
+					aria-pressed={mode === "standard"}
+					onClick={() => onChange("standard")}
+					type="button"
+				>
+					Standard
+				</button>
+				<button
+					aria-pressed={mode === "ai"}
+					onClick={() => onChange("ai")}
+					type="button"
+				>
+					AI
+				</button>
+			</div>
+		</div>
 	);
 }
 

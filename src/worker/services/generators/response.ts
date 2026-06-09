@@ -8,6 +8,7 @@ export async function createGeneratorResponse(
 	type: string,
 	request: GeneratorRequest,
 	params = new URLSearchParams(),
+	env?: Pick<Env, "AI">,
 ) {
 	const generator = findGenerator(type);
 	if (!generator) {
@@ -23,7 +24,7 @@ export async function createGeneratorResponse(
 	}
 
 	try {
-		const result = await createJsonResult(generator, request);
+		const result = await createJsonResult(generator, request, env);
 		return json({
 			...result,
 			generatedAt,
