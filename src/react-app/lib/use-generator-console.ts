@@ -19,6 +19,7 @@ import {
 	pushGeneratorRoute,
 	type GeneratorValues,
 } from "./generator-state";
+import { appendDiceResultHistory } from "./dice-result";
 import type { ResultStageValue } from "./result-types";
 
 function createInitialResult(
@@ -45,6 +46,7 @@ export function useGeneratorConsole() {
 	const [generateId, setGenerateId] = useState(0);
 	const [notification, setNotification] = useState("");
 	const [result, setResult] = useState<ResultStageValue | undefined>();
+	const [resultHistory, setResultHistory] = useState<ResultStageValue[]>([]);
 	const notificationTimer = useRef<number | undefined>(undefined);
 
 	const activeTool = useMemo(
@@ -147,11 +149,15 @@ export function useGeneratorConsole() {
 		}
 
 		try {
-			setResult(await generateThing(
+			const nextResult = await generateThing(
 				activeTool.endpoint,
 				input,
 				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
-			));
+			);
+			if (activeTool.id === "dice") {
+				setResultHistory((current) => appendDiceResultHistory(current, result));
+			}
+			setResult(nextResult);
 			setResultMode(aiMode ? "ai" : "standard");
 			setIsLoading(false);
 		} catch (caught) {
@@ -198,6 +204,15 @@ export function useGeneratorConsole() {
 		setResult(undefined);
 	}
 
+	function clearResultHistory() {
+		setResultHistory([]);
+	}
+
+	function restoreResult(restoredResult: ResultStageValue) {
+		setResult(restoredResult);
+		notify("Roll restored");
+	}
+
 	return {
 		activeTool,
 		activeToolId,
@@ -217,7 +232,10 @@ export function useGeneratorConsole() {
 		notification,
 		notify,
 		result,
+		resultHistory,
 		resultMode,
+		clearResultHistory,
+		restoreResult,
 		setResultMode,
 		setInput,
 		tools,

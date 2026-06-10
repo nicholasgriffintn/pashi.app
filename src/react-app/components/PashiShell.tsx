@@ -14,9 +14,12 @@ interface PashiShellProps {
 	isLoading: boolean;
 	modeTabs: React.ReactNode;
 	notification: string;
+	onClearResultHistory?: () => void;
 	onImageError: () => void;
 	onImageLoad: () => void;
+	onRestoreResult?: (result: ResultStageValue) => void;
 	result?: ResultStageValue;
+	resultHistory?: ResultStageValue[];
 	statusMessage: string;
 }
 
@@ -38,9 +41,12 @@ export function PashiShell({
 	isLoading,
 	modeTabs,
 	notification,
+	onClearResultHistory,
 	onImageError,
 	onImageLoad,
+	onRestoreResult,
 	result,
+	resultHistory,
 	statusMessage,
 }: PashiShellProps) {
 	return (
@@ -70,9 +76,12 @@ export function PashiShell({
 						emptyMessage={emptyResultMessage}
 						generatedAtLabel={generatedAtLabel}
 						isLoading={isLoading}
+						onClearResultHistory={onClearResultHistory}
 						onImageError={onImageError}
 						onImageLoad={onImageLoad}
+						onRestoreResult={onRestoreResult}
 						result={result}
+						resultHistory={resultHistory}
 					/>
 				</div>
 			</section>

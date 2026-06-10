@@ -12,6 +12,8 @@ import {
 } from "../lib/result-format";
 import { createResultSummary, type ResultSummary } from "../lib/result-summary";
 import { createFieldDisplayModel } from "../lib/result-field-display";
+import { diceHistoryResults, isDiceStageResult } from "../lib/dice-result";
+import { DiceResultView } from "./DiceResultView";
 import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
 
 interface ImagePreviewItem {
@@ -32,7 +34,10 @@ interface ResultStageProps {
 	isLoading: boolean;
 	onImageError: () => void;
 	onImageLoad: () => void;
+	onClearResultHistory?: () => void;
+	onRestoreResult?: (result: ResultStageValue) => void;
 	result?: ResultStageValue;
+	resultHistory?: ResultStageValue[];
 }
 
 const IMAGE_OUTPUT_FORMATS = new Set(["avif", "bmp", "gif", "ico", "jpeg", "jpg", "mjpeg", "png", "svg", "tif", "tiff", "webp"]);
@@ -59,15 +64,19 @@ export function ResultStage({
 	emptyMessage,
 	generatedAtLabel,
 	isLoading,
+	onClearResultHistory,
 	onImageError,
 	onImageLoad,
+	onRestoreResult,
 	result,
+	resultHistory = [],
 }: ResultStageProps) {
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
 	const summary = result ? createResultSummary(result, generatedAtLabel) : undefined;
 	const [isExpanded, setIsExpanded] = useState(false);
 	const expandedResult = result && isExpanded ? result : undefined;
 	const expandedSummary = expandedResult ? createResultSummary(expandedResult, generatedAtLabel) : undefined;
+	const diceHistory = result && isDiceStageResult(result) ? diceHistoryResults(resultHistory) : [];
 
 	useEffect(() => {
 		if (!expandedResult) {
@@ -90,6 +99,7 @@ export function ResultStage({
 			aria-live="polite"
 			className="result-stage"
 			data-has-result={Boolean(result)}
+			data-result-tool={result && isDiceStageResult(result) ? "dice" : undefined}
 		>
 			<div className="result-box" data-result-kind={result?.kind}>
 				{result ? (
@@ -118,7 +128,13 @@ export function ResultStage({
 							src={result.src}
 						/>
 					) : (
-						<ResultBody result={result} compact />
+						<ResultBody
+							diceHistory={diceHistory}
+							onClearDiceHistory={onClearResultHistory}
+							onRestoreDiceHistory={onRestoreResult}
+							result={result}
+							compact
+						/>
 					)}
 				</div>
 				{summary ? (
@@ -164,7 +180,12 @@ export function ResultStage({
 										src={expandedResult.src}
 									/>
 								) : (
-									<ResultBody result={expandedResult} />
+									<ResultBody
+										diceHistory={diceHistory}
+										onClearDiceHistory={onClearResultHistory}
+										onRestoreDiceHistory={onRestoreResult}
+										result={expandedResult}
+									/>
 								)}
 							</div>
 						</div>
@@ -209,10 +230,34 @@ function ResultSummaryPanel({ summary }: { summary: ResultSummary }) {
 	);
 }
 
-function ResultBody({ compact = false, result }: { compact?: boolean; result: TextResultStageValue }) {
+function ResultBody({
+	compact = false,
+	diceHistory = [],
+	onClearDiceHistory,
+	onRestoreDiceHistory,
+	result,
+}: {
+	compact?: boolean;
+	diceHistory?: ReturnType<typeof diceHistoryResults>;
+	onClearDiceHistory?: () => void;
+	onRestoreDiceHistory?: (result: ResultStageValue) => void;
+	result: TextResultStageValue;
+}) {
 	const imagePreview = createImagePreview(result);
 	if (imagePreview.length > 0) {
 		return <ImagePreviewResult compact={compact} items={imagePreview} />;
+	}
+
+	if (isDiceStageResult(result)) {
+		return (
+			<DiceResultView
+				compact={compact}
+				history={diceHistory}
+				onClearHistory={onClearDiceHistory}
+				onRestoreHistory={onRestoreDiceHistory}
+				result={result}
+			/>
+		);
 	}
 
 	if (result.kind === "palette" && Array.isArray(result.result) && isStringArray(result.result)) {

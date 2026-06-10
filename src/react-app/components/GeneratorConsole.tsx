@@ -15,6 +15,7 @@ export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
 		activeTool,
 		activeToolId,
 		clearResult,
+		clearResultHistory,
 		error,
 		exportFormats,
 		fieldValues,
@@ -30,7 +31,9 @@ export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
 		notification,
 		notify,
 		result,
+		resultHistory,
 		resultMode,
+		restoreResult,
 		setResultMode,
 		setInput,
 		tools,
@@ -61,9 +64,12 @@ export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
 			isLoading={isLoading}
 			modeTabs={modeTabs}
 			notification={notification}
+			onClearResultHistory={clearResultHistory}
 			onImageError={handleImageError}
 			onImageLoad={handleImageLoad}
+			onRestoreResult={restoreResult}
 			result={result}
+			resultHistory={resultHistory}
 			statusMessage="Loading generators"
 		>
 			{!activeTool ? (
