@@ -88,7 +88,7 @@ app.post("/api/:type", async (c) => {
 	if (converterTool) {
 		const contentType = c.req.header("content-type")?.toLowerCase() ?? "";
 		if (isQueuedConversionUploadRequest(converterTool.id, contentType)) {
-			return createQueuedConversionUploadResponse(converterTool.id, c.req.raw, c.env);
+			return createQueuedConversionUploadResponse(converterTool.id, c.req.raw, c.env, type);
 		}
 
 		const body = await readConverterBody(c);

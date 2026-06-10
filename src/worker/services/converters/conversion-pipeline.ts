@@ -78,6 +78,7 @@ export async function createQueuedConversionUploadResponse(
 	converterId: string,
 	request: Request,
 	env: ConversionEnv,
+	presetType = converterId,
 ) {
 	const kind = queuedConversionKindForConverter(converterId);
 	if (!kind) {
@@ -89,7 +90,7 @@ export async function createQueuedConversionUploadResponse(
 		return Response.json({ error: "Upload a file to convert." }, { status: 400 });
 	}
 
-	const converterFields = applyConverterPresetFields(converterId, source.fields);
+	const converterFields = applyConverterPresetFields(presetType, source.fields);
 	const outputFormat = normaliseOutputFormat(converterId, kind, converterFields.outputFormat || converterFields.format);
 	if (!outputFormat.format) {
 		return Response.json({ error: outputFormat.error }, { status: 400 });
