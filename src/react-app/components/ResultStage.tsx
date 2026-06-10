@@ -20,6 +20,11 @@ interface ImagePreviewItem {
 	src: string;
 }
 
+interface RecordPreviewItem {
+	label: string;
+	value: string;
+}
+
 interface ResultStageProps {
 	actions?: React.ReactNode;
 	emptyMessage: string;
@@ -32,6 +37,22 @@ interface ResultStageProps {
 
 const IMAGE_OUTPUT_FORMATS = new Set(["avif", "bmp", "gif", "ico", "jpeg", "jpg", "mjpeg", "png", "svg", "tif", "tiff", "webp"]);
 const IMAGE_URL_KEYS = ["downloadUrl", "imageUrl", "image", "previewUrl", "thumbnailUrl", "url", "src"] as const;
+const RECORD_PREVIEW_KEYS = [
+	"hash",
+	"value",
+	"apiKey",
+	"accessToken",
+	"token",
+	"uuid",
+	"cardNumber",
+	"number",
+	"formatted",
+	"name",
+	"email",
+	"pattern",
+	"javascriptLiteral",
+	"expression",
+] as const;
 
 export function ResultStage({
 	actions,
@@ -238,6 +259,10 @@ function ResultBody({ compact = false, result }: { compact?: boolean; result: Te
 			);
 		}
 
+		if (compact) {
+			return <RecordPreviewResult items={createRecordPreview(result.result)} total={result.result.length} />;
+		}
+
 		const columns = uniqueKeys(result.result);
 		return (
 			<div className="records-result">
@@ -307,6 +332,43 @@ function textResultDensity(text: string) {
 	}
 
 	return "long";
+}
+
+function RecordPreviewResult({ items, total }: { items: RecordPreviewItem[]; total: number }) {
+	const visibleItems = items.slice(0, 4);
+
+	return (
+		<div className="record-preview-result">
+			<div className="record-preview-list">
+				{visibleItems.map((item, index) => (
+					<div className="record-preview-item" key={`${item.label}-${item.value}-${index}`}>
+						<span>{item.label}</span>
+						<strong>{item.value}</strong>
+					</div>
+				))}
+			</div>
+			{total > visibleItems.length ? <p className="record-preview-more">+{total - visibleItems.length} more</p> : null}
+		</div>
+	);
+}
+
+function createRecordPreview(records: readonly Record<string, string>[]): RecordPreviewItem[] {
+	const primaryKey = RECORD_PREVIEW_KEYS.find((key) => records.some((record) => record[key]));
+
+	return records.map((record, index) => {
+		const value = primaryKey ? record[primaryKey] : firstRecordValue(record);
+		const fallbackLabel = `Record ${index + 1}`;
+		const label = record.algorithm || record.type || record.format || record.name || fallbackLabel;
+
+		return {
+			label: label === value ? fallbackLabel : label,
+			value: value || fallbackLabel,
+		};
+	});
+}
+
+function firstRecordValue(record: Record<string, string>) {
+	return Object.values(record).find((value) => value !== "") ?? "";
 }
 
 function ImagePreviewResult({ compact, items }: { compact: boolean; items: ImagePreviewItem[] }) {

@@ -1414,6 +1414,58 @@ h1 {
 	white-space: pre-wrap;
 }
 
+.record-preview-result {
+	align-content: center;
+	display: grid;
+	gap: 0.55rem;
+	height: 100%;
+	overflow: hidden;
+	padding: 0.85rem;
+	width: 100%;
+}
+
+.record-preview-list {
+	display: grid;
+	gap: 0.45rem;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.record-preview-item {
+	background: rgba(17, 20, 46, 0.08);
+	border-left: 3px solid #ff2f78;
+	display: grid;
+	gap: 0.18rem;
+	min-width: 0;
+	padding: 0.42rem 0.5rem;
+}
+
+.record-preview-item span {
+	color: rgba(17, 20, 46, 0.72);
+	font-size: 0.58rem;
+	font-weight: 900;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.record-preview-item strong {
+	color: #11142e;
+	font: 900 0.82rem / 1.12 "Trebuchet MS", system-ui, sans-serif;
+	overflow-wrap: anywhere;
+}
+
+.record-preview-more {
+	background: #11142e;
+	color: #25ffe6;
+	font: 900 0.68rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	justify-self: center;
+	margin: 0;
+	padding: 0.3rem 0.55rem;
+	text-transform: uppercase;
+}
+
 .palette-result {
 	display: grid;
 	gap: 0.5rem;
