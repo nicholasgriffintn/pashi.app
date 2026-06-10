@@ -1,18 +1,14 @@
-import { formatGeneratedAt } from "../lib/result-format";
 import { diceRollRecords, type DiceStageResult, type DiceRollRecord } from "../lib/dice-result";
+import type { TextResultStageValue } from "../lib/result-types";
+import { ResultHistory, type ResultHistoryDescription } from "./ResultHistory";
 
 interface DiceResultViewProps {
 	compact?: boolean;
+	generatedAtLabel: string;
 	history?: DiceStageResult[];
 	onClearHistory?: () => void;
-	onRestoreHistory?: (result: DiceStageResult) => void;
+	onRestoreHistory?: (result: TextResultStageValue) => void;
 	result: DiceStageResult;
-}
-
-interface DiceResultHistoryProps {
-	history: DiceStageResult[];
-	onClear?: () => void;
-	onRestore?: (result: DiceStageResult) => void;
 }
 
 const PIP_POSITIONS: Record<number, readonly string[]> = {
@@ -26,6 +22,7 @@ const PIP_POSITIONS: Record<number, readonly string[]> = {
 
 export function DiceResultView({
 	compact = false,
+	generatedAtLabel,
 	history = [],
 	onClearHistory,
 	onRestoreHistory,
@@ -52,55 +49,15 @@ export function DiceResultView({
 					<DiceRollCard key={`${record.roll}-${record.total}-${index}`} record={record} />
 				))}
 			</div>
-			<DiceResultHistory
+			<ResultHistory
+				describeResult={describeDiceHistory}
+				generatedAtLabel={generatedAtLabel}
 				history={history}
 				onClear={onClearHistory}
 				onRestore={onRestoreHistory}
+				title="Roll history"
 			/>
 		</div>
-	);
-}
-
-export function DiceResultHistory({ history, onClear, onRestore }: DiceResultHistoryProps) {
-	if (history.length === 0) {
-		return null;
-	}
-
-	return (
-		<aside className="dice-history" aria-label="Dice roll history">
-			<header className="dice-history-header">
-				<div>
-					<span>Roll history</span>
-					<strong>{history.length} previous generation{history.length === 1 ? "" : "s"}</strong>
-				</div>
-				{onClear ? (
-					<button onClick={onClear} type="button">
-						Clear
-					</button>
-				) : null}
-			</header>
-			<div className="dice-history-list">
-				{history.map((result) => {
-					const records = diceRollRecords(result);
-					const firstRecord = records[0];
-					const generatedAt = formatGeneratedAt(result.generatedAt) ?? "Earlier";
-
-					return (
-						<button
-							className="dice-history-item"
-							key={result.generatedAt ?? `${firstRecord?.notation}-${sumTotals(records)}`}
-							onClick={() => onRestore?.(result)}
-							type="button"
-						>
-							<span>{generatedAt}</span>
-							<strong>{firstRecord?.notation ?? result.label}</strong>
-							<small>{records.length} roll{records.length === 1 ? "" : "s"} / total {sumTotals(records)}</small>
-							<em>Restore</em>
-						</button>
-					);
-				})}
-			</div>
-		</aside>
 	);
 }
 
@@ -179,4 +136,18 @@ function splitRollValues(value: string | undefined) {
 
 function sumTotals(records: readonly DiceRollRecord[]) {
 	return records.reduce((sum, record) => sum + Number.parseInt(record.total, 10), 0);
+}
+
+function describeDiceHistory(result: TextResultStageValue): ResultHistoryDescription {
+	if (result.type !== "dice" || result.kind !== "fields") {
+		return { heading: result.label, meta: result.meta };
+	}
+
+	const records = diceRollRecords(result as DiceStageResult);
+	const firstRecord = records[0];
+
+	return {
+		heading: firstRecord?.notation ?? result.label,
+		meta: `${records.length} roll${records.length === 1 ? "" : "s"} / total ${sumTotals(records)}`,
+	};
 }

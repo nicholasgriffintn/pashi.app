@@ -12,8 +12,12 @@ import {
 } from "../lib/result-format";
 import { createResultSummary, type ResultSummary } from "../lib/result-summary";
 import { createFieldDisplayModel } from "../lib/result-field-display";
-import { diceHistoryResults, isDiceStageResult } from "../lib/dice-result";
+import { isDiceStageResult } from "../lib/dice-result";
+import { resultHistoryForResult } from "../lib/result-history";
+import { isCoinFlipStageResult } from "../lib/coin-result";
+import { CoinFlipResultView } from "./CoinFlipResultView";
 import { DiceResultView } from "./DiceResultView";
+import { ResultHistory } from "./ResultHistory";
 import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
 
 interface ImagePreviewItem {
@@ -76,7 +80,7 @@ export function ResultStage({
 	const [isExpanded, setIsExpanded] = useState(false);
 	const expandedResult = result && isExpanded ? result : undefined;
 	const expandedSummary = expandedResult ? createResultSummary(expandedResult, generatedAtLabel) : undefined;
-	const diceHistory = result && isDiceStageResult(result) ? diceHistoryResults(resultHistory) : [];
+	const currentHistory = resultHistoryForResult(resultHistory, result);
 
 	useEffect(() => {
 		if (!expandedResult) {
@@ -128,13 +132,14 @@ export function ResultStage({
 							src={result.src}
 						/>
 					) : (
-						<ResultBody
-							diceHistory={diceHistory}
-							onClearDiceHistory={onClearResultHistory}
-							onRestoreDiceHistory={onRestoreResult}
-							result={result}
-							compact
-						/>
+							<ResultBody
+								generatedAtLabel={generatedAtLabel}
+								history={currentHistory}
+								onClearHistory={onClearResultHistory}
+								onRestoreHistory={onRestoreResult}
+								result={result}
+								compact
+							/>
 					)}
 				</div>
 				{summary ? (
@@ -180,12 +185,13 @@ export function ResultStage({
 										src={expandedResult.src}
 									/>
 								) : (
-									<ResultBody
-										diceHistory={diceHistory}
-										onClearDiceHistory={onClearResultHistory}
-										onRestoreDiceHistory={onRestoreResult}
-										result={expandedResult}
-									/>
+										<ResultBody
+											generatedAtLabel={generatedAtLabel}
+											history={currentHistory}
+											onClearHistory={onClearResultHistory}
+											onRestoreHistory={onRestoreResult}
+											result={expandedResult}
+										/>
 								)}
 							</div>
 						</div>
@@ -232,36 +238,65 @@ function ResultSummaryPanel({ summary }: { summary: ResultSummary }) {
 
 function ResultBody({
 	compact = false,
-	diceHistory = [],
-	onClearDiceHistory,
-	onRestoreDiceHistory,
+	generatedAtLabel,
+	history = [],
+	onClearHistory,
+	onRestoreHistory,
 	result,
 }: {
 	compact?: boolean;
-	diceHistory?: ReturnType<typeof diceHistoryResults>;
-	onClearDiceHistory?: () => void;
-	onRestoreDiceHistory?: (result: ResultStageValue) => void;
+	generatedAtLabel: string;
+	history?: TextResultStageValue[];
+	onClearHistory?: () => void;
+	onRestoreHistory?: (result: ResultStageValue) => void;
 	result: TextResultStageValue;
 }) {
+	function withHistory(content: React.ReactNode) {
+		return (
+			<div className="result-with-history" data-compact={compact}>
+				{content}
+				<ResultHistory
+					generatedAtLabel={generatedAtLabel}
+					history={history}
+					onClear={onClearHistory}
+					onRestore={(restoredResult) => onRestoreHistory?.(restoredResult)}
+				/>
+			</div>
+		);
+	}
+
 	const imagePreview = createImagePreview(result);
 	if (imagePreview.length > 0) {
-		return <ImagePreviewResult compact={compact} items={imagePreview} />;
+		return withHistory(<ImagePreviewResult compact={compact} items={imagePreview} />);
 	}
 
 	if (isDiceStageResult(result)) {
 		return (
 			<DiceResultView
 				compact={compact}
-				history={diceHistory}
-				onClearHistory={onClearDiceHistory}
-				onRestoreHistory={onRestoreDiceHistory}
+				generatedAtLabel={generatedAtLabel}
+				history={history.filter(isDiceStageResult)}
+				onClearHistory={onClearHistory}
+				onRestoreHistory={(restoredResult) => onRestoreHistory?.(restoredResult)}
+				result={result}
+			/>
+		);
+	}
+
+	if (isCoinFlipStageResult(result)) {
+		return (
+			<CoinFlipResultView
+				generatedAtLabel={generatedAtLabel}
+				history={history}
+				onClearHistory={onClearHistory}
+				onRestoreHistory={(restoredResult) => onRestoreHistory?.(restoredResult)}
 				result={result}
 			/>
 		);
 	}
 
 	if (result.kind === "palette" && Array.isArray(result.result) && isStringArray(result.result)) {
-		return (
+		return withHistory(
 			<div className="palette-result">
 				{result.result.map((colour) => (
 					<div className="swatch" key={colour} style={{ background: colour }}>
@@ -274,7 +309,7 @@ function ResultBody({
 
 	if (result.kind === "fields" && Array.isArray(result.result) && isRecordArray(result.result)) {
 		if (isColourRecordArray(result.result)) {
-			return (
+			return withHistory(
 				<div className="colour-records-result">
 					{result.result.map((record) => (
 						<article className="colour-card" key={`${record.hex}-${record.rgb}`} style={{ background: record.primary }}>
@@ -304,14 +339,14 @@ function ResultBody({
 			);
 		}
 
-		if (compact) {
-			return <RecordPreviewResult items={createRecordPreview(result.result)} total={result.result.length} />;
-		}
+			if (compact) {
+				return withHistory(<RecordPreviewResult items={createRecordPreview(result.result)} total={result.result.length} />);
+			}
 
-		const columns = uniqueKeys(result.result);
-		return (
-			<div className="records-result">
-				<table>
+			const columns = uniqueKeys(result.result);
+			return withHistory(
+				<div className="records-result">
+					<table>
 					<thead>
 						<tr>
 							{columns.map((column) => (
@@ -328,15 +363,15 @@ function ResultBody({
 							</tr>
 						))}
 					</tbody>
-				</table>
-			</div>
-		);
+					</table>
+				</div>
+			);
 	}
 
 	if (result.kind === "fields" && !Array.isArray(result.result) && typeof result.result !== "string") {
 		const fieldDisplay = createFieldDisplayModel(result.result);
 
-		return (
+		return withHistory(
 			<dl className="field-result">
 				{fieldDisplay.status ? (
 					<div className="field-status" data-status={fieldDisplay.status.toLowerCase()}>
@@ -361,7 +396,7 @@ function ResultBody({
 	}
 
 	const text = formatTextResult(result.result);
-	return <pre className="text-result" data-density={textResultDensity(text)}>{text}</pre>;
+	return withHistory(<pre className="text-result" data-density={textResultDensity(text)}>{text}</pre>);
 }
 
 function textResultDensity(text: string) {

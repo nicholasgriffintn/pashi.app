@@ -19,7 +19,7 @@ import {
 	pushGeneratorRoute,
 	type GeneratorValues,
 } from "./generator-state";
-import { appendDiceResultHistory } from "./dice-result";
+import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
 import type { ResultStageValue } from "./result-types";
 
 function createInitialResult(
@@ -154,9 +154,7 @@ export function useGeneratorConsole() {
 				input,
 				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
 			);
-			if (activeTool.id === "dice") {
-				setResultHistory((current) => appendDiceResultHistory(current, result));
-			}
+			setResultHistory((current) => appendResultHistory(current, result));
 			setResult(nextResult);
 			setResultMode(aiMode ? "ai" : "standard");
 			setIsLoading(false);
@@ -205,12 +203,12 @@ export function useGeneratorConsole() {
 	}
 
 	function clearResultHistory() {
-		setResultHistory([]);
+		setResultHistory((current) => clearResultHistoryForResult(current, result));
 	}
 
 	function restoreResult(restoredResult: ResultStageValue) {
 		setResult(restoredResult);
-		notify("Roll restored");
+		notify("Result restored");
 	}
 
 	return {
