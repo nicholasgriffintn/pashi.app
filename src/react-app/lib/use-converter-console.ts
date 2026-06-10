@@ -375,10 +375,13 @@ export function useConverterConsole() {
 			const sourcePresetField = findSourcePresetField(activeTool);
 			const sourceKey = sourcePresetField ? converterFields[sourcePresetField.id]?.trim() : "";
 			const hasSourceKey = Boolean(sourceKey);
+			const hasImageUrl = activeTool.id === "image-format" && Boolean(input.trim());
 
-			if (!selectedFile && !hasSourceKey) {
+			if (!selectedFile && !hasSourceKey && !hasImageUrl) {
 				const requirement = sourcePresetField
 					? `${activeTool.input.label.toLowerCase()} or a preset`
+					: activeTool.id === "image-format"
+					? `${activeTool.input.label.toLowerCase()} or image URL`
 					: activeTool.input.label.toLowerCase();
 				setError(`Choose ${requirement} to convert.`);
 				setIsLoading(false);
@@ -397,6 +400,16 @@ export function useConverterConsole() {
 					outputFormat: outputFormat || activeTool.outputs[0] || "txt",
 					...(selectedFile ? { sourceName: selectedFile.name } : {}),
 				};
+				if (activeTool.id === "image-format" && !selectedFile && hasImageUrl) {
+					const format = outputFormat || activeTool.outputs[0] || "webp";
+					const blob = await convertImageThing(activeTool.endpoint, input, { outputFormat: format });
+					if (objectUrlRef.current) {
+						URL.revokeObjectURL(objectUrlRef.current);
+					}
+					objectUrlRef.current = URL.createObjectURL(blob);
+					setResult(createImageConverterResult(activeTool, input, format, objectUrlRef.current));
+					return;
+				}
 				if (activeTool.runtime === "container") {
 					if (activeTool.id === "slackmoji") {
 						await startSlackmojiBatchConversion(activeTool.endpoint, fields, selectedFile);
@@ -440,21 +453,11 @@ export function useConverterConsole() {
 				...(outputFormat ? { outputFormat } : {}),
 			};
 
-			if (activeTool.id === "image-format") {
-				const format = outputFormat || activeTool.outputs[0] || "webp";
-				const blob = await convertImageThing(activeTool.endpoint, input, { outputFormat: format });
-				if (objectUrlRef.current) {
-					URL.revokeObjectURL(objectUrlRef.current);
-				}
-				objectUrlRef.current = URL.createObjectURL(blob);
-				setResult(createImageConverterResult(activeTool, input, format, objectUrlRef.current));
-			} else {
-				setResult(await convertThing(
-					activeTool.endpoint,
-					input,
-					fields,
-				));
-			}
+			setResult(await convertThing(
+				activeTool.endpoint,
+				input,
+				fields,
+			));
 			setIsLoading(false);
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Conversion failed.");

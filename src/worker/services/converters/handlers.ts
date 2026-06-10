@@ -61,6 +61,12 @@ function jsonTransformFormat(value: string | undefined) {
 	return isJsonTransformFormat(format) ? format : undefined;
 }
 
+function jsonTransformMimeType(format: (typeof JSON_TRANSFORM_FORMATS)[number]) {
+	return format === "flatten" || format === "format" || format === "minify" || format === "sort"
+		? "application/json;charset=utf-8"
+		: "text/plain;charset=utf-8";
+}
+
 function htmlTransformFormat(value: string | undefined) {
 	const format = value || "strip-tags";
 	return isHtmlTransformFormat(format) ? format : undefined;
@@ -127,7 +133,7 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				input,
 				transformJson(input, outputFormat),
 				`JSON transformed with ${outputFormat}.`,
-				{ mimeType: "application/json;charset=utf-8" },
+				{ mimeType: jsonTransformMimeType(outputFormat) },
 			);
 		} catch (error) {
 			if (error instanceof JsonTransformError) {

@@ -32,10 +32,6 @@ export async function createConverterResponse(
 		return json({ error: "Conversions are not available." }, 503);
 	}
 
-	if (tool.runtime === "container" && !hasQueuedConversionServices(env)) {
-		return json({ error: `${tool.label} conversion needs media conversion services.` }, 503);
-	}
-
 	if (env && params) {
 		const converterPresetResponse = await createConverterPresetResponse(tool.id, params, env);
 		if (converterPresetResponse) {
@@ -59,6 +55,10 @@ export async function createConverterResponse(
 
 	if (tool.id === "image-format" && requestWithPresets.input.trim()) {
 		return createImageFormatResponse(requestWithPresets);
+	}
+
+	if (tool.runtime === "container" && !hasQueuedConversionServices(env)) {
+		return json({ error: `${tool.label} conversion needs media conversion services.` }, 503);
 	}
 
 	if (tool.runtime !== "worker" || !tool.endpoint) {

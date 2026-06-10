@@ -5,6 +5,14 @@ import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
 import { HTML_TRANSFORM_FORMATS } from "./html-transform.ts";
 import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
 import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
+import {
+	AUDIO_FORMAT_OUTPUTS,
+	DOCUMENT_FORMAT_OUTPUTS,
+	IMAGE_FORMAT_OUTPUTS,
+	SLACK_HDR_EMOJI_OUTPUTS,
+	SLACKMOJI_OUTPUTS,
+	VIDEO_FORMAT_OUTPUTS,
+} from "./queued-output-formats.ts";
 import { TIMESTAMP_TRANSFORM_FORMATS } from "./timestamp-transform.ts";
 import { URL_TRANSFORM_FORMATS } from "./url-transform.ts";
 
@@ -681,7 +689,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				{
 					description: "Target image format.",
 					id: "outputFormat",
-					values: ["webp", "jpeg", "png", "avif", "gif", "bmp", "tiff", "ico", "mjpeg"],
+					values: IMAGE_FORMAT_OUTPUTS,
 				},
 				{
 					description: "Optional image quality from 1 to 100.",
@@ -707,7 +715,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			required: true,
 		},
 		label: "Image formats",
-		outputs: ["webp", "jpeg", "png", "avif", "gif", "bmp", "tiff", "ico", "mjpeg"],
+		outputs: IMAGE_FORMAT_OUTPUTS,
 		placeholder: "Any ffmpeg-readable image",
 		runtime: "container",
 		status: "available",
@@ -741,7 +749,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					description: "Target output format.",
 					id: "outputFormat",
 					required: true,
-					values: ["gif"],
+					values: SLACKMOJI_OUTPUTS,
 				},
 				{
 					description: "Preset image.",
@@ -836,7 +844,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			required: true,
 		},
 		label: "Slack-style GIF generator",
-		outputs: ["gif"],
+		outputs: SLACKMOJI_OUTPUTS,
 		placeholder: "Upload an image to animate as GIF",
 		runtime: "container",
 		status: "available",
@@ -871,7 +879,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					description: "Target output format.",
 					id: "outputFormat",
 					required: true,
-					values: ["png"],
+					values: SLACK_HDR_EMOJI_OUTPUTS,
 				},
 				{
 					description: "Preset image.",
@@ -913,7 +921,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			required: true,
 		},
 		label: "HDR Slack emoji generator",
-		outputs: ["png"],
+		outputs: SLACK_HDR_EMOJI_OUTPUTS,
 		placeholder: "Upload an image or choose a preset for an HDR-style Slack emoji",
 		runtime: "container",
 		status: "available",
@@ -1040,7 +1048,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					description: "Target document format. The API accepts safe Pandoc output extensions.",
 					id: "outputFormat",
 					required: true,
-					values: ["docx", "odt", "rtf", "epub", "html", "md", "txt"],
+					values: DOCUMENT_FORMAT_OUTPUTS,
 				},
 			],
 			methods: ["GET", "POST"],
@@ -1077,7 +1085,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			required: true,
 		},
 		label: "Document formats",
-		outputs: ["docx", "odt", "rtf", "epub", "html", "md", "txt"],
+		outputs: DOCUMENT_FORMAT_OUTPUTS,
 		placeholder: "DOCX, ODT, RTF, EPUB, HTML, Markdown, or TXT",
 		runtime: "container",
 		status: "available",
@@ -1126,7 +1134,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					description: "Target video, audio, or animated image format.",
 					id: "outputFormat",
 					required: true,
-					values: ["mp4", "webm", "mov", "mkv", "avi", "m4v", "mpeg", "mpg", "ogv", "gif", "png", "webp", "jpeg", "mp3", "wav", "flac", "m4a", "ogg", "opus"],
+					values: VIDEO_FORMAT_OUTPUTS,
 				},
 				{
 					description: "Optional ffmpeg operation preset.",
@@ -1157,7 +1165,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			required: true,
 		},
 		label: "Video and audio formats",
-		outputs: ["mp4", "webm", "mov", "mkv", "avi", "m4v", "mpeg", "mpg", "ogv", "gif", "png", "webp", "jpeg", "mp3", "wav", "flac", "m4a", "ogg", "opus"],
+		outputs: VIDEO_FORMAT_OUTPUTS,
 		placeholder: "Any ffmpeg-readable video or audio",
 		runtime: "container",
 		status: "available",
@@ -1198,10 +1206,10 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			],
 			fields: [
 				{
-					description: "Target audio format. The API accepts any safe ffmpeg output extension.",
+					description: "Target audio format.",
 					id: "outputFormat",
 					required: true,
-					values: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "opus", "aiff", "mka", "wma", "png"],
+					values: AUDIO_FORMAT_OUTPUTS,
 				},
 				{
 					description: "Optional ffmpeg operation preset.",
@@ -1232,7 +1240,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			required: true,
 		},
 		label: "Audio formats",
-		outputs: ["mp3", "wav", "flac", "aac", "m4a", "ogg", "opus", "aiff", "mka", "wma", "png"],
+		outputs: AUDIO_FORMAT_OUTPUTS,
 		placeholder: "Any ffmpeg-readable audio",
 		runtime: "container",
 		status: "available",

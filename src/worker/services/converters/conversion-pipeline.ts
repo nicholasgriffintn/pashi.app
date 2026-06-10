@@ -3,6 +3,7 @@ import { Container, getContainer } from "@cloudflare/containers";
 import { safeFilename } from "../../utils/text";
 import { appendConversionOperationSearchParams, createConversionOperationFields, type ConversionOperationFields } from "./conversion-options";
 import { applyConverterPresetFields } from "./presets";
+import { QUEUED_CONVERTER_OUTPUTS } from "./queued-output-formats";
 import { isAllowedPresetKey, SLACKMOJI_PRESET_PREFIX } from "./slackmoji-presets";
 import type { ConverterResult } from "./types";
 
@@ -89,11 +90,11 @@ export async function createQueuedConversionUploadResponse(
 	}
 
 	const converterFields = applyConverterPresetFields(converterId, source.fields);
-	const outputFormat = normaliseOutputFormat(kind, converterFields.outputFormat || converterFields.format);
-	if (!outputFormat) {
-		return Response.json({ error: "Choose a safe ffmpeg output format such as webp, mp4, or mp3." }, { status: 400 });
+	const outputFormat = normaliseOutputFormat(converterId, kind, converterFields.outputFormat || converterFields.format);
+	if (!outputFormat.format) {
+		return Response.json({ error: outputFormat.error }, { status: 400 });
 	}
-	const finalOutputFormat = converterId === "slackmoji" ? "gif" : converterId === "slack-hdr-emoji" ? "png" : outputFormat;
+	const finalOutputFormat = outputFormat.format;
 
 	const now = new Date().toISOString();
 	const jobId = crypto.randomUUID();
@@ -425,14 +426,30 @@ function queuedConversionKindForConverter(converterId: string): QueuedConversion
 	return undefined;
 }
 
-function normaliseOutputFormat(kind: QueuedConversionKind, value: string | undefined) {
-	const defaultFormat = kind === "image" ? "webp" : kind === "audio" ? "mp3" : kind === "document" ? "docx" : "mp4";
+function normaliseOutputFormat(converterId: string, kind: QueuedConversionKind, value: string | undefined) {
+	const defaultFormat = converterId === "slackmoji"
+		? "gif"
+		: converterId === "slack-hdr-emoji"
+		? "png"
+		: kind === "image"
+		? "webp"
+		: kind === "audio"
+		? "mp3"
+		: kind === "document"
+		? "docx"
+		: "mp4";
 	const format = value?.trim().toLowerCase() || defaultFormat;
 	if (!OUTPUT_FORMAT_PATTERN.test(format)) {
-		return undefined;
+		return { error: "Choose a safe output format such as webp, mp4, or mp3." };
 	}
 
-	return format === "jpg" ? "jpeg" : format;
+	const normalisedFormat = format === "jpg" ? "jpeg" : format;
+	const supportedFormats = QUEUED_CONVERTER_OUTPUTS[converterId] ?? [];
+	if (!supportedFormats.includes(normalisedFormat)) {
+		return { error: `Choose a supported output format: ${supportedFormats.join(", ")}.` };
+	}
+
+	return { format: normalisedFormat };
 }
 
 function extensionForFormat(format: string) {

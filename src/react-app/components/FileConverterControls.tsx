@@ -5,6 +5,8 @@ import { type ConverterInfoTool } from "../lib/converter-api";
 interface FileConverterControlsProps {
 	onFileChange: (file: File | undefined) => void;
 	converterFields: Record<string, string>;
+	input: string;
+	onInputChange: (value: string) => void;
 	onConverterFieldChange: (id: string, value: string) => void;
 	onOutputFormatChange: (value: string) => void;
 	outputFormat: string;
@@ -15,6 +17,8 @@ interface FileConverterControlsProps {
 export function FileConverterControls({
 	onFileChange,
 	converterFields,
+	input,
+	onInputChange,
 	onConverterFieldChange,
 	onOutputFormatChange,
 	outputFormat,
@@ -24,6 +28,7 @@ export function FileConverterControls({
 	const fields = tool.api?.fields ?? [];
 	const outputField = fields.find((field) => field.id === "outputFormat");
 	const hasSourcePresetField = fields.some((field) => field.display?.control === "source-presets");
+	const acceptsUrlInput = tool.id === "image-format";
 
 	return (
 		<div className="field-grid">
@@ -36,6 +41,17 @@ export function FileConverterControls({
 					type="file"
 				/>
 			</label>
+			{acceptsUrlInput ? (
+				<label className="field-control converter-input">
+					<span>Image URL</span>
+					<textarea
+						onChange={(event) => onInputChange(event.target.value)}
+						placeholder="https://example.com/image.png"
+						rows={3}
+						value={input}
+					/>
+				</label>
+			) : null}
 			<ConverterOutputControl
 				field={outputField}
 				onOutputFormatChange={onOutputFormatChange}

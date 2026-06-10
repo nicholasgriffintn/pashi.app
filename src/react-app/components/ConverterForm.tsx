@@ -89,8 +89,10 @@ export function ConverterForm({
 				) : isAvailable && activeTool.input.kind === "file" ? (
 					<FileConverterControls
 						converterFields={converterFields}
+						input={input}
 						onConverterFieldChange={onConverterFieldChange}
 						onFileChange={onFileChange}
+						onInputChange={onInputChange}
 						onOutputFormatChange={onOutputFormatChange}
 						outputFormat={outputFormat}
 						selectedFile={selectedFile}
