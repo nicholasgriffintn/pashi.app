@@ -6,6 +6,28 @@ import { escapeXml } from "../../../utils/text.ts";
 import { fieldsResult, textResult } from "./result.ts";
 
 const CRON_PRESETS = ["hourly", "daily", "weekly", "monthly"] as const;
+const REGEX_PRESETS = [
+	"email",
+	"url",
+	"uuid",
+	"hex-colour",
+	"ipv4",
+	"slug",
+	"iso-date",
+	"time",
+	"integer",
+	"decimal",
+	"whitespace",
+	"html-tag",
+] as const;
+const REGEX_FLAGS = ["none", "i", "g", "gi", "m", "im"] as const;
+
+interface RegexPreset {
+	description: string;
+	exampleMatch: string;
+	exampleNonMatch: string;
+	pattern: string;
+}
 
 export function createDeveloperResult(
 	generator: GeneratorTool,
@@ -14,6 +36,8 @@ export function createDeveloperResult(
 	switch (generator.id) {
 		case "cron-expression":
 			return fieldsResult(generator, request.input, createCronExpression(request));
+		case "regex-pattern":
+			return fieldsResult(generator, request.input, createRegexPattern(request));
 		case "html-meta-tags":
 			return textResult(generator, request.input, createHtmlMetaTags(request));
 		case "json-api-response":
@@ -29,6 +53,24 @@ export function createDeveloperResult(
 		default:
 			return undefined;
 	}
+}
+
+function createRegexPattern(request: GeneratorRequest): GeneratorResultRecord {
+	const preset = parseChoice(request.fields.preset ?? request.input, REGEX_PRESETS, "email");
+	const flags = parseChoice(request.fields.flags ?? "", REGEX_FLAGS, "none");
+	const regex = regexPreset(preset);
+	const pattern = request.fields.anchors === "false" ? regex.pattern : `^${regex.pattern}$`;
+	const normalizedFlags = flags === "none" ? "" : flags;
+
+	return {
+		description: regex.description,
+		exampleMatch: regex.exampleMatch,
+		exampleNonMatch: regex.exampleNonMatch,
+		flags: normalizedFlags || "none",
+		javascriptLiteral: `/${escapeRegexLiteral(pattern)}/${normalizedFlags}`,
+		notes: "Curated linear-time pattern; still validate business rules separately.",
+		pattern,
+	};
 }
 
 function createCronExpression(request: GeneratorRequest): GeneratorResultRecord {
@@ -58,6 +100,95 @@ function createCronExpression(request: GeneratorRequest): GeneratorResultRecord 
 			return {
 				description: `Every day at ${pad(hour)}:${pad(minute)}`,
 				expression: `${minute} ${hour} * * *`,
+			};
+	}
+}
+
+function regexPreset(preset: (typeof REGEX_PRESETS)[number]): RegexPreset {
+	switch (preset) {
+		case "decimal":
+			return {
+				description: "Signed decimal number.",
+				exampleMatch: "-12.75",
+				exampleNonMatch: "12.",
+				pattern: "[+-]?(?:\\d+\\.\\d+|\\d+)",
+			};
+		case "hex-colour":
+			return {
+				description: "CSS hex colour in 3, 4, 6, or 8 digit form.",
+				exampleMatch: "#ff2f78",
+				exampleNonMatch: "ff2f78",
+				pattern: "#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})",
+			};
+		case "html-tag":
+			return {
+				description: "Simple HTML tag token.",
+				exampleMatch: "<meta name=\"description\">",
+				exampleNonMatch: "meta name=\"description\"",
+				pattern: "<\\/?[A-Za-z][A-Za-z0-9-]*\\b[^<>]*>",
+			};
+		case "integer":
+			return {
+				description: "Signed base-10 integer.",
+				exampleMatch: "-42",
+				exampleNonMatch: "4.2",
+				pattern: "[+-]?\\d+",
+			};
+		case "ipv4":
+			return {
+				description: "IPv4 address with octets from 0 to 255.",
+				exampleMatch: "192.168.0.1",
+				exampleNonMatch: "999.168.0.1",
+				pattern: "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
+			};
+		case "iso-date":
+			return {
+				description: "ISO-style calendar date.",
+				exampleMatch: "2026-06-10",
+				exampleNonMatch: "10/06/2026",
+				pattern: "\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])",
+			};
+		case "slug":
+			return {
+				description: "Lowercase URL slug.",
+				exampleMatch: "launch-notes-v2",
+				exampleNonMatch: "Launch notes v2",
+				pattern: "[a-z0-9]+(?:-[a-z0-9]+)*",
+			};
+		case "time":
+			return {
+				description: "24-hour time with minutes.",
+				exampleMatch: "23:59",
+				exampleNonMatch: "24:00",
+				pattern: "(?:[01]\\d|2[0-3]):[0-5]\\d",
+			};
+		case "url":
+			return {
+				description: "HTTP or HTTPS URL.",
+				exampleMatch: "https://pashi.app/tools",
+				exampleNonMatch: "ftp://pashi.app/tools",
+				pattern: "https?:\\/\\/[^\\s/$.?#][^\\s]*",
+			};
+		case "uuid":
+			return {
+				description: "UUID v4-style identifier.",
+				exampleMatch: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+				exampleNonMatch: "f47ac10b58cc4372a5670e02b2c3d479",
+				pattern: "[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}",
+			};
+		case "whitespace":
+			return {
+				description: "One or more whitespace characters.",
+				exampleMatch: "   ",
+				exampleNonMatch: "word",
+				pattern: "\\s+",
+			};
+		case "email":
+			return {
+				description: "Practical email address shape, not full RFC validation.",
+				exampleMatch: "ada@example.com",
+				exampleNonMatch: "ada@example",
+				pattern: "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",
 			};
 	}
 }
@@ -186,6 +317,10 @@ function safeUrl(value: string | undefined) {
 
 function pad(value: number) {
 	return String(value).padStart(2, "0");
+}
+
+function escapeRegexLiteral(pattern: string) {
+	return pattern.replace(/\\/g, "\\\\").replace(/\//g, "\\/");
 }
 
 function parseJsonSample(input: string): unknown {

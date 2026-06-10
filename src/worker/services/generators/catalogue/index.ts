@@ -81,6 +81,7 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	"port-number": ["port-numbers"],
 	"palette": ["palettes", "color-palette-generator", "random-color-palette-generator", "custom-color-palette-generator", "color-harmony-generator", "monochrome-palette-generator", "pastel-palette-generator"],
 	"qr": ["qr-code", "qr-codes", "qr-code-generator", "url-qr-code-generator"],
+	"regex-pattern": ["regex", "regexp", "regular-expression", "regular-expression-generator", "regex-generator"],
 	"salt": ["salts"],
 	"ssh-key": ["ssh-keys"],
 	"slug": ["slugs", "url-slug-generator", "text-to-slug-converter"],
@@ -223,6 +224,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 		field("hour", "Hour", "9", true),
 		field("weekday", "Weekday", "1", true),
 		field("day", "Day", "1", true),
+	]),
+	tool("regex-pattern", "Regex pattern", "Engineering", "Curated regular expressions for common matching tasks.", "Preset", false, "email", "fields", "Generate regex", ["email", "uuid", "hex colour"], [
+		field("preset", "Preset", "email", false, "select", ["email", "url", "uuid", "hex-colour", "ipv4", "slug", "iso-date", "time", "integer", "decimal", "whitespace", "html-tag"]),
+		field("anchors", "Anchors", "true", false, "select", ["true", "false"]),
+		field("flags", "Flags", "none", false, "select", ["none", "i", "g", "gi", "m", "im"]),
 	]),
 	tool("json-schema-example", "JSON schema example", "Engineering", "Generate a JSON schema from field:type lines.", "Fields", true, "name:string\nage:number", "text", "Generate schema", ["name:string\nage:number"], [
 		field("title", "Title", "Example", false),
