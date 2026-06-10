@@ -1,4 +1,5 @@
 import { listConverterTools } from "./converters/catalogue.ts";
+import { isConverterAvailable } from "./converters/availability.ts";
 import { listExportFormats } from "./export-formats.ts";
 import type { FeatureEnv } from "./features.ts";
 import { createFeatureStatus, createServiceStatus } from "./features.ts";
@@ -12,12 +13,12 @@ export function createApiIndexResponse(env: FeatureEnv) {
 		modes: features.ai.available ? tool.modes : tool.modes?.filter((mode) => mode !== "ai"),
 		toolType: "generator" as const,
 	}));
-	const converters = features.conversions.available
-		? listConverterTools().map((tool) => ({
+	const converters = listConverterTools()
+		.filter((tool) => isConverterAvailable(tool, env))
+		.map((tool) => ({
 			...tool,
 			toolType: "converter" as const,
-		}))
-		: [];
+		}));
 	const tools = [...generators, ...converters];
 
 	return {

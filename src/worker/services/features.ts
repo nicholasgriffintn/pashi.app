@@ -76,7 +76,7 @@ export function createFeatureStatus(env: FeatureEnv): FeatureStatusMap {
 			unavailableServices: aiUnavailableServices,
 		},
 		conversions: {
-			available: conversionsEnabled && conversionUnavailableServices.length === 0,
+			available: conversionsEnabled,
 			enabled: conversionsEnabled,
 			requiredServices: conversionRequiredServices,
 			unavailableServices: conversionUnavailableServices,

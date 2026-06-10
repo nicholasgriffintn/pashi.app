@@ -1,4 +1,4 @@
-import { isTextTransformFormat, TEXT_TRANSFORM_FORMATS, transformText } from "../../utils/text-transforms.ts";
+import { isTextTransformFormat, TEXT_TRANSFORM_FORMATS, TextTransformError, transformText } from "../../utils/text-transforms.ts";
 import { convertUnitText, UNIT_OUTPUTS, UnitConversionError } from "../../utils/unit-conversion.ts";
 import { safeFilename } from "../../utils/text.ts";
 import { jiraToMarkdown, markdownToJira } from "./atlassian-markup.ts";
@@ -160,14 +160,22 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			throw new ConverterRequestError(`Choose a supported text transform: ${TEXT_TRANSFORM_FORMATS.join(", ")}.`);
 		}
 
-		return textResult(
-			"text-transform",
-			"Text transform",
-			input,
-			transformText(input, outputFormat, fields),
-			`Text transformed with ${outputFormat}.`,
-			{ mimeType: "text/plain;charset=utf-8" },
-		);
+		try {
+			return textResult(
+				"text-transform",
+				"Text transform",
+				input,
+				transformText(input, outputFormat, fields),
+				`Text transformed with ${outputFormat}.`,
+				{ mimeType: "text/plain;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof TextTransformError) {
+				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
 	},
 	"timestamp-transform": ({ fields, input }) => {
 		const outputFormat = timestampTransformFormat(fields.outputFormat || fields.format);

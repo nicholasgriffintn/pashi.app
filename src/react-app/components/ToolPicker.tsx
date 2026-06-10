@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 
 import { searchTools } from "../lib/tool-search";
+import { isStringArray } from "../../shared/records";
 
 const MENU_GAP = 8;
 const MENU_MAX_HEIGHT = 448;
@@ -66,9 +67,14 @@ function groupTools(tools: ToolPickerTool[], recentToolIds: string[]) {
 	const recentTools = recentToolIds
 		.map((toolId) => tools.find((tool) => tool.id === toolId))
 		.filter((tool): tool is ToolPickerTool => Boolean(tool));
+	const recentToolIdSet = new Set(recentTools.map((tool) => tool.id));
 	const groups = new Map<string, ToolPickerTool[]>();
 
 	for (const tool of tools) {
+		if (recentToolIdSet.has(tool.id)) {
+			continue;
+		}
+
 		const group = groups.get(tool.display.category) ?? [];
 		group.push(tool);
 		groups.set(tool.display.category, group);
@@ -87,7 +93,8 @@ function isTypingTarget(target: EventTarget | null) {
 function readRecentToolIds(recentKey: string) {
 	try {
 		const value = localStorage.getItem(recentKey);
-		return value ? (JSON.parse(value) as string[]) : [];
+		const parsed = value ? JSON.parse(value) as unknown : [];
+		return isStringArray(parsed) ? parsed : [];
 	} catch {
 		return [];
 	}

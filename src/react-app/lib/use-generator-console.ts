@@ -89,6 +89,7 @@ export function useGeneratorConsole() {
 				setTools(info.tools);
 				setExportFormats(info.exportFormats);
 				applyToolValues(nextTool, getInitialValues(nextTool));
+				notify("Generators ready");
 			})
 			.catch((caught) => {
 				if (!ignore) {
@@ -98,7 +99,6 @@ export function useGeneratorConsole() {
 			.finally(() => {
 				if (!ignore) {
 					setIsInfoLoading(false);
-					notify("Generators ready");
 				}
 			});
 

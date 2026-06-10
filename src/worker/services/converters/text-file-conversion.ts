@@ -1,5 +1,5 @@
 import { isStringArray, isStringRecord, isStringRecordArray, type StringRecord, uniqueKeys } from "../../../shared/records.ts";
-import { csvRow, parseCsv, recordsToCsv } from "../../utils/csv.ts";
+import { csvRow, parseCsv, parseTsv, recordsToCsv } from "../../utils/csv.ts";
 import {
 	parseKeyValueText,
 	parseXmlRecords,
@@ -150,6 +150,15 @@ function readSourceContent(input: string, sourceName = "file"): SourceContent {
 		return {
 			keyValues,
 			records: [],
+			text: input,
+			values: [],
+		};
+	}
+
+	const tsvRecords = shouldPreferTsvSource(sourceName, input) ? parseTsv(input) : [];
+	if (tsvRecords.length > 0) {
+		return {
+			records: tsvRecords,
 			text: input,
 			values: [],
 		};
@@ -420,4 +429,10 @@ function shouldPreferKeyValueSource(sourceName: string, input: string) {
 function shouldPreferXmlSource(sourceName: string, input: string) {
 	const extension = sourceName.toLowerCase().split(".").pop();
 	return extension === "xml" || /^\s*<\?xml\b/i.test(input);
+}
+
+function shouldPreferTsvSource(sourceName: string, input: string) {
+	const extension = sourceName.toLowerCase().split(".").pop();
+	const firstLine = input.split(/\r?\n/, 1)[0] ?? "";
+	return extension === "tsv" || extension === "tab" || (firstLine.includes("\t") && !firstLine.includes(","));
 }

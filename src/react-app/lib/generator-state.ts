@@ -1,4 +1,5 @@
 import type { GeneratorInfoTool } from "./generator-info";
+import { pushAppPath } from "./navigation";
 
 export interface GeneratorValues {
 	fields: Record<string, string>;
@@ -89,8 +90,5 @@ export function findToolByRoute(tools: readonly GeneratorInfoTool[], routeToolId
 }
 
 export function pushGeneratorRoute(toolId: string) {
-	const nextPath = `/${toolId}`;
-	if (window.location.pathname !== nextPath) {
-		window.history.pushState(null, "", nextPath);
-	}
+	pushAppPath(`/${toolId}`);
 }

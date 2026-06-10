@@ -1,3 +1,5 @@
+import { parseInteger } from "./generation.ts";
+
 export type TextTransformFormat =
 	| "ascii-decimal"
 	| "ascii-hex"
@@ -76,6 +78,8 @@ export const TEXT_TRANSFORM_FORMATS: readonly TextTransformFormat[] = [
 	"remove-zero-width",
 	"vertical",
 ];
+
+export class TextTransformError extends Error {}
 
 const LEET_REPLACEMENTS: Record<string, string> = {
 	a: "4",
@@ -191,7 +195,7 @@ export function transformText(input: string, format: TextTransformFormat, fields
 		case "upside-down":
 			return [...input.toLowerCase()].reverse().map((char) => UPSIDE_DOWN_REPLACEMENTS[char] ?? char).join("");
 		case "url-decode":
-			return decodeURIComponent(input.replace(/\+/g, " "));
+			return decodeUrlComponent(input);
 		case "url-encode":
 			return encodeURIComponent(input);
 		case "vertical":
@@ -228,7 +232,7 @@ function uniqueBy(values: string[], keyFor: (value: string) => string) {
 }
 
 function repeatInput(input: string, countValue: string | undefined) {
-	const count = Math.min(Math.max(Number.parseInt(countValue ?? "2", 10) || 2, 1), 100);
+	const count = parseInteger(countValue ?? "", 2, 1, 100);
 	return Array.from({ length: count }, () => input).join("\n");
 }
 
@@ -261,12 +265,39 @@ function decodeBytes(input: string, radix: number) {
 		.trim()
 		.split(/[\s,]+/)
 		.filter(Boolean)
-		.map((value) => Number.parseInt(value, radix));
+		.map((value) => parseByteToken(value, radix));
 	if (values.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) {
-		throw new Error("Encoded text contains an invalid byte.");
+		throw new TextTransformError("Encoded text contains an invalid byte.");
 	}
 
 	return new TextDecoder().decode(new Uint8Array(values));
+}
+
+function parseByteToken(value: string, radix: number) {
+	if (!isByteToken(value, radix)) {
+		return Number.NaN;
+	}
+
+	return Number.parseInt(value, radix);
+}
+
+function isByteToken(value: string, radix: number) {
+	switch (radix) {
+		case 2:
+			return /^[01]{1,8}$/.test(value);
+		case 16:
+			return /^[0-9a-fA-F]{1,2}$/.test(value);
+		default:
+			return false;
+	}
+}
+
+function decodeUrlComponent(input: string) {
+	try {
+		return decodeURIComponent(input.replace(/\+/g, " "));
+	} catch {
+		throw new TextTransformError("Enter valid URL-encoded text.");
+	}
 }
 
 function codePoints(input: string, radix: number) {

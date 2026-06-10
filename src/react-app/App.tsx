@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppModeTabs, type AppMode } from "./components/AppModeTabs";
 import { ConverterConsole } from "./components/ConverterConsole";
 import { GeneratorConsole } from "./components/GeneratorConsole";
+import { pushAppPath, replaceAppPath } from "./lib/navigation";
 import { fetchPashiInfo, type FeatureStatusMap } from "./lib/pashi-info";
 import "./App.css";
 
@@ -50,7 +51,7 @@ function App() {
 			return;
 		}
 
-		window.history.replaceState(null, "", "/");
+		replaceAppPath("/");
 	}, [conversionsUnavailable, mode]);
 
 	function handleModeChange(nextMode: AppMode) {
@@ -60,9 +61,7 @@ function App() {
 
 		const nextPath =
 			nextMode === "convert" ? "/convert/markdown-to-jira" : "/";
-		if (window.location.pathname !== nextPath) {
-			window.history.pushState(null, "", nextPath);
-		}
+		pushAppPath(nextPath);
 		setMode(nextMode);
 	}
 

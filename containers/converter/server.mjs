@@ -2,6 +2,7 @@ import { createReadStream, createWriteStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import { mkdir, rm } from "node:fs/promises";
 import { createServer } from "node:http";
+import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -76,6 +77,10 @@ const SLACKMOJI_EFFECT_ALIASES = Object.freeze({
 	"blueprint": "spin_right",
 });
 const SLACKMOJI_EFFECTS = new Set(Object.keys(SLACKMOJI_EFFECT_ALIASES));
+
+class PayloadTooLargeError extends Error {
+	status = 413;
+}
 
 function extensionForFormat(format) {
 	return format === "jpeg" ? "jpg" : format;
@@ -402,12 +407,12 @@ function bitrateOption(value) {
 }
 
 function integerOption(value, min, max, fallback) {
-	const parsed = Number.parseInt(value, 10);
+	const parsed = /^[+-]?\d+$/.test(String(value).trim()) ? Number(value) : Number.NaN;
 	return Number.isInteger(parsed) && parsed >= min && parsed <= max ? String(parsed) : fallback;
 }
 
 function numberOption(value, min, max, fallback) {
-	const parsed = Number(value);
+	const parsed = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(String(value).trim()) ? Number(value) : Number.NaN;
 	return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : fallback;
 }
 
@@ -459,6 +464,22 @@ async function runHdrEmoji(inputPath, outputPath, options, workDir) {
 	await runMagick(hdrEmojiMagickArgs(normalizedInputPath, outputPath, options));
 }
 
+function byteLimitStream(maxBytes) {
+	let total = 0;
+
+	return new Transform({
+		transform(chunk, _encoding, callback) {
+			total += chunk.length;
+			if (total > maxBytes) {
+				callback(new PayloadTooLargeError("Uploaded file is too large."));
+				return;
+			}
+
+			callback(null, chunk);
+		},
+	});
+}
+
 async function handleConvert(request, response) {
 	const url = new URL(request.url, "http://localhost");
 	const kind = url.searchParams.get("kind");
@@ -485,7 +506,7 @@ async function handleConvert(request, response) {
 
 	try {
 		await mkdir(workDir, { recursive: true });
-		await pipeline(request, createWriteStream(inputPath));
+		await pipeline(request, byteLimitStream(MAX_BYTES), createWriteStream(inputPath));
 		if (kind === "document") {
 			await runPandoc(pandocArgs(inputPath, outputPath));
 		} else if (kind === "image" && outputFormat === "png" && operationFields.operation === "hdr-emoji") {
@@ -501,7 +522,7 @@ async function handleConvert(request, response) {
 		});
 		await pipeline(createReadStream(outputPath), response);
 	} catch (error) {
-		response.writeHead(422, { "Content-Type": "application/json" });
+		response.writeHead(error instanceof PayloadTooLargeError ? error.status : 422, { "Content-Type": "application/json" });
 		response.end(JSON.stringify({ error: error instanceof Error ? error.message : "Conversion failed." }));
 	} finally {
 		await rm(workDir, { force: true, recursive: true });

@@ -50,6 +50,7 @@ const MAX_UPLOAD_BYTES = 250 * 1024 * 1024;
 const CONTAINER_PORT = 8080;
 const JOB_PREFIX = "conversions";
 const MAX_PRESET_LIST = 150;
+const JOB_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export interface SlackmojiPreset {
 	key: string;
@@ -135,6 +136,10 @@ export async function createQueuedConversionLookupResponse(
 	const jobId = fields.job || fields.download;
 	if (!jobId) {
 		return undefined;
+	}
+
+	if (!isJobId(jobId)) {
+		return Response.json({ error: "Conversion job not found." }, { status: 404 });
 	}
 
 	const record = await readJobRecord(env, jobId);
@@ -392,6 +397,10 @@ function createJobResult(record: ConversionJobRecord): ConverterResult {
 
 function jobRecordKey(jobId: string) {
 	return `${JOB_PREFIX}/${jobId}/job.json`;
+}
+
+function isJobId(value: string) {
+	return JOB_ID_PATTERN.test(value);
 }
 
 function queuedConversionKindForConverter(converterId: string): QueuedConversionKind | undefined {

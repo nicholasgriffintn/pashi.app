@@ -9,7 +9,7 @@
 		"deploy": "wrangler deploy",
 		"dev": "vite",
 		"lint": "eslint .",
-		"preview": "npm run build && vite preview",
+		"preview": "pnpm build && vite preview",
 		"test": "echo \"Error: DO NOT ADD UNIT TESTS, THIS PROJECT IS SUPPOSED TO BE FUN! (E2E / INTEGRATION MAY BE ACCEPTABLE, NOT UNIT, EVER)\" && exit 1"
 	},
 	"type": "module",

@@ -14,13 +14,31 @@ export function parseCount(input: string, fallback = 1, max = 1000) {
 }
 
 export function parseInteger(input: string, fallback: number, min: number, max: number) {
-	const parsed = input ? Number.parseInt(input, 10) : fallback;
+	const parsed = parseStrictInteger(input, fallback);
 	return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
 }
 
 export function parseNumber(input: string, fallback: number, min: number, max: number) {
-	const parsed = input ? Number.parseFloat(input) : fallback;
+	const parsed = parseStrictNumber(input, fallback);
 	return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+}
+
+function parseStrictInteger(input: string, fallback: number) {
+	const trimmed = input.trim();
+	if (!trimmed) {
+		return fallback;
+	}
+
+	return /^[+-]?\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
+}
+
+function parseStrictNumber(input: string, fallback: number) {
+	const trimmed = input.trim();
+	if (!trimmed) {
+		return fallback;
+	}
+
+	return /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(trimmed) ? Number(trimmed) : Number.NaN;
 }
 
 export function parseBoolean(input: string | undefined, fallback: boolean) {

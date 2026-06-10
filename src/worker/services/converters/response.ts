@@ -9,7 +9,7 @@ import {
 	readSlackmojiPresetSource,
 	type ConversionEnv,
 } from "./conversion-pipeline";
-import { createFeatureStatus } from "../features";
+import { hasQueuedConversionServices, isConverterFeatureEnabled } from "./availability";
 import { applyConverterPresetFields } from "./presets";
 
 export async function createConverterResponse(
@@ -23,19 +23,24 @@ export async function createConverterResponse(
 		return json({ error: "Converter not found." }, 404);
 	}
 
-	if (env && params) {
-		const converterPresetResponse = await createConverterPresetResponse(tool.id, params, env);
-		if (converterPresetResponse) {
-			return converterPresetResponse;
-		}
-	}
 	const requestWithPresets: ConverterRequest = {
 		...request,
 		fields: applyConverterPresetFields(type, request.fields),
 	};
 
-	if (!env || !createFeatureStatus(env).conversions.available) {
+	if (!isConverterFeatureEnabled(env)) {
 		return json({ error: "Conversions are not available." }, 503);
+	}
+
+	if (tool.runtime === "container" && !hasQueuedConversionServices(env)) {
+		return json({ error: `${tool.label} conversion needs media conversion services.` }, 503);
+	}
+
+	if (env && params) {
+		const converterPresetResponse = await createConverterPresetResponse(tool.id, params, env);
+		if (converterPresetResponse) {
+			return converterPresetResponse;
+		}
 	}
 
 	if (env && (

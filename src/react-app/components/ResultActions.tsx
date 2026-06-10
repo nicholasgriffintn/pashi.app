@@ -101,7 +101,15 @@ async function copyImage(src: string) {
 	}
 
 	const response = await fetch(src);
+	if (!response.ok) {
+		throw new Error("Image could not be loaded.");
+	}
+
 	const blob = await response.blob();
+	if (!blob.type.startsWith("image/")) {
+		throw new Error("Clipboard source is not an image.");
+	}
+
 	await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
 }
 

@@ -1,4 +1,5 @@
 import type { ConverterInfoTool } from "./converter-api";
+import { pushAppPath } from "./navigation";
 
 export interface ConverterValues {
 	input: string;
@@ -37,8 +38,5 @@ export function findConverterByRoute(
 }
 
 export function pushConverterRoute(toolId: string) {
-	const nextPath = `/convert/${toolId}`;
-	if (window.location.pathname !== nextPath) {
-		window.history.pushState(null, "", nextPath);
-	}
+	pushAppPath(`/convert/${toolId}`);
 }

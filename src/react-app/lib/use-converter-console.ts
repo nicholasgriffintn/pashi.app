@@ -266,6 +266,7 @@ export function useConverterConsole() {
 				const nextTool = pickInitialConverter(info.tools);
 				setTools(info.tools);
 				applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
+				notify("Converters ready");
 			})
 			.catch((caught) => {
 				if (!ignore) {
@@ -275,7 +276,6 @@ export function useConverterConsole() {
 			.finally(() => {
 				if (!ignore) {
 					setIsInfoLoading(false);
-					notify("Converters ready");
 				}
 			});
 

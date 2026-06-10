@@ -1,4 +1,5 @@
 import { escapeXml } from "../utils/text";
+import { listConverterTools } from "./converters";
 import { listGeneratorTools } from "./generators/index";
 
 export function createSitemapResponse(origin: string) {
@@ -11,7 +12,11 @@ export function createSitemapResponse(origin: string) {
 }
 
 function createSitemapXml(origin: string) {
-	const urls = ["/", ...listGeneratorTools().map((tool) => `/${tool.id}`)];
+	const urls = [
+		"/",
+		...listGeneratorTools().map((tool) => `/${tool.id}`),
+		...listConverterTools().map((tool) => `/convert/${tool.id}`),
+	];
 	const entries = urls
 		.map(
 			(path) => `  <url>

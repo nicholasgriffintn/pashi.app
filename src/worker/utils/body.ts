@@ -51,7 +51,7 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 				...queryFields,
 				...fieldsFromJsonBody(body),
 			},
-			input: isInputBody(body) ? body.input : "",
+			input: isInputBody(body) ? body.input : queryInput,
 		};
 	}
 
@@ -104,9 +104,14 @@ export function normaliseFields(value: unknown) {
 }
 
 export function fieldsFromJsonBody(value: unknown) {
-	return typeof value === "object" && value !== null && !Array.isArray(value) && "fields" in value
-		? normaliseFields(value.fields)
-		: {};
+	if (typeof value !== "object" || value === null || Array.isArray(value)) {
+		return {};
+	}
+
+	return {
+		...fieldsFromObject(value),
+		...("fields" in value ? normaliseFields(value.fields) : {}),
+	};
 }
 
 export function fieldsFromSearchParams(params: URLSearchParams) {
@@ -158,4 +163,12 @@ export function fieldsFromFormData(formData: FormData) {
 function stringFormField(formData: FormData, key: string) {
 	const value = formData.get(key);
 	return typeof value === "string" ? value : "";
+}
+
+function fieldsFromObject(value: object) {
+	return Object.fromEntries(
+		Object.entries(value).flatMap(([key, fieldValue]) =>
+			!BODY_INPUT_FIELD_IDS.has(key) && typeof fieldValue === "string" ? [[key, fieldValue]] : [],
+		),
+	);
 }

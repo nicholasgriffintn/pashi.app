@@ -22,6 +22,17 @@ export function recordsToCsv(records: readonly StringRecord[]) {
 
 export function parseCsv(value: string): StringRecord[] {
 	const rows = parseCsvRows(value);
+	return recordsFromRows(rows);
+}
+
+export function parseTsv(value: string): StringRecord[] {
+	const rows = value
+		.split(/\r?\n/)
+		.map((row) => row.split("\t"));
+	return recordsFromRows(rows);
+}
+
+function recordsFromRows(rows: string[][]): StringRecord[] {
 	const [headers, ...body] = rows;
 	if (!headers?.length) {
 		return [];

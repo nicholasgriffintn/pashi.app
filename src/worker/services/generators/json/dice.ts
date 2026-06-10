@@ -11,6 +11,7 @@ interface DiceNotation {
 }
 
 const DICE_TYPES = ["d4", "d6", "d8", "d10", "d12", "d20", "d100", "custom"] as const;
+const DICE_EXPRESSION_PATTERN = /^(.+?)\s*(>=|<=|>|<|=)\s*(-?\d+)\s*$/;
 
 export function rollDice(request: GeneratorRequest) {
 	const notation = parseDiceRequest(request);
@@ -24,9 +25,12 @@ export function rollDice(request: GeneratorRequest) {
 }
 
 export function calculateDiceProbability(request: GeneratorRequest) {
+	const expression = parseDiceExpression(diceNotationInput(request));
 	const notation = parseDiceRequest(request);
-	const target = parseInteger(request.fields.target ?? "", notation.dice + notation.modifier, -100_000, 100_000);
-	const comparison = normaliseComparison(request.fields.comparison);
+	const target = expression
+		? expression.target
+		: parseInteger(request.fields.target ?? "", notation.dice + notation.modifier, -100_000, 100_000);
+	const comparison = expression?.comparison ?? normaliseComparison(request.fields.comparison);
 	const distribution = createDiceDistribution(notation);
 	const totalOutcomes = sumBigInts([...distribution.values()]);
 	const matchingOutcomes = sumBigInts(
@@ -72,7 +76,24 @@ function parseDiceRequest(request: GeneratorRequest): DiceNotation {
 		return parseDiceFields(request);
 	}
 
-	return parseDiceNotation(request.fields.notation || request.input || "1d6");
+	return parseDiceNotation(parseDiceExpression(diceNotationInput(request))?.notation ?? diceNotationInput(request));
+}
+
+function diceNotationInput(request: GeneratorRequest) {
+	return request.fields.notation || request.input || "1d6";
+}
+
+function parseDiceExpression(value: string) {
+	const match = value.trim().match(DICE_EXPRESSION_PATTERN);
+	if (!match) {
+		return undefined;
+	}
+
+	return {
+		comparison: normaliseComparison(match[2]),
+		notation: match[1].trim(),
+		target: parseInteger(match[3], 0, -100_000, 100_000),
+	};
 }
 
 function parseDiceFields(request: GeneratorRequest): DiceNotation {
@@ -187,6 +208,10 @@ function formatDiceNotation(notation: DiceNotation) {
 function createDiceDistribution(notation: DiceNotation) {
 	if (hasDiceMechanic(notation)) {
 		return createMechanicDistribution(notation);
+	}
+
+	if (notation.dice > 50 || notation.sides > 200 || notation.dice * notation.sides > 5000) {
+		throw new Error("Exact dice probability supports up to 50 dice, 200 sides, or 5000 dice-side combinations.");
 	}
 
 	let distribution = new Map<number, bigint>([[0, 1n]]);
