@@ -10,6 +10,7 @@ import {
 	isStringArray,
 	uniqueKeys,
 } from "../lib/result-format";
+import { createResultSummary, type ResultSummary } from "../lib/result-summary";
 import { createFieldDisplayModel } from "../lib/result-field-display";
 import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
 
@@ -42,8 +43,10 @@ export function ResultStage({
 	result,
 }: ResultStageProps) {
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
+	const summary = result ? createResultSummary(result, generatedAtLabel) : undefined;
 	const [isExpanded, setIsExpanded] = useState(false);
 	const expandedResult = result && isExpanded ? result : undefined;
+	const expandedSummary = expandedResult ? createResultSummary(expandedResult, generatedAtLabel) : undefined;
 
 	useEffect(() => {
 		if (!expandedResult) {
@@ -97,6 +100,12 @@ export function ResultStage({
 						<ResultBody result={result} compact />
 					)}
 				</div>
+				{summary ? (
+					<div className="result-summary-strip">
+						<strong>{summary.title}</strong>
+						<span>{summary.stat}</span>
+					</div>
+				) : null}
 				{generatedAt ? <p className="result-generated-at">{generatedAtLabel} {generatedAt}</p> : null}
 			</div>
 			<div className="result-action-slot" data-visible={Boolean(result && actions)}>
@@ -120,25 +129,62 @@ export function ResultStage({
 								<span aria-hidden="true">×</span>
 							</button>
 						</div>
-						<div className="result-dialog-content">
-							{expandedResult.kind === "slackmoji-batch" ? (
-								<SlackmojiBatchResults items={expandedResult.items} />
-							) : expandedResult.kind === "image" ? (
-								<img
-									alt={expandedResult.alt}
-									className="image-result"
-									onError={onImageError}
-									onLoad={onImageLoad}
-									src={expandedResult.src}
-								/>
-							) : (
-								<ResultBody result={expandedResult} />
-							)}
+						<div className="result-dialog-main">
+							{expandedSummary ? <ResultSummaryPanel summary={expandedSummary} /> : null}
+							<div className="result-dialog-content">
+								{expandedResult.kind === "slackmoji-batch" ? (
+									<SlackmojiBatchResults items={expandedResult.items} />
+								) : expandedResult.kind === "image" ? (
+									<img
+										alt={expandedResult.alt}
+										className="image-result"
+										onError={onImageError}
+										onLoad={onImageLoad}
+										src={expandedResult.src}
+									/>
+								) : (
+									<ResultBody result={expandedResult} />
+								)}
+							</div>
 						</div>
 					</div>
 				</div>
 			) : null}
 		</section>
+	);
+}
+
+function ResultSummaryPanel({ summary }: { summary: ResultSummary }) {
+	return (
+		<aside className="result-summary-panel">
+			<div>
+				<h2>{summary.title}</h2>
+				<p>{summary.stat}</p>
+			</div>
+			<dl className="result-summary-metrics">
+				{summary.metrics.map((metric) => (
+					<div key={metric.label}>
+						<dt>{metric.label}</dt>
+						<dd>{metric.value}</dd>
+					</div>
+				))}
+			</dl>
+			<dl className="result-summary-details">
+				{summary.details.map((detail) => (
+					<div key={`${detail.label}-${detail.value}`}>
+						<dt>{detail.label}</dt>
+						<dd>
+							{detail.href ? (
+								<a href={detail.href} rel="noreferrer" target="_blank">{detail.value}</a>
+							) : (
+								detail.value
+							)}
+						</dd>
+					</div>
+				))}
+			</dl>
+			{summary.footnote ? <p className="result-summary-footnote">{summary.footnote}</p> : null}
+		</aside>
 	);
 }
 
@@ -244,7 +290,23 @@ function ResultBody({ compact = false, result }: { compact?: boolean; result: Te
 		);
 	}
 
-	return <pre className="text-result">{formatTextResult(result.result)}</pre>;
+	const text = formatTextResult(result.result);
+	return <pre className="text-result" data-density={textResultDensity(text)}>{text}</pre>;
+}
+
+function textResultDensity(text: string) {
+	const lines = text.split("\n");
+	const longestLine = lines.reduce((longest, line) => Math.max(longest, line.length), 0);
+
+	if (lines.length === 1 && text.length <= 16) {
+		return "short";
+	}
+
+	if (lines.length <= 3 && text.length <= 80 && longestLine <= 36) {
+		return "medium";
+	}
+
+	return "long";
 }
 
 function ImagePreviewResult({ compact, items }: { compact: boolean; items: ImagePreviewItem[] }) {

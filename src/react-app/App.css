@@ -928,6 +928,41 @@ h1 {
 	width: 100%;
 }
 
+.result-summary-strip {
+	align-items: center;
+	background: #ffd14c;
+	border-top: 2px solid rgba(17, 20, 46, 0.2);
+	color: #11142e;
+	display: grid;
+	gap: 0.12rem;
+	justify-self: stretch;
+	min-height: 2.35rem;
+	padding: 0.35rem 0.65rem;
+	position: relative;
+	z-index: 4;
+}
+
+.result-summary-strip strong,
+.result-summary-strip span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.result-summary-strip strong {
+	font-size: 0.72rem;
+	font-weight: 900;
+	line-height: 1.1;
+	text-transform: uppercase;
+}
+
+.result-summary-strip span {
+	color: rgba(17, 20, 46, 0.72);
+	font-size: 0.62rem;
+	font-weight: 900;
+	line-height: 1.1;
+}
+
 .result-generated-at {
 	align-items: center;
 	background: linear-gradient(90deg, #11142e 0 72%, rgba(17, 20, 46, 0.92));
@@ -960,7 +995,7 @@ h1 {
 
 .result-box::after {
 	border: 1px solid rgba(255, 247, 215, 0.42);
-	bottom: 2rem;
+	bottom: 4.35rem;
 	content: "";
 	left: 0.55rem;
 	pointer-events: none;
@@ -1028,6 +1063,94 @@ h1 {
 	background: #25ffe6;
 	color: #11142e;
 	outline: 0;
+}
+
+.result-dialog-main {
+	display: grid;
+	grid-template-columns: minmax(12rem, 0.44fr) minmax(0, 1fr);
+	min-height: 0;
+	overflow: hidden;
+}
+
+.result-summary-panel {
+	align-content: start;
+	background: #11142e;
+	border-right: 2px solid rgba(37, 255, 230, 0.42);
+	color: #fff7d7;
+	display: grid;
+	gap: 0.85rem;
+	min-height: 0;
+	overflow: auto;
+	padding: clamp(0.85rem, 2vw, 1.05rem);
+	scrollbar-color: #ff2f78 rgba(255, 247, 215, 0.16);
+	scrollbar-width: thin;
+}
+
+.result-summary-panel h2 {
+	color: #25ffe6;
+	font-size: clamp(1rem, 2vw, 1.25rem);
+	line-height: 1.05;
+	margin: 0;
+	overflow-wrap: anywhere;
+	text-transform: uppercase;
+}
+
+.result-summary-panel p {
+	color: #ffd14c;
+	font-size: 0.76rem;
+	font-weight: 900;
+	line-height: 1.25;
+	margin: 0.28rem 0 0;
+	text-transform: uppercase;
+}
+
+.result-summary-metrics,
+.result-summary-details {
+	display: grid;
+	gap: 0.45rem;
+	margin: 0;
+}
+
+.result-summary-metrics {
+	grid-template-columns: repeat(auto-fit, minmax(4.6rem, 1fr));
+}
+
+.result-summary-metrics div,
+.result-summary-details div {
+	background: rgba(255, 247, 215, 0.08);
+	border-left: 3px solid #25ffe6;
+	min-width: 0;
+	padding: 0.45rem 0.5rem;
+}
+
+.result-summary-details div {
+	border-left-color: #ff2f78;
+}
+
+.result-summary-panel dt {
+	color: #ffd14c;
+	font-size: 0.62rem;
+	font-weight: 900;
+	text-transform: uppercase;
+}
+
+.result-summary-panel dd {
+	color: #fff7d7;
+	font-size: 0.76rem;
+	font-weight: 800;
+	line-height: 1.25;
+	margin: 0.14rem 0 0;
+	overflow-wrap: anywhere;
+}
+
+.result-summary-panel a {
+	color: #25ffe6;
+	text-decoration-color: rgba(37, 255, 230, 0.55);
+}
+
+.result-summary-footnote {
+	border-top: 1px solid rgba(255, 247, 215, 0.2);
+	padding-top: 0.75rem;
 }
 
 .result-dialog-content {
@@ -1155,7 +1278,7 @@ h1 {
 
 .text-result {
 	color: #11142e;
-	font: 800 clamp(0.78rem, 1vw, 0.95rem) / 1.4 "Trebuchet MS", system-ui, sans-serif;
+	font: 800 0.9rem / 1.4 "Trebuchet MS", system-ui, sans-serif;
 	margin: 0;
 	max-height: 100%;
 	overflow: auto;
@@ -1164,6 +1287,31 @@ h1 {
 	scrollbar-width: thin;
 	white-space: pre-wrap;
 	width: 100%;
+}
+
+.text-result[data-density="short"],
+.text-result[data-density="medium"] {
+	align-items: center;
+	display: grid;
+	justify-items: center;
+	overflow: hidden;
+	text-align: center;
+}
+
+.text-result[data-density="short"] {
+	font-size: 2.4rem;
+	font-weight: 900;
+	line-height: 1;
+	overflow-wrap: anywhere;
+	padding: 1.25rem;
+}
+
+.text-result[data-density="medium"] {
+	font-size: 1.55rem;
+	font-weight: 900;
+	line-height: 1.12;
+	overflow-wrap: anywhere;
+	padding: 1.2rem;
 }
 
 .field-result {
@@ -1790,6 +1938,17 @@ h1 {
 	.result-dialog {
 		max-height: calc(100dvh - 2rem);
 		min-height: min(26rem, calc(100dvh - 2rem));
+	}
+
+	.result-dialog-main {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto minmax(0, 1fr);
+	}
+
+	.result-summary-panel {
+		border-bottom: 2px solid rgba(37, 255, 230, 0.42);
+		border-right: 0;
+		max-height: 15rem;
 	}
 
 	.image-result {

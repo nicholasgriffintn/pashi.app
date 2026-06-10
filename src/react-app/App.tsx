@@ -58,7 +58,7 @@ function App() {
 			return;
 		}
 
-	const nextPath =
+		const nextPath =
 			nextMode === "convert" ? "/convert/markdown-to-jira" : "/";
 		if (window.location.pathname !== nextPath) {
 			window.history.pushState(null, "", nextPath);
