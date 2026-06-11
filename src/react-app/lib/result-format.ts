@@ -23,6 +23,19 @@ export function formatGeneratedAt(value: string | undefined) {
 	return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+export function formatGeneratedAtTime(value: string | undefined) {
+	if (!value) {
+		return undefined;
+	}
+
+	const date = new Date(value);
+	if (Number.isNaN(date.getTime())) {
+		return value;
+	}
+
+	return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 export function formatTextResult(value: TextResultStageValue["result"]) {
 	if (Array.isArray(value)) {
 		if (isStringArray(value)) {

@@ -20,9 +20,13 @@ const MENU_VIEWPORT_PADDING = 12;
 const MENU_SHADOW_SPACE = 12;
 
 interface ToolPickerProps {
-	activeTool: ToolPickerTool;
+	activeTool?: ToolPickerTool;
 	label: string;
 	onChange: (toolId: string) => void;
+	placeholder?: {
+		category: string;
+		label: string;
+	};
 	recentKey: string;
 	tools: ToolPickerTool[];
 }
@@ -108,7 +112,7 @@ function writeRecentToolIds(recentKey: string, toolIds: string[]) {
 	}
 }
 
-export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: ToolPickerProps) {
+export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey, tools }: ToolPickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
@@ -167,11 +171,11 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 		});
 	}, []);
 	const openPicker = useCallback(() => {
-		const selectedIndex = flatTools.findIndex((tool) => tool.id === activeTool.id);
+		const selectedIndex = activeTool ? flatTools.findIndex((tool) => tool.id === activeTool.id) : 0;
 		setActiveIndex(Math.max(0, selectedIndex));
 		updatePlacement();
 		setIsOpen(true);
-	}, [activeTool.id, flatTools, updatePlacement]);
+	}, [activeTool, flatTools, updatePlacement]);
 
 	const closePicker = useCallback((restoreFocus = false) => {
 		setIsOpen(false);
@@ -342,7 +346,7 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 						{group.tools.map((tool) => (
 							<button
 								id={optionId(listboxId, tool.id)}
-								aria-selected={tool.id === activeTool.id}
+								aria-selected={tool.id === activeTool?.id}
 								className="tool-option"
 								data-active={flatTools[activeIndex]?.id === tool.id ? "true" : undefined}
 								key={`${group.label}-${tool.id}`}
@@ -368,6 +372,7 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 				aria-controls={listboxId}
 				aria-expanded={isOpen}
 				className="tool-trigger"
+				data-empty={activeTool ? undefined : "true"}
 				onKeyDown={handlePickerKeyDown}
 				onClick={() => {
 					if (isOpen) {
@@ -380,8 +385,8 @@ export function ToolPicker({ activeTool, label, onChange, recentKey, tools }: To
 				type="button"
 			>
 				<span>
-					<strong>{activeTool.label}</strong>
-					<small>{activeTool.display.category}</small>
+					<strong>{activeTool?.label ?? placeholder?.label ?? `Choose ${label}`}</strong>
+					<small>{activeTool?.display.category ?? placeholder?.category ?? "Tool picker"}</small>
 				</span>
 				<kbd>/</kbd>
 			</button>

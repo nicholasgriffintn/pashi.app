@@ -20,14 +20,17 @@ function ActionButton({
 	icon,
 	label,
 	onClick,
+	text,
 }: {
 	icon: string;
 	label: string;
 	onClick: () => void;
+	text?: string;
 }) {
 	return (
-		<button aria-label={label} onClick={onClick} title={label} type="button">
+		<button aria-label={label} data-has-label={Boolean(text)} onClick={onClick} title={label} type="button">
 			<span aria-hidden="true">{icon}</span>
+			{text ? <strong>{text}</strong> : null}
 		</button>
 	);
 }
@@ -35,14 +38,17 @@ function ActionButton({
 function ActionLink({
 	icon,
 	label,
+	text,
 	...props
 }: AnchorHTMLAttributes<HTMLAnchorElement> & {
 	icon: string;
 	label: string;
+	text?: string;
 }) {
 	return (
-		<a aria-label={label} title={label} {...props}>
+		<a aria-label={label} data-has-label={Boolean(text)} title={label} {...props}>
 			<span aria-hidden="true">{icon}</span>
+			{text ? <strong>{text}</strong> : null}
 		</a>
 	);
 }
@@ -58,6 +64,10 @@ function formatIcon(format: string) {
 		default:
 			return "↓";
 	}
+}
+
+function formatActionText(format: string, index: number) {
+	return index === 0 ? "Download" : format.toUpperCase();
 }
 
 function createExportHrefs(
@@ -221,11 +231,13 @@ export function ResultActions({
 					href={result.src}
 					icon="↓"
 					label="Download image"
+					text="Download"
 				/>
 				<ActionButton
 					icon="⧉"
 					label="Copy image"
 					onClick={() => runAction(() => copyImage(imageSrc ?? result.src), "Image copied")}
+					text="Copy"
 				/>
 				<ActionButton
 					icon="⌘"
@@ -248,15 +260,17 @@ export function ResultActions({
 					icon="⧉"
 					label="Copy result"
 					onClick={() => runAction(() => copyText(resultText), "Copied")}
+					text="Copy"
 				/>
 			) : null}
-			{exportHrefs.map(({ format, href }) => (
+			{exportHrefs.map(({ format, href }, index) => (
 				<ActionLink
 					download={`pashi-${tool.id}.${format}`}
 					href={href}
 					icon={formatIcon(format)}
 					key={format}
 					label={`Download ${format.toUpperCase()}`}
+					text={formatActionText(format, index)}
 				/>
 			))}
 			{"downloadName" in result && result.downloadName ? (
@@ -265,6 +279,7 @@ export function ResultActions({
 					href={createTextDownloadHref(result, resultToText(result))}
 					icon="↓"
 					label="Download file"
+					text="Download"
 				/>
 			) : null}
 			{downloadUrl ? (
@@ -272,6 +287,7 @@ export function ResultActions({
 					href={downloadUrl}
 					icon="↓"
 					label="Download converted file"
+					text="Download"
 				/>
 			) : null}
 			<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />

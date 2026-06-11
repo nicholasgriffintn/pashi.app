@@ -73,6 +73,16 @@ export function useGeneratorConsole() {
 		[],
 	);
 
+	const clearToolValues = useCallback(() => {
+		setActiveToolId("");
+		setInput("");
+		setFieldValues({});
+		setError("");
+		setResultMode("standard");
+		setIsLoading(false);
+		setResult(undefined);
+	}, []);
+
 	useEffect(() => {
 		return () => window.clearTimeout(notificationTimer.current);
 	}, []);
@@ -86,11 +96,14 @@ export function useGeneratorConsole() {
 					return;
 				}
 
-				const nextTool =
-					findToolByRoute(info.tools, getRouteToolId()) ?? info.tools[0];
+				const nextTool = findToolByRoute(info.tools, getRouteToolId());
 				setTools(info.tools);
 				setExportFormats(info.exportFormats);
-				applyToolValues(nextTool, getInitialValues(nextTool));
+				if (nextTool) {
+					applyToolValues(nextTool, getInitialValues(nextTool));
+				} else {
+					clearToolValues();
+				}
 				notify("Generators ready");
 			})
 			.catch((caught) => {
@@ -107,7 +120,7 @@ export function useGeneratorConsole() {
 		return () => {
 			ignore = true;
 		};
-	}, [applyToolValues, notify]);
+	}, [applyToolValues, clearToolValues, notify]);
 
 	useEffect(() => {
 		if (tools.length === 0) {
@@ -115,13 +128,18 @@ export function useGeneratorConsole() {
 		}
 
 		function handlePopState() {
-			const nextTool = findToolByRoute(tools, getRouteToolId()) ?? tools[0];
-			applyToolValues(nextTool, getInitialValues(nextTool));
+			const nextTool = findToolByRoute(tools, getRouteToolId());
+			if (nextTool) {
+				applyToolValues(nextTool, getInitialValues(nextTool));
+				return;
+			}
+
+			clearToolValues();
 		}
 
 		window.addEventListener("popstate", handlePopState);
 		return () => window.removeEventListener("popstate", handlePopState);
-	}, [applyToolValues, tools]);
+	}, [applyToolValues, clearToolValues, tools]);
 
 	async function generateActiveTool(aiMode = resultMode === "ai") {
 		setError("");

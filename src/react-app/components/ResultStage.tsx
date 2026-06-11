@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
 import {
 	formatGeneratedAt,
+	formatGeneratedAtTime,
 	formatTextResult,
 	isColourRecordArray,
 	isRecordArray,
@@ -76,6 +77,7 @@ export function ResultStage({
 	resultHistory = [],
 }: ResultStageProps) {
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
+	const generatedAtTime = formatGeneratedAtTime(result?.generatedAt);
 	const summary = result ? createResultSummary(result, generatedAtLabel) : undefined;
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [historyViewKey, setHistoryViewKey] = useState<string | undefined>();
@@ -113,9 +115,10 @@ export function ResultStage({
 			aria-live="polite"
 			className="result-stage"
 			data-has-result={Boolean(result)}
+			data-result-tone={resultTone(result)}
 			data-result-tool={result && isDiceStageResult(result) ? "dice" : undefined}
 		>
-			<div className="result-box" data-result-kind={result?.kind}>
+			<div className="result-box" data-result-kind={result?.kind} data-result-tone={resultTone(result)}>
 				{result ? (
 					<div className="result-stage-tools">
 						{canShowInlineHistory ? (
@@ -146,7 +149,15 @@ export function ResultStage({
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
 				<div className="result-content" key={`${isShowingHistory ? "history" : "result"}-${result?.generatedAt ?? result?.kind ?? "empty"}`}>
 					{!result ? (
-						<p className="empty-result">{emptyMessage}</p>
+						<div className="empty-result">
+							<div aria-hidden="true" className="empty-result-mark">↯</div>
+							<p>{emptyMessage}</p>
+							<div aria-hidden="true" className="empty-result-chips">
+								<span>QR</span>
+								<span>JSON</span>
+								<span>TXT</span>
+							</div>
+						</div>
 					) : isShowingHistory && canShowInlineHistory ? (
 						<div className="result-history-view">
 							<ResultHistory
@@ -186,7 +197,15 @@ export function ResultStage({
 						<span>{summary.stat}</span>
 					</div>
 				) : null}
-				{generatedAt ? <p className="result-generated-at">{generatedAtLabel} {generatedAt}</p> : null}
+				{generatedAt && generatedAtTime ? (
+					<p
+						aria-label={`${generatedAtLabel} ${generatedAt}`}
+						className="result-generated-at"
+						title={`${generatedAtLabel} ${generatedAt}`}
+					>
+						{generatedAtLabel} {generatedAtTime}
+					</p>
+				) : null}
 			</div>
 			<div className="result-action-slot" data-visible={Boolean(result && actions)}>
 				{result ? actions : null}
@@ -238,6 +257,18 @@ export function ResultStage({
 			) : null}
 		</section>
 	);
+}
+
+function resultTone(result: ResultStageValue | undefined) {
+	if (!result) {
+		return undefined;
+	}
+
+	if (result.kind === "image" || result.kind === "palette" || isDiceStageResult(result) || isCoinFlipStageResult(result)) {
+		return "visual";
+	}
+
+	return "code";
 }
 
 function ResultSummaryPanel({ summary }: { summary: ResultSummary }) {

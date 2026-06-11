@@ -153,7 +153,7 @@ function GenerateButton({
 	isLoading: boolean;
 }) {
 	return (
-		<button disabled={isLoading} type="submit">
+		<button className="primary-action" disabled={isLoading} type="submit">
 			{isLoading ? "Generating" : activeTool.display.actionLabel}
 		</button>
 	);

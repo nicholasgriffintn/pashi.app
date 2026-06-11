@@ -120,7 +120,7 @@ export function ConverterForm({
 
 			<div className="generate-actions">
 				{error ? <p className="error">{error}</p> : null}
-				<button disabled={isLoading || !isAvailable} type="submit">
+				<button className="primary-action" disabled={isLoading || !isAvailable} type="submit">
 					{isLoading ? "Converting" : activeTool.display.actionLabel}
 				</button>
 			</div>

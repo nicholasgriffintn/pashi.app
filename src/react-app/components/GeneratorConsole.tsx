@@ -4,6 +4,7 @@ import { useGeneratorConsole } from "../lib/use-generator-console";
 import { GeneratorForm } from "./GeneratorForm";
 import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
+import { ToolPicker } from "./ToolPicker";
 
 interface GeneratorConsoleProps {
 	modeTabs: React.ReactNode;
@@ -72,12 +73,35 @@ export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
 			resultHistory={resultHistory}
 			statusMessage="Loading generators"
 		>
-			{!activeTool ? (
+			{!activeTool && isInfoLoading ? (
 				<div aria-busy="true" className="generator generator-loading">
 					<label>Generator</label>
 					<p className="tool-description">
 						{isInfoLoading ? `Loading ${activeToolId || "generators"}` : "No generators available"}
 					</p>
+				</div>
+			) : !activeTool ? (
+				<div className="generator generator-empty">
+					<div className="generator-content">
+						<label>Generator</label>
+						<ToolPicker
+							label="generators"
+							onChange={handleToolChange}
+							placeholder={{
+								category: "Start here",
+								label: tools.length > 0 ? "Choose a generator" : "No generators available",
+							}}
+							recentKey="pashi:recent-generator-tools"
+							tools={tools}
+						/>
+						<div className="generator-empty-copy">
+							<h2>Make boring formats fast.</h2>
+							<p>
+								Pashi is a small toolkit for generating, converting, inspecting, and reshaping
+								developer-friendly data without leaving the page.
+							</p>
+						</div>
+					</div>
 				</div>
 			) : (
 				<GeneratorForm
