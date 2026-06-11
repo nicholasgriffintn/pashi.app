@@ -875,7 +875,16 @@ h1 {
 	width: 100%;
 }
 
-.result-expand-button {
+.result-stage-tools {
+	display: flex;
+	gap: 0.35rem;
+	position: absolute;
+	right: 0.65rem;
+	top: 0.65rem;
+	z-index: 6;
+}
+
+.result-stage-tool-button {
 	align-items: center;
 	background: #11142e;
 	border: 1px solid rgba(37, 255, 230, 0.86);
@@ -885,20 +894,17 @@ h1 {
 	font: 900 0.9rem / 1 "Trebuchet MS", system-ui, sans-serif;
 	height: 2rem;
 	place-items: center;
-	position: absolute;
-	right: 0.65rem;
-	top: 0.65rem;
 	transition:
 		background 160ms ease,
 		box-shadow 160ms ease,
 		color 160ms ease,
 		transform 160ms ease;
 	width: 2rem;
-	z-index: 6;
 }
 
-.result-expand-button:hover,
-.result-expand-button:focus-visible {
+.result-stage-tool-button:hover,
+.result-stage-tool-button:focus-visible,
+.result-stage-tool-button[aria-pressed="true"] {
 	background: #25ffe6;
 	box-shadow: 3px 3px 0 #ff2f78;
 	color: #11142e;
@@ -913,6 +919,16 @@ h1 {
 	justify-items: stretch;
 	min-height: 0;
 	place-items: center;
+	width: 100%;
+}
+
+.result-history-view {
+	align-content: stretch;
+	display: grid;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+	padding: 0.75rem;
 	width: 100%;
 }
 
@@ -1480,6 +1496,10 @@ h1 {
 	width: 100%;
 }
 
+.result-with-history[data-compact="true"] {
+	align-content: center;
+}
+
 .result-with-history > .field-result,
 .result-with-history > .records-result,
 .result-with-history > .palette-result,
@@ -1783,6 +1803,13 @@ h1 {
 	width: 100%;
 }
 
+.result-history-view .result-history {
+	height: 100%;
+	margin: 0;
+	min-height: 0;
+	overflow: hidden;
+}
+
 .result-history-header {
 	align-items: center;
 	display: flex;
@@ -1833,7 +1860,9 @@ h1 {
 .result-history-list {
 	display: grid;
 	gap: 0.4rem;
-	overflow: visible;
+	overflow: auto;
+	scrollbar-color: #ff2f78 rgba(255, 247, 215, 0.16);
+	scrollbar-width: thin;
 }
 
 .result-history-item {

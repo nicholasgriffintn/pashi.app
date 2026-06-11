@@ -61,6 +61,9 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	"ipv6": ["ipv6-address", "ipv6-addresses"],
 	"jwt-token": ["jwt-tokens", "jwt-generator-signer"],
 	"html-meta-tags": ["html-meta-tag-generator"],
+	"http-curl-command": ["curl-command-generator", "curl-generator", "request-curl-generator"],
+	"http-har-request": ["har-request-generator", "har-example-generator"],
+	"http-request-example": ["http-request-generator", "raw-http-request-generator"],
 	"json-api-response": ["json-api-response-generator"],
 	"json-axios-code": ["json-axios-code-generator"],
 	"json-fetch-code": ["json-fetch-code-generator"],
@@ -241,10 +244,27 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 	tool("json-fetch-code", "JSON Fetch code", "Engineering", "Generate a Fetch API JSON request snippet.", "JSON", true, "{\"ok\":true}", "text", "Generate Fetch", ["{\"ok\":true}"], [
 		field("url", "URL", "https://api.example.com/items", true),
 		field("method", "Method", "POST", false, "select", ["GET", "POST", "PUT", "PATCH", "DELETE"]),
+		field("headers", "Headers", "Accept: application/json", false, "textarea"),
 	]),
 	tool("json-axios-code", "JSON Axios code", "Engineering", "Generate an Axios JSON request snippet.", "JSON", true, "{\"ok\":true}", "text", "Generate Axios", ["{\"ok\":true}"], [
 		field("url", "URL", "https://api.example.com/items", true),
 		field("method", "Method", "POST", false, "select", ["GET", "POST", "PUT", "PATCH", "DELETE"]),
+		field("headers", "Headers", "Accept: application/json", false, "textarea"),
+	]),
+	tool("http-curl-command", "HTTP cURL command", "Engineering", "Generate a cURL command for a JSON API request.", "JSON", false, "{\"ok\":true}", "text", "Generate cURL", ["{\"ok\":true}", "GET https://api.example.com/items"], [
+		field("url", "URL", "https://api.example.com/items", true),
+		field("method", "Method", "POST", false, "select", ["GET", "POST", "PUT", "PATCH", "DELETE"]),
+		field("headers", "Headers", "Accept: application/json", false, "textarea"),
+	]),
+	tool("http-request-example", "Raw HTTP request", "Engineering", "Generate raw HTTP request text for API testing and documentation.", "JSON", false, "{\"ok\":true}", "text", "Generate request", ["{\"ok\":true}", "GET /items"], [
+		field("url", "URL", "https://api.example.com/items", true),
+		field("method", "Method", "POST", false, "select", ["GET", "POST", "PUT", "PATCH", "DELETE"]),
+		field("headers", "Headers", "Accept: application/json", false, "textarea"),
+	]),
+	tool("http-har-request", "HAR request", "Engineering", "Generate a minimal HAR request entry for browser tooling and converter tests.", "JSON", false, "{\"ok\":true}", "text", "Generate HAR", ["{\"ok\":true}", "POST request"], [
+		field("url", "URL", "https://api.example.com/items", true),
+		field("method", "Method", "POST", false, "select", ["GET", "POST", "PUT", "PATCH", "DELETE"]),
+		field("headers", "Headers", "Accept: application/json", false, "textarea"),
 	]),
 	tool("json-api-response", "JSON API response", "Engineering", "Generate a standard JSON API response wrapper.", "JSON", false, "{\"id\":123}", "text", "Generate response", ["{\"id\":123}"], [
 		field("status", "Status", "200", true),

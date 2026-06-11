@@ -2,8 +2,16 @@ import type { GeneratorRequest } from "../request.ts";
 import type { GeneratorResultRecord, GeneratorTool, JsonResult } from "../types.ts";
 import { isRecord } from "../../../../shared/records.ts";
 import { parseChoice, parseInteger } from "../../../utils/generation.ts";
-import { escapeXml } from "../../../utils/text.ts";
+import { escapeXml, safeHttpUrl } from "../../../utils/text.ts";
 import { fieldsResult, textResult } from "./result.ts";
+import {
+	createAxiosSnippet,
+	createCurlCommand,
+	createFetchSnippet,
+	createHarRequest,
+	createHttpRequestExample,
+	createJsonApiResponse,
+} from "./developer/requests.ts";
 
 const CRON_PRESETS = ["hourly", "daily", "weekly", "monthly"] as const;
 const REGEX_PRESETS = [
@@ -40,6 +48,12 @@ export function createDeveloperResult(
 			return fieldsResult(generator, request.input, createRegexPattern(request));
 		case "html-meta-tags":
 			return textResult(generator, request.input, createHtmlMetaTags(request));
+		case "http-curl-command":
+			return textResult(generator, request.input, createCurlCommand(request));
+		case "http-har-request":
+			return textResult(generator, request.input, createHarRequest(request));
+		case "http-request-example":
+			return textResult(generator, request.input, createHttpRequestExample(request));
 		case "json-api-response":
 			return textResult(generator, request.input, createJsonApiResponse(request));
 		case "json-axios-code":
@@ -212,8 +226,8 @@ function createJsonSchemaExample(request: GeneratorRequest) {
 function createHtmlMetaTags(request: GeneratorRequest) {
 	const title = request.fields.title?.trim() || request.input || "Pashi";
 	const description = request.fields.description?.trim() || "Fast tools and converters";
-	const url = safeUrl(request.fields.url) || "https://pashi.app";
-	const image = safeUrl(request.fields.image);
+	const url = safeHttpUrl(request.fields.url) || "https://pashi.app";
+	const image = safeHttpUrl(request.fields.image);
 	const tags = [
 		`<title>${escapeXml(title)}</title>`,
 		`<meta name="description" content="${escapeXml(description)}">`,
@@ -238,42 +252,6 @@ function createTypeScriptInterface(request: GeneratorRequest) {
 	);
 
 	return [`interface ${name} {`, ...lines, "}"].join("\n");
-}
-
-function createFetchSnippet(request: GeneratorRequest) {
-	const url = safeUrl(request.fields.url) || "https://api.example.com/items";
-	const method = requestMethod(request.fields.method);
-	const body = jsonBody(request);
-	const options = method === "GET" || method === "DELETE"
-		? `{\n  method: "${method}",\n  headers: {\n    "Accept": "application/json"\n  }\n}`
-		: `{\n  method: "${method}",\n  headers: {\n    "Accept": "application/json",\n    "Content-Type": "application/json"\n  },\n  body: JSON.stringify(${body})\n}`;
-
-	return [
-		`const response = await fetch("${url}", ${options});`,
-		"const data = await response.json();",
-	].join("\n");
-}
-
-function createAxiosSnippet(request: GeneratorRequest) {
-	const url = safeUrl(request.fields.url) || "https://api.example.com/items";
-	const method = requestMethod(request.fields.method).toLowerCase();
-	const body = jsonBody(request);
-	if (method === "get" || method === "delete") {
-		return `const response = await axios.${method}("${url}", {\n  headers: {\n    "Accept": "application/json"\n  }\n});`;
-	}
-
-	return `const response = await axios.${method}("${url}", ${body}, {\n  headers: {\n    "Accept": "application/json",\n    "Content-Type": "application/json"\n  }\n});`;
-}
-
-function createJsonApiResponse(request: GeneratorRequest) {
-	const success = request.fields.success?.toLowerCase() !== "false";
-	const status = parseInteger(request.fields.status ?? "", success ? 200 : 400, 100, 599);
-	return JSON.stringify({
-		data: parseJsonSample(request.input || request.fields.json || "{}"),
-		error: success ? null : { message: "Request failed" },
-		status,
-		success,
-	}, null, 2);
 }
 
 function parseSchemaFields(input: string) {
@@ -302,19 +280,6 @@ function safePropertyName(value: string) {
 	return name || "value";
 }
 
-function safeUrl(value: string | undefined) {
-	if (!value?.trim()) {
-		return undefined;
-	}
-
-	try {
-		const url = new URL(value.trim());
-		return url.protocol === "http:" || url.protocol === "https:" ? value.trim() : undefined;
-	} catch {
-		return undefined;
-	}
-}
-
 function pad(value: number) {
 	return String(value).padStart(2, "0");
 }
@@ -329,14 +294,6 @@ function parseJsonSample(input: string): unknown {
 	} catch {
 		return input;
 	}
-}
-
-function jsonBody(request: GeneratorRequest) {
-	return JSON.stringify(parseJsonSample(request.input || request.fields.json || "{}"), null, 2);
-}
-
-function requestMethod(value: string | undefined) {
-	return parseChoice(value ?? "", ["get", "post", "put", "patch", "delete"] as const, "post").toUpperCase();
 }
 
 function typescriptType(value: unknown): string {

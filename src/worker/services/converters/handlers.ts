@@ -9,6 +9,10 @@ import { convertMarkdownTarget, isMarkdownTargetFormat, MARKDOWN_TARGET_FORMATS 
 import type { ConverterHandler, ConverterResult } from "./types";
 import { isTimestampTransformFormat, TIMESTAMP_TRANSFORM_FORMATS, TimestampTransformError, transformTimestamp } from "./timestamp-transform.ts";
 import { isUrlTransformFormat, transformUrl, URL_TRANSFORM_FORMATS, UrlTransformError } from "./url-transform.ts";
+import { DATA_SHAPE_FORMATS, DataShapeError, inspectDataShape, isDataShapeFormat } from "./data-shape.ts";
+import { DEVELOPER_INSPECT_FORMATS, DeveloperInspectError, inspectDeveloperText, isDeveloperInspectFormat } from "./developer-inspect.ts";
+import { DEVELOPER_TEXT_FORMATS, DeveloperTextError, isDeveloperTextFormat, transformDeveloperText } from "./developer-text.ts";
+import { isRequestTransformFormat, REQUEST_TRANSFORM_FORMATS, RequestTransformError, transformRequestText } from "./request-transform.ts";
 
 export class ConverterRequestError extends Error {
 	status = 400;
@@ -67,6 +71,26 @@ function jsonTransformMimeType(format: (typeof JSON_TRANSFORM_FORMATS)[number]) 
 		: "text/plain;charset=utf-8";
 }
 
+function dataShapeFormat(value: string | undefined) {
+	const format = value || "json-shape";
+	return isDataShapeFormat(format) ? format : undefined;
+}
+
+function developerInspectFormat(value: string | undefined) {
+	const format = value || "jwt";
+	return isDeveloperInspectFormat(format) ? format : undefined;
+}
+
+function developerTextFormat(value: string | undefined) {
+	const format = value || "diff-lines";
+	return isDeveloperTextFormat(format) ? format : undefined;
+}
+
+function requestTransformFormat(value: string | undefined) {
+	const format = value || "curl-to-fetch";
+	return isRequestTransformFormat(format) ? format : undefined;
+}
+
 function htmlTransformFormat(value: string | undefined) {
 	const format = value || "strip-tags";
 	return isHtmlTransformFormat(format) ? format : undefined;
@@ -83,6 +107,75 @@ function urlTransformFormat(value: string | undefined) {
 }
 
 export const converterHandlers: Record<string, ConverterHandler> = {
+	"data-shape": ({ fields, input }) => {
+		const outputFormat = dataShapeFormat(fields.outputFormat || fields.format);
+		if (!outputFormat) {
+			throw new ConverterRequestError(`Choose a supported data shape inspection: ${DATA_SHAPE_FORMATS.join(", ")}.`);
+		}
+
+		try {
+			return textResult(
+				"data-shape",
+				"Data shape",
+				input,
+				inspectDataShape(input, outputFormat),
+				`Data shape inspected with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof DataShapeError) {
+				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
+	},
+	"developer-inspect": ({ fields, input }) => {
+		const outputFormat = developerInspectFormat(fields.outputFormat || fields.format);
+		if (!outputFormat) {
+			throw new ConverterRequestError(`Choose a supported developer inspection: ${DEVELOPER_INSPECT_FORMATS.join(", ")}.`);
+		}
+
+		try {
+			return textResult(
+				"developer-inspect",
+				"Developer inspection",
+				input,
+				inspectDeveloperText(input, outputFormat, fields),
+				`Developer text inspected with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof DeveloperInspectError) {
+				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
+	},
+	"developer-text": ({ fields, input }) => {
+		const outputFormat = developerTextFormat(fields.outputFormat || fields.format);
+		if (!outputFormat) {
+			throw new ConverterRequestError(`Choose a supported developer text transform: ${DEVELOPER_TEXT_FORMATS.join(", ")}.`);
+		}
+
+		try {
+			return textResult(
+				"developer-text",
+				"Developer text",
+				input,
+				transformDeveloperText(input, outputFormat, fields),
+				`Developer text transformed with ${outputFormat}.`,
+				{ mimeType: outputFormat.includes("json") ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof DeveloperTextError) {
+				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
+	},
 	"file-format": ({ fields, input }) => {
 		const outputFormat = textFileFormat(fields.outputFormat || fields.format);
 		if (!outputFormat) {
@@ -159,6 +252,29 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			`Markdown converted to ${outputFormat}.`,
 			{ mimeType: outputFormat === "wordpress-html" ? "text/html;charset=utf-8" : "text/plain;charset=utf-8" },
 		);
+	},
+	"request-transform": ({ fields, input }) => {
+		const outputFormat = requestTransformFormat(fields.outputFormat || fields.format);
+		if (!outputFormat) {
+			throw new ConverterRequestError(`Choose a supported request transform: ${REQUEST_TRANSFORM_FORMATS.join(", ")}.`);
+		}
+
+		try {
+			return textResult(
+				"request-transform",
+				"Request transform",
+				input,
+				transformRequestText(input, outputFormat),
+				`Request transformed with ${outputFormat}.`,
+				{ mimeType: outputFormat === "curl-to-json" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof RequestTransformError) {
+				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
 	},
 	"text-transform": ({ fields, input }) => {
 		const outputFormat = textTransformFormat(fields.outputFormat || fields.format);

@@ -5,6 +5,10 @@ import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
 import { HTML_TRANSFORM_FORMATS } from "./html-transform.ts";
 import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
 import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
+import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
+import { DEVELOPER_INSPECT_FORMATS } from "./developer-inspect.ts";
+import { DEVELOPER_TEXT_FORMATS } from "./developer-text.ts";
+import { REQUEST_TRANSFORM_FORMATS } from "./request-transform.ts";
 import {
 	AUDIO_FORMAT_OUTPUTS,
 	DOCUMENT_FORMAT_OUTPUTS,
@@ -512,6 +516,287 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "JSON transform",
 		outputs: JSON_TRANSFORM_FORMATS,
 		placeholder: "{\"b\":2,\"a\":{\"c\":3}}",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"csv-json-shape-tools",
+			"csv-schema-inspector",
+			"csv-shape",
+			"csv-summary",
+			"json-schema-inspector",
+			"json-shape",
+			"json-structure-inspector",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					body: "{\"users\":[{\"id\":1,\"name\":\"Ada\"}]}",
+					contentType: "application/json",
+					description: "Inspect JSON structure and inferred value kinds.",
+					method: "POST",
+					url: "/api/data-shape?outputFormat=json-shape",
+				},
+				{
+					body: "id,name\n1,Ada\n2,Grace",
+					contentType: "text/csv",
+					description: "Inspect CSV columns, row counts, examples, and inferred scalar types.",
+					method: "POST",
+					url: "/api/data-shape?outputFormat=csv-shape",
+				},
+			],
+			fields: [
+				{
+					description: "Data shape inspection mode.",
+					id: "outputFormat",
+					required: true,
+					values: DATA_SHAPE_FORMATS,
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		description: "Inspect JSON and CSV structure, including fields, row counts, examples, and inferred scalar types.",
+		display: {
+			actionLabel: "Inspect data",
+			category: "Data",
+			examples: [
+				"{\"users\":[{\"id\":1,\"name\":\"Ada\"}]}",
+				"id,name\n1,Ada\n2,Grace",
+			],
+		},
+		endpoint: "/api/data-shape",
+		id: "data-shape",
+		input: {
+			label: "JSON or CSV",
+			kind: "text",
+			required: true,
+		},
+		label: "Data shape",
+		outputs: DATA_SHAPE_FORMATS,
+		placeholder: "{\"users\":[{\"id\":1,\"name\":\"Ada\"}]}",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"colour-contrast-checker",
+			"color-contrast-checker",
+			"cron-explainer",
+			"file-signature-inspector",
+			"jwt-decoder",
+			"jwt-inspector",
+			"mime-inspector",
+			"uuid-decoder",
+			"uuid-inspector",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					body: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature",
+					contentType: "text/plain",
+					description: "Decode a JWT header and payload without verifying the signature.",
+					method: "POST",
+					url: "/api/developer-inspect?outputFormat=jwt",
+				},
+				{
+					body: "#111827 #ffffff",
+					contentType: "text/plain",
+					description: "Check WCAG contrast for foreground and background colours.",
+					method: "POST",
+					url: "/api/developer-inspect?outputFormat=colour-contrast",
+				},
+			],
+			fields: [
+				{
+					description: "Developer inspection mode.",
+					id: "outputFormat",
+					required: true,
+					values: DEVELOPER_INSPECT_FORMATS,
+				},
+				{
+					description: "Foreground colour for contrast checks.",
+					id: "foreground",
+				},
+				{
+					description: "Background colour for contrast checks.",
+					id: "background",
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		description: "Decode JWTs, inspect UUIDs, explain cron expressions, check colour contrast, and identify common file signatures.",
+		display: {
+			actionLabel: "Inspect value",
+			category: "Developer",
+			examples: [
+				"0 9 * * 1",
+				"018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00",
+			],
+		},
+		endpoint: "/api/developer-inspect",
+		id: "developer-inspect",
+		input: {
+			label: "Value",
+			kind: "text",
+			required: true,
+		},
+		label: "Developer inspector",
+		outputs: DEVELOPER_INSPECT_FORMATS,
+		placeholder: "0 9 * * 1",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"css-beautifier",
+			"css-formatter",
+			"css-minifier",
+			"diff-checker",
+			"diff-tool",
+			"html-beautifier",
+			"html-formatter",
+			"html-minifier",
+			"json-beautifier",
+			"json-diff-tool",
+			"json-minifier-tool",
+			"pretty-print",
+			"text-diff",
+			"xml-beautifier",
+			"xml-formatter",
+			"xml-minifier",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					body: "one\ntwo\n---\none\nthree",
+					contentType: "text/plain",
+					description: "Compare two text blocks separated by a line containing three hyphens.",
+					method: "POST",
+					url: "/api/developer-text?outputFormat=diff-lines",
+				},
+				{
+					body: "body{color:#111;background:#fff}",
+					contentType: "text/css",
+					description: "Pretty-print CSS without adding dependencies.",
+					method: "POST",
+					url: "/api/developer-text?outputFormat=pretty-css",
+				},
+			],
+			fields: [
+				{
+					description: "Developer text transform mode.",
+					id: "outputFormat",
+					required: true,
+					values: DEVELOPER_TEXT_FORMATS,
+				},
+				{
+					description: "Left-hand text for diff mode.",
+					display: { width: "full" },
+					id: "left",
+				},
+				{
+					description: "Right-hand text for diff mode.",
+					display: { width: "full" },
+					id: "right",
+				},
+				{
+					description: "Separator used when diffing from a single input field.",
+					id: "separator",
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		description: "Diff text blocks and pretty-print or minify JSON, CSS, HTML, and XML snippets.",
+		display: {
+			actionLabel: "Transform text",
+			category: "Developer",
+			examples: [
+				"one\ntwo\n---\none\nthree",
+				"body{color:#111;background:#fff}",
+			],
+		},
+		endpoint: "/api/developer-text",
+		id: "developer-text",
+		input: {
+			label: "Text or code",
+			kind: "text",
+			required: false,
+		},
+		label: "Developer text tools",
+		outputs: DEVELOPER_TEXT_FORMATS,
+		placeholder: "one\ntwo\n---\none\nthree",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"curl-converter",
+			"curl-to-fetch",
+			"curl-to-json",
+			"har-converter",
+			"har-to-curl",
+			"http-request-converter",
+			"request-to-curl",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					body: "curl -X POST -H 'Content-Type: application/json' --data-raw '{\"ok\":true}' https://api.example.com/items",
+					contentType: "text/plain",
+					description: "Convert a curl command into a Fetch API snippet.",
+					method: "POST",
+					url: "/api/request-transform?outputFormat=curl-to-fetch",
+				},
+				{
+					body: "GET /items HTTP/1.1\nHost: api.example.com\nAccept: application/json",
+					contentType: "text/plain",
+					description: "Convert raw HTTP request text into curl.",
+					method: "POST",
+					url: "/api/request-transform?outputFormat=request-to-curl",
+				},
+			],
+			fields: [
+				{
+					description: "Request conversion mode.",
+					id: "outputFormat",
+					required: true,
+					values: REQUEST_TRANSFORM_FORMATS,
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		description: "Convert common request formats between curl, Fetch API snippets, HAR requests, and raw HTTP request text.",
+		display: {
+			actionLabel: "Convert request",
+			category: "Requests",
+			examples: [
+				"curl -H 'Accept: application/json' https://api.example.com/items",
+				"GET /items HTTP/1.1\nHost: api.example.com",
+			],
+		},
+		endpoint: "/api/request-transform",
+		id: "request-transform",
+		input: {
+			label: "Request",
+			kind: "text",
+			required: true,
+		},
+		label: "Request transform",
+		outputs: REQUEST_TRANSFORM_FORMATS,
+		placeholder: "curl -H 'Accept: application/json' https://api.example.com/items",
 		runtime: "worker",
 		status: "available",
 	},

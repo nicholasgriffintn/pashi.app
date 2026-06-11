@@ -78,9 +78,19 @@ export function ResultStage({
 	const generatedAt = formatGeneratedAt(result?.generatedAt);
 	const summary = result ? createResultSummary(result, generatedAtLabel) : undefined;
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [historyViewKey, setHistoryViewKey] = useState<string | undefined>();
 	const expandedResult = result && isExpanded ? result : undefined;
 	const expandedSummary = expandedResult ? createResultSummary(expandedResult, generatedAtLabel) : undefined;
 	const currentHistory = resultHistoryForResult(resultHistory, result);
+	const resultToolKey = result && "type" in result ? result.type : undefined;
+	const resultViewKey = result ? `${resultToolKey ?? result.kind}-${result.generatedAt ?? ""}` : undefined;
+	const canShowInlineHistory = Boolean(
+		result &&
+		currentHistory.length > 0 &&
+		!isDiceStageResult(result) &&
+		!isCoinFlipStageResult(result),
+	);
+	const isShowingHistory = Boolean(canShowInlineHistory && resultViewKey && historyViewKey === resultViewKey);
 
 	useEffect(() => {
 		if (!expandedResult) {
@@ -107,20 +117,48 @@ export function ResultStage({
 		>
 			<div className="result-box" data-result-kind={result?.kind}>
 				{result ? (
-					<button
-						aria-label="Expand result"
-						className="result-expand-button"
-						onClick={() => setIsExpanded(true)}
-						title="Expand result"
-						type="button"
-					>
-						<span aria-hidden="true">↗</span>
-					</button>
+					<div className="result-stage-tools">
+						{canShowInlineHistory ? (
+							<button
+								aria-label={isShowingHistory ? "Show current result" : "Show result history"}
+								aria-pressed={isShowingHistory}
+								className="result-stage-tool-button result-history-toggle-button"
+								onClick={() => {
+									setHistoryViewKey(isShowingHistory ? undefined : resultViewKey);
+								}}
+								title={isShowingHistory ? "Show current result" : "Show result history"}
+								type="button"
+							>
+								<span aria-hidden="true">≡</span>
+							</button>
+						) : null}
+						<button
+							aria-label="Expand result"
+							className="result-stage-tool-button result-expand-button"
+							onClick={() => setIsExpanded(true)}
+							title="Expand result"
+							type="button"
+						>
+							<span aria-hidden="true">↗</span>
+						</button>
+					</div>
 				) : null}
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
-				<div className="result-content" key={result?.generatedAt ?? result?.kind ?? "empty"}>
+				<div className="result-content" key={`${isShowingHistory ? "history" : "result"}-${result?.generatedAt ?? result?.kind ?? "empty"}`}>
 					{!result ? (
 						<p className="empty-result">{emptyMessage}</p>
+					) : isShowingHistory && canShowInlineHistory ? (
+						<div className="result-history-view">
+							<ResultHistory
+								generatedAtLabel={generatedAtLabel}
+								history={currentHistory}
+								onClear={onClearResultHistory}
+								onRestore={(restoredResult) => {
+									setHistoryViewKey(undefined);
+									onRestoreResult?.(restoredResult);
+								}}
+							/>
+						</div>
 					) : result.kind === "slackmoji-batch" ? (
 						<SlackmojiBatchResults compact items={result.items} />
 					) : result.kind === "image" ? (
@@ -134,7 +172,7 @@ export function ResultStage({
 					) : (
 							<ResultBody
 								generatedAtLabel={generatedAtLabel}
-								history={currentHistory}
+								history={canShowInlineHistory ? [] : currentHistory}
 								onClearHistory={onClearResultHistory}
 								onRestoreHistory={onRestoreResult}
 								result={result}
