@@ -1,5 +1,6 @@
 import type React from "react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
 import {
@@ -210,7 +211,7 @@ export function ResultStage({
 			<div className="result-action-slot" data-visible={Boolean(result && actions)}>
 				{result ? actions : null}
 			</div>
-			{expandedResult ? (
+			{expandedResult && typeof document !== "undefined" ? createPortal(
 				<div className="result-dialog-backdrop" role="presentation">
 					<div
 						aria-label="Expanded result"
@@ -253,7 +254,8 @@ export function ResultStage({
 							</div>
 						</div>
 					</div>
-				</div>
+				</div>,
+				document.body,
 			) : null}
 		</section>
 	);
