@@ -6,10 +6,12 @@ import {
 	convertQueuedThing,
 	type SlackmojiBatchResult,
 	fetchConverterInfo,
+	fetchConversionJob,
 	type ConverterInfoTool,
 	type ConvertResult,
 	conversionJobStatus,
 } from "./converter-api";
+import { useApiKey } from "./api-key-context";
 import { createConversionJobPoller, type ConversionJobPoller } from "./converter-polling";
 import {
 	findConverterByRoute,
@@ -144,6 +146,7 @@ function pickInitialConverter(tools: readonly ConverterInfoTool[]) {
 }
 
 export function useConverterConsole() {
+	const { apiKey } = useApiKey();
 	const initialRouteConverterId = getRouteConverterId();
 	const [tools, setTools] = useState<ConverterInfoTool[]>([]);
 	const [activeToolId, setActiveToolId] = useState(initialRouteConverterId ?? "");
@@ -209,6 +212,7 @@ export function useConverterConsole() {
 
 	const pollConversionJob = useCallback((initialResult: ConvertResult) => {
 		const poller = createConversionJobPoller({
+			fetchJob: (statusUrl) => fetchConversionJob(statusUrl, apiKey),
 			onError: (caught) => {
 				setError(caught.message);
 				setIsLoading(false);
@@ -225,7 +229,7 @@ export function useConverterConsole() {
 		});
 		pollerRef.current = poller;
 		poller.start(initialResult);
-	}, [notify]);
+	}, [apiKey, notify]);
 
 	const applyToolValues = useCallback((nextTool: ConverterInfoTool, nextInput: string) => {
 		stopPolling();
@@ -253,6 +257,10 @@ export function useConverterConsole() {
 			}
 		};
 	}, [stopPolling]);
+
+	useEffect(() => {
+		return () => stopPolling();
+	}, [apiKey, stopPolling]);
 
 	useEffect(() => {
 		let ignore = false;
@@ -303,7 +311,7 @@ export function useConverterConsole() {
 		const effects = requestedEffects.length > 0 ? requestedEffects : [defaultSlackmojiEffect()];
 		const fieldJobs = effects.map((effect) => ({ ...fields, effect }));
 		const batchResults = await Promise.all(fieldJobs.map((fieldJob) =>
-			convertQueuedThing(endpoint, file, fieldJob),
+			convertQueuedThing(endpoint, file, fieldJob, apiKey),
 		));
 		const batchInitialResults = batchResults.map((batchResult, index) => (
 			createInitialBatchResult(fieldJobs[index]?.effect ?? "", batchResult, `slackmoji-batch-${index}`)
@@ -334,6 +342,7 @@ export function useConverterConsole() {
 		slackmojiPendingResults.current = batchInitialResults.length;
 		slackmojiPollersRef.current = batchInitialResults.map((batchItem) =>
 			createConversionJobPoller({
+				fetchJob: (statusUrl) => fetchConversionJob(statusUrl, apiKey),
 				onError: (caught) => {
 					syncSlackmojiBatchResults(batchItem.jobId, { status: "failed", error: caught.message });
 					setError(caught.message);
@@ -402,7 +411,7 @@ export function useConverterConsole() {
 				};
 				if (activeTool.id === "image-format" && !selectedFile && hasImageUrl) {
 					const format = outputFormat || activeTool.outputs[0] || "webp";
-					const blob = await convertImageThing(activeTool.endpoint, input, { outputFormat: format });
+					const blob = await convertImageThing(activeTool.endpoint, input, { outputFormat: format }, apiKey);
 					if (objectUrlRef.current) {
 						URL.revokeObjectURL(objectUrlRef.current);
 					}
@@ -414,7 +423,7 @@ export function useConverterConsole() {
 					if (activeTool.id === "slackmoji") {
 						await startSlackmojiBatchConversion(activeTool.endpoint, fields, selectedFile);
 					} else {
-						const nextResult = await convertQueuedThing(activeTool.endpoint, selectedFile, fields);
+						const nextResult = await convertQueuedThing(activeTool.endpoint, selectedFile, fields, apiKey);
 						pollConversionJob(nextResult);
 					}
 				} else {
@@ -424,7 +433,7 @@ export function useConverterConsole() {
 						return;
 					}
 
-					const nextResult = await convertThing(activeTool.endpoint, await selectedFile.text(), fields);
+					const nextResult = await convertThing(activeTool.endpoint, await selectedFile.text(), fields, apiKey);
 					setResult(nextResult);
 					setIsLoading(false);
 				}
@@ -457,6 +466,7 @@ export function useConverterConsole() {
 				activeTool.endpoint,
 				input,
 				fields,
+				apiKey,
 			));
 			setIsLoading(false);
 		} catch (caught) {

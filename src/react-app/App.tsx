@@ -65,7 +65,7 @@ function App() {
 		setMode(nextMode);
 	}
 
-	const modeTabs = (
+	const controls = (
 		<AppModeTabs
 			disabledModes={conversionsUnavailable ? { convert: "Conversions are not available." } : undefined}
 			mode={effectiveMode}
@@ -74,9 +74,9 @@ function App() {
 	);
 
 	if (effectiveMode === "convert") {
-		return <ConverterConsole modeTabs={modeTabs} />;
+		return <ConverterConsole controls={controls} />;
 	}
-	return <GeneratorConsole modeTabs={modeTabs} />;
+	return <GeneratorConsole controls={controls} />;
 }
 
 export default App;

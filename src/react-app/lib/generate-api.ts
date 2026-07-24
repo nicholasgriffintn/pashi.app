@@ -1,3 +1,5 @@
+import { apiFetch } from "./api-request.ts";
+
 export type GenerateResultKind = "fields" | "palette" | "text";
 
 export interface GenerateResult {
@@ -14,8 +16,9 @@ export async function generateThing(
 	endpoint: string,
 	input: string,
 	fields: Record<string, string> = {},
+	apiKey = "",
 ): Promise<GenerateResult> {
-	const response = await fetch(endpoint, {
+	const response = await apiFetch(endpoint, apiKey, {
 		body: JSON.stringify({ fields, input }),
 		headers: { "Content-Type": "application/json" },
 		method: "POST",

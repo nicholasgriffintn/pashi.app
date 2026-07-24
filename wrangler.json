@@ -16,6 +16,13 @@
 		"binding": "AI",
 		"remote": true
 	},
+	"kv_namespaces": [
+		{
+			"binding": "APPLICATIONS",
+			"id": "47c516fdbd83467793346eea1a44cd43",
+			"remote": true
+		}
+	],
 	"containers": [
 		{
 			"class_name": "ConversionContainer",

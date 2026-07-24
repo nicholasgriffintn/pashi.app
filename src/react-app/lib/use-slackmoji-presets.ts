@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { fetchSlackmojiPresets, type SlackmojiPreset } from "./converter-api";
+import { useApiKey } from "./api-key-context";
 
 interface SlackmojiPresetsState {
 	error: string;
@@ -9,6 +10,7 @@ interface SlackmojiPresetsState {
 }
 
 export function useSlackmojiPresets(enabled: boolean): SlackmojiPresetsState {
+	const { apiKey } = useApiKey();
 	const [error, setError] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [presets, setPresets] = useState<SlackmojiPreset[]>([]);
@@ -27,7 +29,7 @@ export function useSlackmojiPresets(enabled: boolean): SlackmojiPresetsState {
 
 		void (async () => {
 			try {
-				const next = await fetchSlackmojiPresets();
+				const next = await fetchSlackmojiPresets(apiKey);
 				if (!ignore) {
 					setPresets(next);
 				}
@@ -45,7 +47,7 @@ export function useSlackmojiPresets(enabled: boolean): SlackmojiPresetsState {
 		return () => {
 			ignore = true;
 		};
-	}, [enabled]);
+	}, [apiKey, enabled]);
 
 	return {
 		error,

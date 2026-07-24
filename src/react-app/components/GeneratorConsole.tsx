@@ -7,10 +7,10 @@ import { ResultActions } from "./ResultActions";
 import { ToolPicker } from "./ToolPicker";
 
 interface GeneratorConsoleProps {
-	modeTabs: React.ReactNode;
+	controls: React.ReactNode;
 }
 
-export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
+export function GeneratorConsole({ controls }: GeneratorConsoleProps) {
 	const consoleState = useGeneratorConsole();
 	const {
 		activeTool,
@@ -58,12 +58,12 @@ export function GeneratorConsole({ modeTabs }: GeneratorConsoleProps) {
 	return (
 		<PashiShell
 			actions={actions}
+			controls={controls}
 			emptyResultMessage="Pick a generator, paste something, generate."
 			generatedAtLabel="Generated"
 			intro="Generate and convert everyday formats."
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
-			modeTabs={modeTabs}
 			notification={notification}
 			onClearResultHistory={clearResultHistory}
 			onImageError={handleImageError}

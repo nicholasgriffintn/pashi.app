@@ -176,6 +176,93 @@ h1 {
 	transform: none;
 }
 
+.api-key-control {
+	align-items: stretch;
+	backdrop-filter: blur(10px) saturate(1.15);
+	background: rgba(7, 10, 28, 0.86);
+	border: 2px solid rgba(255, 209, 76, 0.5);
+	bottom: 1.25rem;
+	box-shadow: 5px 5px 0 rgba(255, 47, 120, 0.48);
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	left: 1.25rem;
+	min-height: 2.5rem;
+	position: fixed;
+	transition:
+		border-color 160ms ease,
+		box-shadow 160ms ease,
+		opacity 160ms ease;
+	width: min(19rem, calc(100vw - 2.5rem));
+	z-index: 70;
+}
+
+.api-key-control[data-configured="true"] {
+	border-color: #ffd14c;
+	box-shadow: 5px 5px 0 rgba(37, 255, 230, 0.58);
+}
+
+.api-key-control:focus-within {
+	border-color: #25ffe6;
+	box-shadow: 4px 4px 0 #ff2f78;
+}
+
+.api-key-control label {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	min-width: 0;
+}
+
+.api-key-control label > span {
+	align-items: center;
+	color: #ffd14c;
+	display: flex;
+	font: 900 0.67rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	letter-spacing: 0.08em;
+	padding: 0 0.55rem;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.api-key-control input {
+	background: transparent;
+	border: 0;
+	color: #fff7d7;
+	font: 700 0.76rem / 1.2 "Courier New", monospace;
+	min-width: 0;
+	outline: 0;
+	padding: 0.55rem 0.35rem;
+	width: 100%;
+}
+
+.api-key-control input::placeholder {
+	color: rgba(240, 217, 187, 0.48);
+	font-family: "Trebuchet MS", system-ui, sans-serif;
+	font-weight: 700;
+}
+
+.api-key-control button {
+	background: transparent;
+	border: 0;
+	border-left: 1px solid rgba(255, 247, 215, 0.16);
+	color: #25ffe6;
+	cursor: pointer;
+	font-size: 1rem;
+	min-width: 2.2rem;
+	padding: 0;
+}
+
+.api-key-control button:hover,
+.api-key-control button:focus-visible {
+	background: #25ffe6;
+	color: #11142e;
+	outline: 0;
+}
+
+.api-key-control button:disabled {
+	color: rgba(255, 247, 215, 0.3);
+	cursor: default;
+}
+
 .tool-surface {
 	align-content: start;
 	display: grid;
@@ -2619,6 +2706,13 @@ h1 {
 }
 
 @media (max-width: 560px) {
+	.api-key-control {
+		bottom: 1rem;
+		left: 1rem;
+		min-height: 2.75rem;
+		width: min(18rem, calc(100vw - 2rem));
+	}
+
 	.input-row {
 		grid-template-columns: 1fr;
 	}

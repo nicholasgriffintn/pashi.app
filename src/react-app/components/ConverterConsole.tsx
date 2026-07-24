@@ -6,10 +6,10 @@ import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
 
 interface ConverterConsoleProps {
-	modeTabs: React.ReactNode;
+	controls: React.ReactNode;
 }
 
-export function ConverterConsole({ modeTabs }: ConverterConsoleProps) {
+export function ConverterConsole({ controls }: ConverterConsoleProps) {
 	const consoleState = useConverterConsole();
 	const {
 		activeTool,
@@ -53,12 +53,12 @@ export function ConverterConsole({ modeTabs }: ConverterConsoleProps) {
 	return (
 		<PashiShell
 			actions={actions}
+			controls={controls}
 			emptyResultMessage="Pick a converter, paste source text, convert."
 			generatedAtLabel="Converted"
 			intro="Generate and convert everyday formats."
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
-			modeTabs={modeTabs}
 			notification={notification}
 			onImageError={handleImageError}
 			onImageLoad={handleImageLoad}

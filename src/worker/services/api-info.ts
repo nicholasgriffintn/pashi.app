@@ -10,6 +10,9 @@ export function createApiIndexResponse(env: FeatureEnv) {
 	const services = createServiceStatus(env);
 	const generators = listGeneratorTools().map((tool) => ({
 		...tool,
+		apiKeyRequiredModes: features.ai.available && tool.modes?.includes("ai")
+			? ["ai" as const]
+			: [],
 		modes: features.ai.available ? tool.modes : tool.modes?.filter((mode) => mode !== "ai"),
 		toolType: "generator" as const,
 	}));
@@ -17,11 +20,16 @@ export function createApiIndexResponse(env: FeatureEnv) {
 		.filter((tool) => isConverterAvailable(tool, env))
 		.map((tool) => ({
 			...tool,
+			apiKeyRequired: tool.runtime === "container",
 			toolType: "converter" as const,
 		}));
 	const tools = [...generators, ...converters];
 
 	return {
+		authentication: {
+			headers: ["Authorization: Bearer <api-key>", "X-API-Key: <api-key>"],
+			requiredFor: ["Workers AI mode", "container converters"],
+		},
 		endpoints: tools.flatMap((tool) => tool.endpoint ? [tool.endpoint] : []),
 		exportFormats: listExportFormats(),
 		features,

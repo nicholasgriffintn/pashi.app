@@ -1,4 +1,5 @@
 import type { SlackmojiBatchResult } from "../lib/converter-api";
+import { AuthenticatedImage } from "./AuthenticatedImage";
 
 interface SlackmojiBatchResultsProps {
 	compact?: boolean;
@@ -28,9 +29,12 @@ export function SlackmojiBatchResults({ compact = false, items }: SlackmojiBatch
 				{visibleItems.map((item) => (
 					<article className="slackmoji-batch-item" key={`${item.jobId}-${item.effect}`}>
 						{item.downloadUrl ? (
-							<a className="slackmoji-batch-thumb" href={item.downloadUrl} rel="noreferrer" target="_blank">
-								<img alt={`Slackmoji ${item.effect} result`} src={item.downloadUrl} />
-							</a>
+							<div className="slackmoji-batch-thumb">
+								<AuthenticatedImage
+									alt={`Slackmoji ${item.effect} result`}
+									src={item.downloadUrl}
+								/>
+							</div>
 						) : null}
 						<div className="slackmoji-batch-meta">
 							<span className="slackmoji-batch-effect">:{item.effect}:</span>

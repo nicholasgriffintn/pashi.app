@@ -21,6 +21,7 @@ import { CoinFlipResultView } from "./CoinFlipResultView";
 import { DiceResultView } from "./DiceResultView";
 import { ResultHistory } from "./ResultHistory";
 import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
+import { isAuthenticatedApiUrl } from "../lib/api-request";
 
 interface ImagePreviewItem {
 	alt: string;
@@ -293,7 +294,7 @@ function ResultSummaryPanel({ summary }: { summary: ResultSummary }) {
 					<div key={`${detail.label}-${detail.value}`}>
 						<dt>{detail.label}</dt>
 						<dd>
-							{detail.href ? (
+							{detail.href && !isAuthenticatedApiUrl(detail.href) ? (
 								<a href={detail.href} rel="noreferrer" target="_blank">{detail.value}</a>
 							) : (
 								detail.value

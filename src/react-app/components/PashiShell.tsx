@@ -3,16 +3,17 @@ import type React from "react";
 import { PashiLogoButton } from "./PashiLogoButton";
 import { ResultStage } from "./ResultStage";
 import type { ResultStageValue } from "../lib/result-types";
+import { ApiKeyControl } from "./ApiKeyControl";
 
 interface PashiShellProps {
 	actions?: React.ReactNode;
 	children: React.ReactNode;
+	controls: React.ReactNode;
 	emptyResultMessage: string;
 	generatedAtLabel: string;
 	intro: string;
 	isInfoLoading: boolean;
 	isLoading: boolean;
-	modeTabs: React.ReactNode;
 	notification: string;
 	onClearResultHistory?: () => void;
 	onImageError: () => void;
@@ -34,12 +35,12 @@ function ScreenReaderStatus({ message }: { message: string }) {
 export function PashiShell({
 	actions,
 	children,
+	controls,
 	emptyResultMessage,
 	generatedAtLabel,
 	intro,
 	isInfoLoading,
 	isLoading,
-	modeTabs,
 	notification,
 	onClearResultHistory,
 	onImageError,
@@ -60,7 +61,7 @@ export function PashiShell({
 					/>
 					<h1 id="pashi-title">Pashi</h1>
 					<p className="intro">{intro}</p>
-					{modeTabs}
+					{controls}
 					<div className="tool-surface">{children}</div>
 				</div>
 
@@ -85,6 +86,7 @@ export function PashiShell({
 					/>
 				</div>
 			</section>
+			<ApiKeyControl />
 			{notification ? (
 				<div className="pashi-toast" role="status">
 					{notification}

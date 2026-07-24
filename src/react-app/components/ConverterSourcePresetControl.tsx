@@ -1,5 +1,6 @@
 import type { ConverterApiField } from "../lib/converter-api";
 import { useSlackmojiPresets } from "../lib/use-slackmoji-presets";
+import { AuthenticatedImage } from "./AuthenticatedImage";
 
 interface ConverterSourcePresetControlProps {
 	field: ConverterApiField;
@@ -47,7 +48,7 @@ export function ConverterSourcePresetControl({
 							}}
 							type="button"
 						>
-							<img
+							<AuthenticatedImage
 								alt={preset.name}
 								src={preset.url}
 							/>

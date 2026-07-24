@@ -1,4 +1,5 @@
 import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./pashi-info.ts";
+import { apiFetch } from "./api-request.ts";
 
 export type ConverterStatus = "available";
 export type ConverterRuntime = "container" | "worker";
@@ -141,8 +142,8 @@ export async function fetchConverterInfo(): Promise<ConverterInfo> {
 	};
 }
 
-export async function fetchConversionJob(statusUrl: string): Promise<ConvertResult> {
-	const response = await fetch(statusUrl);
+export async function fetchConversionJob(statusUrl: string, apiKey = ""): Promise<ConvertResult> {
+	const response = await apiFetch(statusUrl, apiKey);
 	const body = (await response.json()) as ConvertResult | { error?: string };
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Could not load conversion job.");
@@ -155,8 +156,9 @@ export async function convertThing(
 	endpoint: string,
 	input: string,
 	fields: Record<string, string> = {},
+	apiKey = "",
 ): Promise<ConvertResult> {
-	const response = await fetch(endpoint, {
+	const response = await apiFetch(endpoint, apiKey, {
 		body: JSON.stringify({ fields, input }),
 		headers: { "Content-Type": "application/json" },
 		method: "POST",
@@ -174,6 +176,7 @@ export async function convertFileThing(
 	endpoint: string,
 	file: File,
 	fields: Record<string, string> = {},
+	apiKey = "",
 ): Promise<ConvertResult> {
 	const formData = new FormData();
 	formData.set("file", file);
@@ -183,7 +186,7 @@ export async function convertFileThing(
 		}
 	}
 
-	const response = await fetch(endpoint, {
+	const response = await apiFetch(endpoint, apiKey, {
 		body: formData,
 		method: "POST",
 	});
@@ -200,6 +203,7 @@ export async function convertQueuedThing(
 	endpoint: string,
 	file: File | undefined,
 	fields: Record<string, string> = {},
+	apiKey = "",
 ): Promise<ConvertResult> {
 	const formData = new FormData();
 	if (file) {
@@ -211,7 +215,7 @@ export async function convertQueuedThing(
 		}
 	}
 
-	const response = await fetch(endpoint, {
+	const response = await apiFetch(endpoint, apiKey, {
 		body: formData,
 		method: "POST",
 	});
@@ -224,8 +228,8 @@ export async function convertQueuedThing(
 	return body as ConvertResult;
 }
 
-export async function fetchSlackmojiPresets(): Promise<SlackmojiPreset[]> {
-	const response = await fetch("/api/slackmoji?presets=1");
+export async function fetchSlackmojiPresets(apiKey = ""): Promise<SlackmojiPreset[]> {
+	const response = await apiFetch("/api/slackmoji?presets=1", apiKey);
 	const body = (await response.json()) as SlackmojiPreset[] | { error?: string };
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Could not load presets.");
@@ -238,8 +242,9 @@ export async function convertImageThing(
 	endpoint: string,
 	input: string,
 	fields: Record<string, string>,
+	apiKey = "",
 ): Promise<Blob> {
-	const response = await fetch(endpoint, {
+	const response = await apiFetch(endpoint, apiKey, {
 		body: JSON.stringify({ fields, input }),
 		headers: { "Content-Type": "application/json" },
 		method: "POST",

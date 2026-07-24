@@ -17,6 +17,7 @@ export async function createConverterResponse(
 	request: ConverterRequest,
 	env?: ConversionEnv,
 	params?: URLSearchParams,
+	applicationId?: string,
 ) {
 	const tool = findConverterTool(type);
 	if (!tool) {
@@ -47,7 +48,12 @@ export async function createConverterResponse(
 		tool.id === "slackmoji" ||
 		tool.id === "video-format"
 	)) {
-		const queuedResponse = await createQueuedConversionLookupResponse(tool.id, requestWithPresets.fields, env);
+		const queuedResponse = await createQueuedConversionLookupResponse(
+			tool.id,
+			requestWithPresets.fields,
+			env,
+			applicationId ?? "",
+		);
 		if (queuedResponse) {
 			return queuedResponse;
 		}

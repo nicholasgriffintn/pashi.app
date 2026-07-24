@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import { generateThing } from "./generate-api";
+import { useApiKey } from "./api-key-context";
 import { fetchGeneratorInfo, type GeneratorInfoTool } from "./generator-info";
 import {
 	createImageResult,
@@ -33,6 +34,7 @@ function createInitialResult(
 }
 
 export function useGeneratorConsole() {
+	const { apiKey } = useApiKey();
 	const initialRouteToolId = getRouteToolId();
 	const [tools, setTools] = useState<GeneratorInfoTool[]>([]);
 	const [exportFormats, setExportFormats] = useState<string[]>([]);
@@ -171,6 +173,7 @@ export function useGeneratorConsole() {
 				activeTool.endpoint,
 				input,
 				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
+				apiKey,
 			);
 			setResultHistory((current) => appendResultHistory(current, result));
 			setResult(nextResult);

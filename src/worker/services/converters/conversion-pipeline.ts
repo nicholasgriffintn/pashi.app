@@ -11,6 +11,7 @@ export type QueuedConversionKind = "audio" | "document" | "image" | "video";
 export type QueuedConversionStatus = "complete" | "failed" | "processing" | "queued";
 
 export interface ConversionJobMessage {
+	applicationId: string;
 	converterId: string;
 	inputContentType: string;
 	jobId: string;
@@ -78,6 +79,7 @@ export async function createQueuedConversionUploadResponse(
 	converterId: string,
 	request: Request,
 	env: ConversionEnv,
+	applicationId: string,
 	presetType = converterId,
 ) {
 	const kind = queuedConversionKindForConverter(converterId);
@@ -103,6 +105,7 @@ export async function createQueuedConversionUploadResponse(
 	const sourceKey = `${JOB_PREFIX}/${jobId}/source-${sourceName}`;
 	const outputKey = `${JOB_PREFIX}/${jobId}/output.${extensionForFormat(finalOutputFormat)}`;
 	const message: ConversionJobMessage = {
+		applicationId,
 		converterId,
 		inputContentType: source.contentType,
 		jobId,
@@ -134,6 +137,7 @@ export async function createQueuedConversionLookupResponse(
 	converterId: string,
 	fields: Record<string, string>,
 	env: ConversionEnv,
+	applicationId: string,
 ) {
 	const jobId = fields.job || fields.download;
 	if (!jobId) {
@@ -145,7 +149,11 @@ export async function createQueuedConversionLookupResponse(
 	}
 
 	const record = await readJobRecord(env, jobId);
-	if (!record || record.converterId !== converterId) {
+	if (
+		!record ||
+		record.applicationId !== applicationId ||
+		record.converterId !== converterId
+	) {
 		return Response.json({ error: "Conversion job not found." }, { status: 404 });
 	}
 

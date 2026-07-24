@@ -4,6 +4,9 @@ import type { GeneratorInfoTool } from "../lib/generator-info";
 import type { ConverterInfoTool } from "../lib/converter-api";
 import type { ResultStageValue } from "../lib/result-types";
 import { resultToText } from "../lib/result-format";
+import { useApiKey } from "../lib/api-key-context";
+import { apiFetch } from "../lib/api-request";
+import { downloadApiResource } from "../lib/download";
 
 interface ResultActionsProps {
 	exportFormats: string[];
@@ -105,12 +108,12 @@ async function copyText(value: string) {
 	await navigator.clipboard.writeText(value);
 }
 
-async function copyImage(src: string) {
+async function copyImage(src: string, apiKey: string) {
 	if (!("ClipboardItem" in window) || !navigator.clipboard.write) {
 		throw new Error("Image clipboard is not supported.");
 	}
 
-	const response = await fetch(src);
+	const response = await apiFetch(src, apiKey);
 	if (!response.ok) {
 		throw new Error("Image could not be loaded.");
 	}
@@ -182,6 +185,7 @@ export function ResultActions({
 	result,
 	tool,
 }: ResultActionsProps) {
+	const { apiKey } = useApiKey();
 	const downloadUrl = resultDownloadUrl(result);
 	const exportHrefs = useMemo(
 		() => createExportHrefs(tool, input, fields, exportFormats),
@@ -236,7 +240,7 @@ export function ResultActions({
 				<ActionButton
 					icon="⧉"
 					label="Copy image"
-					onClick={() => runAction(() => copyImage(imageSrc ?? result.src), "Image copied")}
+					onClick={() => runAction(() => copyImage(imageSrc ?? result.src, apiKey), "Image copied")}
 					text="Copy"
 				/>
 				<ActionButton
@@ -264,12 +268,14 @@ export function ResultActions({
 				/>
 			) : null}
 			{exportHrefs.map(({ format, href }, index) => (
-				<ActionLink
-					download={`pashi-${tool.id}.${format}`}
-					href={href}
+				<ActionButton
 					icon={formatIcon(format)}
 					key={format}
 					label={`Download ${format.toUpperCase()}`}
+					onClick={() => runAction(
+						() => downloadApiResource(href, `pashi-${tool.id}.${format}`, apiKey),
+						"Downloaded",
+					)}
 					text={formatActionText(format, index)}
 				/>
 			))}
@@ -283,10 +289,17 @@ export function ResultActions({
 				/>
 			) : null}
 			{downloadUrl ? (
-				<ActionLink
-					href={downloadUrl}
+				<ActionButton
 					icon="↓"
 					label="Download converted file"
+					onClick={() => runAction(
+						() => downloadApiResource(
+							downloadUrl,
+							("downloadName" in result && result.downloadName) || `pashi-${tool.id}`,
+							apiKey,
+						),
+						"Downloaded",
+					)}
 					text="Download"
 				/>
 			) : null}

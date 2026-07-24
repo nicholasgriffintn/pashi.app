@@ -12,6 +12,43 @@ Pashi also features exports to various formats, including JSON, CSV, and TXT, ma
 
 And if you'd like to use Pashi in your own projects, you can access the API at [https://pashi.app/api](https://pashi.app/api) to generate data programmatically. Go to [https://pashi.app/api/info](https://pashi.app/api/info) for more information on how to use the API.
 
+## API access
+
+Workers AI requests and container-backed converters require an application API key. A valid key also lets an identified bot pass the global bot blocker. Send the key in either `Authorization: Bearer <api-key>` or `X-API-Key`.
+
+Applications and key records live in the `APPLICATIONS` KV namespace, like this:
+
+```text
+applications:v1:<application-id>
+api-keys:v1:<sha256-of-api-key>
+```
+
+Provision an application and a high-entropy key:
+
+Generate a key and copy into your clipboard:
+
+```bash
+openssl rand -hex 32
+```
+
+Set the key in your environment:
+
+```bash
+export PASHI_API_KEY="<your-api-key>"
+```
+
+```bash
+export PASHI_API_KEY_DIGEST="$(printf '%s' "$PASHI_API_KEY" | openssl dgst -sha256 -r | cut -d ' ' -f 1)"
+
+pnpm exec wrangler kv key put --remote --binding APPLICATIONS \
+  "applications:v1:example-app" \
+  '{"id":"example-app","name":"Example application","enabled":true}'
+
+pnpm exec wrangler kv key put --remote --binding APPLICATIONS \
+  "api-keys:v1:${PASHI_API_KEY_DIGEST}" \
+  '{"applicationId":"example-app","enabled":true}'
+```
+
 ## Development
 
 Install dependencies:
