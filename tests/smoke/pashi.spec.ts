@@ -138,6 +138,22 @@ test("results persist across a reload", async ({ page }) => {
 	await expect.poll(() => storedHistoryCount(page), { timeout: 10_000 }).toBeGreaterThan(0);
 });
 
+test("signing in stores the key and the header reflects it", async ({ page }) => {
+	await page.goto("/sign-in");
+
+	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Sign in");
+	await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+
+	await page.getByLabel("API key").fill("smoke-test-key-0123456789abcdef0123456789");
+
+	await expect(page.getByRole("link", { name: "Signed in" })).toBeVisible();
+
+	await page.goto("/labs/ask");
+
+	await expect(page.getByRole("link", { name: "Signed in" })).toBeVisible();
+	await expect(page.getByText(/needs an API key/)).toHaveCount(0);
+});
+
 test("the health endpoint reports service status", async ({ request }) => {
 	const response = await request.get("/api/health");
 	const body = await response.json();

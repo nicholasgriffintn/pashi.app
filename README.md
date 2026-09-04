@@ -30,6 +30,10 @@ It needs an API key and speaks JSON-RPC over POST.
 
 Workers AI requests, the Labs endpoints and container-backed converters require an application API key. Send it in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
 
+In the app, **Sign in** in the header takes you to `/sign-in`, where the key is stored in the browser and used on every page until you clear it.
+
+Locally, `pnpm dev` seeds a permanent development key into the local KV store the first time it runs, and writes it to `.env.local` so the sign-in page can offer it with one click. Run `pnpm seed:dev` to do the seeding on its own.
+
 Applications and key records live in the `APPLICATIONS` KV namespace, like this:
 
 ```text

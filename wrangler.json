@@ -49,8 +49,7 @@
 	"kv_namespaces": [
 		{
 			"binding": "APPLICATIONS",
-			"id": "47c516fdbd83467793346eea1a44cd43",
-			"remote": true
+			"id": "47c516fdbd83467793346eea1a44cd43"
 		}
 	],
 	"containers": [

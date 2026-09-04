@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
-import { ApiKeyControl } from "../components/ApiKeyControl";
+import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
 import { useApiKey } from "../lib/api-key-context";
 import { fetchJson } from "../lib/query-client";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
@@ -94,7 +94,7 @@ export function ExplainPage() {
 					rows={4}
 					value={input}
 				/>
-				<ApiKeyControl hint="Explainers run on Workers AI, so they need a key." />
+				<KeyRequiredNotice what="Explainers" />
 				<button disabled={isPending || !input.trim()} type="submit">
 					{isPending ? "Reading" : "Explain"}
 				</button>

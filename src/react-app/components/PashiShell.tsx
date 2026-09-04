@@ -1,7 +1,7 @@
 import type React from "react";
 
 import type { ResultStageValue } from "../lib/result-types";
-import { ApiKeyControl } from "./ApiKeyControl";
+import { KeyRequiredNotice } from "./KeyRequiredNotice";
 import { PashiLogoButton, type MascotState } from "./PashiLogoButton";
 import { ResultStage } from "./ResultStage";
 
@@ -14,6 +14,7 @@ interface PashiShellProps {
 	intro: string;
 	isInfoLoading: boolean;
 	isLoading: boolean;
+	keyRequiredFor?: string;
 	notification: string;
 	onClearResultHistory?: () => void;
 	onImageError: () => void;
@@ -41,6 +42,7 @@ export function PashiShell({
 	intro,
 	isInfoLoading,
 	isLoading,
+	keyRequiredFor,
 	notification,
 	onClearResultHistory,
 	onImageError,
@@ -70,7 +72,7 @@ export function PashiShell({
 					{controls}
 					<div className="tool-surface">
 						{children}
-						<ApiKeyControl />
+						{keyRequiredFor ? <KeyRequiredNotice what={keyRequiredFor} /> : null}
 					</div>
 				</div>
 

@@ -3,9 +3,12 @@ import type React from "react";
 import { useGeneratorConsole, type ToolConsoleRoute } from "../lib/use-generator-console";
 import { GeneratorForm } from "./GeneratorForm";
 import { PashiShell } from "./PashiShell";
+import { QuickPicks } from "./QuickPicks";
 import { ResultActions } from "./ResultActions";
 import { ToolPicker } from "./ToolPicker";
 import { ToolSkeleton } from "./ToolSkeleton";
+
+const QUICK_PICK_IDS = ["uuid", "password", "qr", "colour", "dice", "lorem", "jwt-token"];
 
 interface GeneratorConsoleProps extends ToolConsoleRoute {
 	controls: React.ReactNode;
@@ -65,6 +68,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 			intro="Generate and convert everyday formats."
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
+			keyRequiredFor={resultMode === "ai" ? "AI mode" : undefined}
 			notification={notification}
 			onClearResultHistory={clearResultHistory}
 			onImageError={handleImageError}
@@ -90,13 +94,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 							recentKey="pashi:recent-generator-tools"
 							tools={tools}
 						/>
-						<div className="generator-empty-copy">
-							<h2>Make boring formats fast.</h2>
-							<p>
-								Pashi is a small toolkit for generating, converting, inspecting, and reshaping
-								developer-friendly data without leaving the page.
-							</p>
-						</div>
+						<QuickPicks onPick={handleToolChange} preferredIds={QUICK_PICK_IDS} tools={tools} />
 					</div>
 				</div>
 			) : (

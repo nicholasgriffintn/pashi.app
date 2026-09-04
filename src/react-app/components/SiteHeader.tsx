@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 
+import { useApiKey } from "../lib/api-key-context";
 import { PaletteButton } from "./PaletteButton";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -11,6 +12,9 @@ const NAV_ITEMS = [
 ];
 
 export function SiteHeader() {
+	const { apiKey } = useApiKey();
+	const isSignedIn = Boolean(apiKey.trim());
+
 	return (
 		<header className="site-header">
 			<div className="site-header-inner">
@@ -32,6 +36,10 @@ export function SiteHeader() {
 				<div className="site-actions">
 					<PaletteButton />
 					<ThemeToggle />
+					<Link className="site-sign-in" data-signed-in={isSignedIn || undefined} to="/sign-in">
+						<span className="site-sign-in-dot" aria-hidden="true" />
+						{isSignedIn ? "Signed in" : "Sign in"}
+					</Link>
 				</div>
 			</div>
 		</header>

@@ -24,6 +24,9 @@ const AskPage = lazy(() =>
 const ExplainPage = lazy(() =>
 	import("./pages/ExplainPage").then((module) => ({ default: module.ExplainPage })),
 );
+const SignInPage = lazy(() =>
+	import("./pages/SignInPage").then((module) => ({ default: module.SignInPage })),
+);
 const LabsPage = lazy(() =>
 	import("./pages/LabsPage").then((module) => ({ default: module.LabsPage })),
 );
@@ -52,6 +55,7 @@ function App() {
 							<Route element={<LabsPage />} path="/labs" />
 							<Route element={<AskPage />} path="/labs/ask" />
 							<Route element={<ExplainPage />} path="/labs/explain" />
+							<Route element={<SignInPage />} path="/sign-in" />
 							<Route element={<AboutPage />} path="/about" />
 							<Route element={<ApiDocsPage />} path="/api" />
 							<Route element={<Navigate replace to="/" />} path="*" />

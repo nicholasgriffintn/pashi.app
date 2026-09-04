@@ -65,6 +65,7 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 			intro="Generate and convert everyday formats."
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
+			keyRequiredFor={activeTool?.runtime === "container" ? "This converter" : undefined}
 			notification={notification}
 			onClearResultHistory={clearResultHistory}
 			onImageError={handleImageError}

@@ -22,7 +22,8 @@ Pashi (https://pashi.app) is the home for side projects: a hub that lists projec
 ## Commands
 
 ```bash
-pnpm dev            # vite + workers runtime on http://localhost:5173
+pnpm dev            # seeds the local dev API key, then vite + workers runtime on http://localhost:5173
+pnpm seed:dev       # seed the local dev API key on its own
 pnpm check          # typecheck app + worker
 pnpm lint           # oxlint
 pnpm format         # oxfmt

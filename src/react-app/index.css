@@ -74,6 +74,12 @@
 	--body-muted: var(--paper-warm);
 	--console-bg: rgb(var(--ink-void-rgb) / 0.8);
 	--console-field-bg: rgb(var(--paper-rgb) / 0.08);
+	--chrome-bg: rgb(var(--ink-void-rgb) / 0.72);
+	--on-accent: var(--ink);
+	--edge: rgb(var(--paper-rgb) / 0.3);
+	--edge-soft: rgb(var(--paper-rgb) / 0.16);
+	--ground-tint: rgb(var(--paper-rgb) / 0.08);
+	--ground-tint-strong: rgb(var(--paper-rgb) / 0.18);
 }
 
 :root[data-theme="light"] {
@@ -89,6 +95,12 @@
 	--body-muted: #4a4166;
 	--console-bg: rgb(255 255 255 / 0.84);
 	--console-field-bg: rgb(26 20 54 / 0.06);
+	--chrome-bg: rgb(255 255 255 / 0.84);
+	--on-accent: #fff7d7;
+	--edge: rgb(26 20 54 / 0.35);
+	--edge-soft: rgb(26 20 54 / 0.16);
+	--ground-tint: rgb(26 20 54 / 0.06);
+	--ground-tint-strong: rgb(26 20 54 / 0.14);
 
 	--page-ground: linear-gradient(135deg, #fdf6e3 0%, #f7ecd8 46%, #f6e4e8 100%);
 	--page-grid: rgb(26 20 54 / 0.05);
