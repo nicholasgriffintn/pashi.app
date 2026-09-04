@@ -20,6 +20,7 @@ import {
 } from "./converter-state";
 import type { ResultStageValue } from "./result-types";
 import type { ToolConsoleRoute } from "./use-generator-console";
+import { useNotification } from "./use-notification";
 
 function normaliseSlackmojiEffects(value: string | undefined) {
 	const values = (value ?? "")
@@ -159,16 +160,15 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	const [error, setError] = useState("");
 	const [isInfoLoading, setIsInfoLoading] = useState(true);
 	const [isLoading, setIsLoading] = useState(false);
-	const [notification, setNotification] = useState("");
 	const [result, setResult] = useState<ResultStageValue | undefined>();
 	const objectUrlRef = useRef<string | undefined>(undefined);
-	const notificationTimer = useRef<number | undefined>(undefined);
 	const pollerRef = useRef<ConversionJobPoller | undefined>(undefined);
 	const slackmojiPollersRef = useRef<ConversionJobPoller[]>([]);
 	const slackmojiBatchResultsRef = useRef<SlackmojiBatchResult[]>([]);
 	const slackmojiPendingResults = useRef(0);
 	const routeToolIdRef = useRef(routeToolId);
 	const hasRequestedInfoRef = useRef(false);
+	const { clearNotification, notification, notify } = useNotification();
 
 	useEffect(() => {
 		routeToolIdRef.current = routeToolId;
@@ -178,12 +178,6 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 		() => tools.find((tool) => tool.id === activeToolId),
 		[activeToolId, tools],
 	);
-
-	const notify = useCallback((message: string) => {
-		window.clearTimeout(notificationTimer.current);
-		setNotification(message);
-		notificationTimer.current = window.setTimeout(() => setNotification(""), 2400);
-	}, []);
 
 	const stopSlackmojiPollers = useCallback(() => {
 		for (const poller of slackmojiPollersRef.current) {
@@ -269,12 +263,13 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	useEffect(() => {
 		return () => {
 			stopPolling();
-			window.clearTimeout(notificationTimer.current);
+			clearNotification();
+
 			if (objectUrlRef.current) {
 				URL.revokeObjectURL(objectUrlRef.current);
 			}
 		};
-	}, [stopPolling]);
+	}, [clearNotification, stopPolling]);
 
 	useEffect(() => {
 		return () => stopPolling();

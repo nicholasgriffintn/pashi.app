@@ -16,6 +16,7 @@ import { replaceAppSearch } from "./navigation";
 import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
 import type { ResultStageValue } from "./result-types";
 import { buildShareSearch } from "./share-link";
+import { useNotification } from "./use-notification";
 
 function createInitialResult(tool: GeneratorInfoTool, values: GeneratorValues, generateId: number) {
 	return tool.result.kind === "image"
@@ -41,13 +42,12 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	const [isLoading, setIsLoading] = useState(false);
 	const [resultMode, setResultMode] = useState<"ai" | "standard">("standard");
 	const [generateId, setGenerateId] = useState(0);
-	const [notification, setNotification] = useState("");
 	const [result, setResult] = useState<ResultStageValue | undefined>();
 	const [resultHistory, setResultHistory] = useState<ResultStageValue[]>([]);
 	const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
-	const notificationTimer = useRef<number | undefined>(undefined);
 	const routeToolIdRef = useRef(routeToolId);
 	const generateAbortRef = useRef<AbortController | undefined>(undefined);
+	const { notification, notify } = useNotification();
 	const hasRequestedInfoRef = useRef(false);
 
 	useEffect(() => {
@@ -58,12 +58,6 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 		() => tools.find((tool) => tool.id === activeToolId),
 		[activeToolId, tools],
 	);
-
-	const notify = useCallback((message: string) => {
-		window.clearTimeout(notificationTimer.current);
-		setNotification(message);
-		notificationTimer.current = window.setTimeout(() => setNotification(""), 2400);
-	}, []);
 
 	const applyToolValues = useCallback((nextTool: GeneratorInfoTool, values: GeneratorValues) => {
 		setActiveToolId(nextTool.id);
@@ -83,10 +77,6 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 		setResultMode("standard");
 		setIsLoading(false);
 		setResult(undefined);
-	}, []);
-
-	useEffect(() => {
-		return () => window.clearTimeout(notificationTimer.current);
 	}, []);
 
 	useEffect(() => {
