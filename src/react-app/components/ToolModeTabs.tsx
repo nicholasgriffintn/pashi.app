@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 
 import { lastToolPath, rememberLastToolPath } from "../lib/last-tool";
+import { PaletteButton } from "./PaletteButton";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface ToolModeTabsProps {
@@ -40,6 +41,7 @@ export function ToolModeTabs({ mode }: ToolModeTabsProps) {
 					Convert
 				</button>
 			</nav>
+			<PaletteButton />
 			<ThemeToggle />
 		</div>
 	);

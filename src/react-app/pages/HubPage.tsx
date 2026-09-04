@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { PaletteButton } from "../components/PaletteButton";
 import { PashiLogoButton } from "../components/PashiLogoButton";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { PROJECTS, STATUS_LABELS, type Project } from "../lib/projects";
@@ -50,6 +51,7 @@ export function HubPage() {
 					<p className="intro">
 						The home for things I build. Small tools, running experiments, and the odd whole app.
 					</p>
+					<PaletteButton label="Search everything" />
 				</div>
 			</header>
 

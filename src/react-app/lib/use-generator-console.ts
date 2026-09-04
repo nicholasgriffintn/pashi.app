@@ -11,6 +11,7 @@ import {
 	getInitialValues,
 	type GeneratorValues,
 } from "./generator-state";
+import { clearHistory, readHistory, saveHistoryEntry } from "./history-store";
 import { replaceAppSearch } from "./navigation";
 import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
 import type { ResultStageValue } from "./result-types";
@@ -43,6 +44,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	const [notification, setNotification] = useState("");
 	const [result, setResult] = useState<ResultStageValue | undefined>();
 	const [resultHistory, setResultHistory] = useState<ResultStageValue[]>([]);
+	const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 	const notificationTimer = useRef<number | undefined>(undefined);
 	const routeToolIdRef = useRef(routeToolId);
 
@@ -122,12 +124,41 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 		};
 	}, [applyToolValues, clearToolValues, notify]);
 
+	useEffect(() => {
+		if (!activeToolId || isHistoryLoaded) {
+			return;
+		}
+
+		let ignore = false;
+
+		readHistory(activeToolId)
+			.then((entries) => {
+				if (ignore) {
+					return;
+				}
+
+				setResultHistory(entries.map((entry) => entry.result));
+				setIsHistoryLoaded(true);
+			})
+			.catch(() => {
+				if (!ignore) {
+					setIsHistoryLoaded(true);
+				}
+			});
+
+		return () => {
+			ignore = true;
+		};
+	}, [activeToolId, isHistoryLoaded]);
+
 	const [syncedRouteToolId, setSyncedRouteToolId] = useState(routeToolId);
 
 	if (tools.length > 0 && routeToolId !== syncedRouteToolId) {
 		const nextTool = findToolByRoute(tools, routeToolId);
 
 		setSyncedRouteToolId(routeToolId);
+
+		setIsHistoryLoaded(false);
 
 		if (nextTool) {
 			applyToolValues(nextTool, getInitialValues(nextTool));
@@ -176,6 +207,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			);
 
 			setResultHistory((current) => appendResultHistory(current, result));
+			void saveHistoryEntry(activeTool.id, nextResult);
 			setResult(nextResult);
 			setResultMode(aiMode ? "ai" : "standard");
 			setIsLoading(false);
@@ -227,6 +259,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 
 	function clearResultHistory() {
 		setResultHistory((current) => clearResultHistoryForResult(current, result));
+		void clearHistory(activeToolId);
 	}
 
 	function restoreResult(restoredResult: ResultStageValue) {

@@ -265,16 +265,6 @@ export function ToolPicker({
 				return;
 			}
 
-			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-				event.preventDefault();
-
-				if (!isOpen) {
-					openPicker();
-				}
-
-				return;
-			}
-
 			if (event.key === "/" && !isOpen && !isTypingTarget(event.target)) {
 				event.preventDefault();
 				openPicker();

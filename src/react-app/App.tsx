@@ -2,6 +2,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { CommandPalette } from "./components/CommandPalette";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { queryClient } from "./lib/query-client";
 import { HubPage } from "./pages/HubPage";
@@ -38,6 +39,7 @@ function App() {
 		<QueryClientProvider client={queryClient}>
 			<BrowserRouter>
 				<ErrorBoundary label="Pashi">
+					<CommandPalette />
 					<Suspense fallback={<RouteFallback />}>
 						<Routes>
 							<Route element={<HubPage />} path="/" />

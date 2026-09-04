@@ -83,6 +83,62 @@ test("the explainers page offers every subject", async ({ page }) => {
 	await expect(page.getByLabel("Cron to explain")).toBeVisible();
 });
 
+test("the command palette searches tools, pages and actions", async ({ page }) => {
+	await page.goto("/");
+
+	await page.getByRole("button", { name: /Search everything/ }).click();
+
+	const search = page.getByPlaceholder("Search tools, pages and actions");
+
+	await expect(search).toBeVisible();
+	await search.fill("jira");
+
+	await expect(page.getByRole("option").first()).toContainText(/Jira/i);
+
+	await page.keyboard.press("Enter");
+
+	await expect(page).toHaveURL(/\/tools\/convert\//);
+});
+
+test("results persist across a reload", async ({ page }) => {
+	await page.goto("/tools/uuid");
+
+	const submit = page.getByRole("button", { name: "Generate UUID" });
+
+	await expect(submit).toBeVisible();
+	await submit.click();
+	await expect(page.getByRole("button", { name: /Copy a link/ })).toBeVisible();
+
+	await submit.click();
+
+	await page.goto("/tools/uuid");
+
+	await expect
+		.poll(
+			() =>
+				page.evaluate(
+					() =>
+						new Promise<number>((resolve) => {
+							const request = indexedDB.open("pashi", 1);
+
+							request.onsuccess = () => {
+								const store = request.result
+									.transaction("history", "readonly")
+									.objectStore("history");
+								const all = store.getAll();
+
+								all.onsuccess = () => resolve(all.result.length);
+
+								all.onerror = () => resolve(0);
+							};
+							request.onerror = () => resolve(0);
+						}),
+				),
+			{ timeout: 10_000 },
+		)
+		.toBeGreaterThan(0);
+});
+
 test("the health endpoint reports service status", async ({ request }) => {
 	const response = await request.get("/api/health");
 	const body = await response.json();
