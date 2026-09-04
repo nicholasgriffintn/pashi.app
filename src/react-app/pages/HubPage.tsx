@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { PashiLogoButton } from "../components/PashiLogoButton";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { PROJECTS, STATUS_LABELS, type Project } from "../lib/projects";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
@@ -64,6 +65,7 @@ export function HubPage() {
 			</section>
 
 			<footer className="hub-footer">
+				<ThemeToggle />
 				<Link to="/api">API</Link>
 				<Link to="/about">About</Link>
 				<a href="https://github.com/nicholasgriffintn/pashi.app" rel="noreferrer" target="_blank">

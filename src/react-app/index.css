@@ -49,18 +49,66 @@
 	--font-display: Impact, Haettenschweiler, "Arial Black", sans-serif;
 	--font-body: "Trebuchet MS", "Gill Sans", "Avenir Next Condensed", system-ui, sans-serif;
 	--font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
+
+	--page-ground: linear-gradient(
+		135deg,
+		var(--ink-deep) 0%,
+		var(--ink-plum) 43%,
+		var(--ink-ember) 100%
+	);
+	--page-grid: rgb(var(--paper-bright-rgb) / 0.035);
+	--page-grid-soft: rgb(var(--paper-bright-rgb) / 0.03);
+	--page-glow: rgb(var(--magenta-rgb) / 0.24);
+	--scanline: rgb(var(--paper-rgb) / 0.02);
+	--vignette: rgb(var(--ink-void-rgb) / 0.24);
+	--scrollbar-track: var(--ink);
+	--panel-bg: rgb(var(--ink-rgb) / 0.86);
+	--panel-border: var(--paper-warm);
+	--panel-text: var(--paper);
+	--panel-muted: var(--paper-warm);
+	--body-text: var(--paper);
+	--body-muted: var(--paper-warm);
+	--console-bg: rgb(var(--ink-void-rgb) / 0.8);
+	--console-field-bg: rgb(var(--paper-rgb) / 0.08);
+}
+
+:root[data-theme="light"] {
+	--cyan: #0a7d70;
+	--magenta: #c81a5c;
+	--yellow: #a86a00;
+
+	--cyan-rgb: 10 125 112;
+	--magenta-rgb: 200 26 92;
+	--yellow-rgb: 168 106 0;
+
+	--body-text: #1a1436;
+	--body-muted: #4a4166;
+	--console-bg: rgb(255 255 255 / 0.84);
+	--console-field-bg: rgb(26 20 54 / 0.06);
+
+	--page-ground: linear-gradient(135deg, #fdf6e3 0%, #f7ecd8 46%, #f6e4e8 100%);
+	--page-grid: rgb(26 20 54 / 0.05);
+	--page-grid-soft: rgb(26 20 54 / 0.04);
+	--page-glow: rgb(200 26 92 / 0.1);
+	--scanline: rgb(26 20 54 / 0.02);
+	--vignette: rgb(26 20 54 / 0.08);
+	--scrollbar-track: #e8dcc0;
+	--panel-bg: rgb(255 255 255 / 0.78);
+	--panel-border: #1a1436;
+	--panel-text: #1a1436;
+	--panel-muted: #4a4166;
+	color-scheme: light;
 }
 
 :root {
 	font-family: var(--font-body);
 	line-height: 1.5;
 	font-weight: 400;
-	color: var(--paper);
+	color: var(--body-text);
 	background:
-		linear-gradient(90deg, rgb(var(--paper-bright-rgb) / 0.035) 1px, transparent 1px),
-		linear-gradient(rgb(var(--paper-bright-rgb) / 0.03) 1px, transparent 1px),
-		radial-gradient(circle at 72% 18%, rgb(var(--magenta-rgb) / 0.24), transparent 25rem),
-		linear-gradient(135deg, var(--ink-deep) 0%, var(--ink-plum) 43%, var(--ink-ember) 100%);
+		linear-gradient(90deg, var(--page-grid) 1px, transparent 1px),
+		linear-gradient(var(--page-grid-soft) 1px, transparent 1px),
+		radial-gradient(circle at 72% 18%, var(--page-glow), transparent 25rem), var(--page-ground);
 	background-size:
 		42px 42px,
 		42px 42px,
@@ -87,7 +135,7 @@ body {
 	min-width: 320px;
 	min-height: 100vh;
 	overflow-x: hidden;
-	scrollbar-color: var(--cyan) var(--ink);
+	scrollbar-color: var(--cyan) var(--scrollbar-track);
 	scrollbar-width: thin;
 }
 
