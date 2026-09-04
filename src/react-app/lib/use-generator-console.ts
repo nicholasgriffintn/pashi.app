@@ -47,6 +47,8 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 	const notificationTimer = useRef<number | undefined>(undefined);
 	const routeToolIdRef = useRef(routeToolId);
+	const generateAbortRef = useRef<AbortController | undefined>(undefined);
+	const hasRequestedInfoRef = useRef(false);
 
 	useEffect(() => {
 		routeToolIdRef.current = routeToolId;
@@ -88,6 +90,12 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	}, []);
 
 	useEffect(() => {
+		if (hasRequestedInfoRef.current) {
+			return;
+		}
+
+		hasRequestedInfoRef.current = true;
+
 		let ignore = false;
 
 		fetchGeneratorInfo()
@@ -168,6 +176,11 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	}
 
 	async function generateActiveTool(aiMode = resultMode === "ai") {
+		generateAbortRef.current?.abort();
+
+		const controller = new AbortController();
+
+		generateAbortRef.current = controller;
 		setError("");
 		setIsLoading(true);
 
@@ -204,7 +217,12 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 				input,
 				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
 				apiKey,
+				controller.signal,
 			);
+
+			if (controller.signal.aborted) {
+				return;
+			}
 
 			setResultHistory((current) => appendResultHistory(current, result));
 			void saveHistoryEntry(activeTool.id, nextResult);
@@ -213,6 +231,10 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			setIsLoading(false);
 			replaceAppSearch(buildShareSearch(input, fieldValues));
 		} catch (caught) {
+			if (controller.signal.aborted) {
+				return;
+			}
+
 			setError(caught instanceof Error ? caught.message : "Generation failed.");
 			setIsLoading(false);
 		}

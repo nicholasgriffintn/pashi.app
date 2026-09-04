@@ -1,4 +1,5 @@
 import type { FeatureStatusMap, ServiceStatusMap } from "../../shared/features";
+import { jsonQueryOptions, queryClient } from "./query-client";
 
 export type { FeatureStatusMap, ServiceStatusMap };
 
@@ -12,10 +13,9 @@ export interface PashiInfo<Tool = unknown> {
 }
 
 export async function fetchPashiInfo<Tool = unknown>(): Promise<PashiInfo<Tool>> {
-	const response = await fetch("/api/info");
-	const body = (await response.json()) as PashiInfo<Tool> | { error?: string };
+	const body = await queryClient.fetchQuery(jsonQueryOptions<PashiInfo<Tool>>("/api/info"));
 
-	if (!response.ok || !("tools" in body)) {
+	if (!("tools" in body)) {
 		throw new Error("Could not load Pashi info.");
 	}
 
