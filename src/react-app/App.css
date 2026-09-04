@@ -146,7 +146,10 @@ h1 {
 	border: 2px solid rgba(37, 255, 230, 0.7);
 	color: #fff7d7;
 	cursor: pointer;
-	font: 900 0.82rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.82rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	min-height: 2.5rem;
 	padding: 0 0.85rem;
 	text-transform: uppercase;
@@ -216,7 +219,10 @@ h1 {
 	align-items: center;
 	color: #ffd14c;
 	display: flex;
-	font: 900 0.67rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.67rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	letter-spacing: 0.08em;
 	padding: 0 0.55rem;
 	text-transform: uppercase;
@@ -227,7 +233,9 @@ h1 {
 	background: transparent;
 	border: 0;
 	color: #fff7d7;
-	font: 700 0.76rem / 1.2 "Courier New", monospace;
+	font:
+		700 0.76rem / 1.2 "Courier New",
+		monospace;
 	min-width: 0;
 	outline: 0;
 	padding: 0.55rem 0.35rem;
@@ -279,8 +287,7 @@ h1 {
 	--generator-padding: clamp(0.85rem, 2vw, 1.15rem);
 	backdrop-filter: blur(8px) saturate(1.1);
 	background:
-		linear-gradient(135deg, rgba(37, 255, 230, 0.055), transparent 34%),
-		rgba(7, 10, 28, 0.8);
+		linear-gradient(135deg, rgba(37, 255, 230, 0.055), transparent 34%), rgba(7, 10, 28, 0.8);
 	border: 2px solid #2ffff1;
 	box-shadow:
 		10px 10px 0 #ff2f78,
@@ -1063,7 +1070,10 @@ h1 {
 	color: #25ffe6;
 	cursor: pointer;
 	display: grid;
-	font: 900 0.9rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.9rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	height: 2rem;
 	place-items: center;
 	transition:
@@ -1199,9 +1209,7 @@ h1 {
 }
 
 .result-dialog {
-	background:
-		linear-gradient(135deg, rgba(37, 255, 230, 0.055), transparent 32%),
-		#fff7d7;
+	background: linear-gradient(135deg, rgba(37, 255, 230, 0.055), transparent 32%), #fff7d7;
 	border: 3px solid #11142e;
 	box-shadow:
 		12px 12px 0 #25ffe6,
@@ -1234,7 +1242,10 @@ h1 {
 	color: #fff7d7;
 	cursor: pointer;
 	display: grid;
-	font: 900 1rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 1rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	height: 2rem;
 	place-items: center;
 	width: 2rem;
@@ -1395,13 +1406,19 @@ h1 {
 	border: 2px solid rgba(17, 20, 46, 0.26);
 	color: rgba(255, 47, 120, 0.92);
 	display: grid;
-	font: 900 1.6rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 1.6rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	place-items: center;
 	width: 2.85rem;
 }
 
 .empty-result p {
-	font: 900 0.95rem / 1.3 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.95rem / 1.3 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	margin: 0;
 	text-transform: uppercase;
 }
@@ -1416,7 +1433,10 @@ h1 {
 	background: rgba(17, 20, 46, 0.055);
 	border: 1px solid rgba(17, 20, 46, 0.3);
 	color: rgba(17, 20, 46, 0.74);
-	font: 900 0.58rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.58rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	padding: 0.24rem 0.34rem;
 }
 
@@ -1479,8 +1499,18 @@ h1 {
 .image-preview-item img {
 	aspect-ratio: 1;
 	background:
-		linear-gradient(45deg, rgba(17, 20, 46, 0.08) 25%, transparent 25% 75%, rgba(17, 20, 46, 0.08) 75%),
-		linear-gradient(45deg, rgba(17, 20, 46, 0.08) 25%, transparent 25% 75%, rgba(17, 20, 46, 0.08) 75%);
+		linear-gradient(
+			45deg,
+			rgba(17, 20, 46, 0.08) 25%,
+			transparent 25% 75%,
+			rgba(17, 20, 46, 0.08) 75%
+		),
+		linear-gradient(
+			45deg,
+			rgba(17, 20, 46, 0.08) 25%,
+			transparent 25% 75%,
+			rgba(17, 20, 46, 0.08) 75%
+		);
 	background-position:
 		0 0,
 		0.4rem 0.4rem;
@@ -1492,7 +1522,10 @@ h1 {
 
 .image-preview-item span,
 .image-preview-more {
-	font: 900 0.66rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.66rem / 1.2 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	overflow: hidden;
 	text-align: center;
 	text-overflow: ellipsis;
@@ -1510,7 +1543,11 @@ h1 {
 
 .text-result {
 	color: #11142e;
-	font: 800 0.76rem / 1.52 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+	font:
+		800 0.76rem / 1.52 "SFMono-Regular",
+		Consolas,
+		"Liberation Mono",
+		monospace;
 	margin: 0;
 	max-height: 100%;
 	overflow: auto;
@@ -1636,7 +1673,10 @@ h1 {
 
 .records-result table {
 	border-collapse: collapse;
-	font: 800 0.78rem / 1.35 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		800 0.78rem / 1.35 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	min-width: 100%;
 }
 
@@ -1697,14 +1737,20 @@ h1 {
 
 .record-preview-item strong {
 	color: #11142e;
-	font: 900 0.82rem / 1.12 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.82rem / 1.12 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	overflow-wrap: anywhere;
 }
 
 .record-preview-more {
 	background: #11142e;
 	color: #25ffe6;
-	font: 900 0.68rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.68rem / 1.2 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	justify-self: center;
 	margin: 0;
 	padding: 0.3rem 0.55rem;
@@ -1804,7 +1850,10 @@ h1 {
 
 .dice-result-header strong {
 	color: #11142e;
-	font: 900 0.95rem / 1.05 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.95rem / 1.05 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	overflow-wrap: anywhere;
 }
 
@@ -1836,7 +1885,10 @@ h1 {
 .dice-roll-card-header strong {
 	background: #11142e;
 	color: #25ffe6;
-	font: 900 1.45rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 1.45rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	min-width: 2.75rem;
 	padding: 0.25rem 0.4rem;
 	text-align: center;
@@ -1851,15 +1903,16 @@ h1 {
 
 .dice-face {
 	aspect-ratio: 1;
-	background:
-		linear-gradient(135deg, rgba(37, 255, 230, 0.08), transparent 56%),
-		#11142e;
+	background: linear-gradient(135deg, rgba(37, 255, 230, 0.08), transparent 56%), #11142e;
 	border: 2px solid #25ffe6;
 	box-shadow: 3px 3px 0 #ff2f78;
 	color: #fff7d7;
 	display: grid;
 	flex: 0 0 2.55rem;
-	font: 900 1rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 1rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	grid-template-columns: repeat(3, 1fr);
 	grid-template-rows: repeat(3, 1fr);
 	place-items: center;
@@ -1935,7 +1988,10 @@ h1 {
 .dice-result-more {
 	background: #11142e;
 	color: #25ffe6;
-	font: 900 0.68rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.68rem / 1.2 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	justify-self: center;
 	margin: 0;
 	padding: 0.3rem 0.55rem;
@@ -1980,7 +2036,10 @@ h1 {
 
 .coin-result-header strong {
 	color: #11142e;
-	font: 900 0.95rem / 1.05 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.95rem / 1.05 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	overflow-wrap: anywhere;
 }
 
@@ -2001,29 +2060,29 @@ h1 {
 	align-items: center;
 	aspect-ratio: 1;
 	background:
-		radial-gradient(circle at 36% 30%, rgba(255, 247, 215, 0.9), transparent 24%),
-		#ffd14c;
+		radial-gradient(circle at 36% 30%, rgba(255, 247, 215, 0.9), transparent 24%), #ffd14c;
 	border: 2px solid #11142e;
 	border-radius: 999px;
 	box-shadow: 3px 3px 0 #ff2f78;
 	color: #11142e;
 	display: inline-flex;
 	flex: 0 0 3.55rem;
-	font: 900 1.35rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 1.35rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	justify-content: center;
 	width: 3.55rem;
 }
 
 .coin-face[data-side="tails"] {
 	background:
-		radial-gradient(circle at 36% 30%, rgba(255, 247, 215, 0.45), transparent 24%),
-		#25ffe6;
+		radial-gradient(circle at 36% 30%, rgba(255, 247, 215, 0.45), transparent 24%), #25ffe6;
 }
 
 .result-history {
 	background:
-		linear-gradient(135deg, rgba(37, 255, 230, 0.08), transparent 34%),
-		rgba(7, 10, 28, 0.88);
+		linear-gradient(135deg, rgba(37, 255, 230, 0.08), transparent 34%), rgba(7, 10, 28, 0.88);
 	border: 2px solid #25ffe6;
 	box-shadow: 4px 4px 0 rgba(255, 47, 120, 0.42);
 	color: #fff7d7;
@@ -2064,7 +2123,10 @@ h1 {
 
 .result-history-header strong {
 	color: #fff7d7;
-	font: 900 0.85rem / 1.1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.85rem / 1.1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	text-transform: uppercase;
@@ -2076,7 +2138,10 @@ h1 {
 	border: 1px solid #ff2f78;
 	color: #ff2f78;
 	cursor: pointer;
-	font: 900 0.72rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.72rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	min-height: 1.8rem;
 	padding: 0 0.55rem;
 	text-transform: uppercase;
@@ -2334,7 +2399,10 @@ h1 {
 
 .slackmoji-batch-effect,
 .slackmoji-batch-status {
-	font: 800 0.58rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		800 0.58rem / 1.2 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	text-transform: uppercase;
 	text-align: center;
 	overflow: hidden;
@@ -2363,7 +2431,10 @@ h1 {
 
 .slackmoji-batch-error {
 	color: #ff2f78;
-	font: 800 0.55rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		800 0.55rem / 1.2 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	margin: 0;
 	padding: 0 0.2rem;
 	text-align: center;
@@ -2372,7 +2443,10 @@ h1 {
 .slackmoji-batch-more {
 	background: #11142e;
 	color: #25ffe6;
-	font: 900 0.68rem / 1.2 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 0.68rem / 1.2 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	justify-self: center;
 	margin: 0;
 	padding: 0.3rem 0.55rem;
@@ -2399,7 +2473,10 @@ h1 {
 	align-items: center;
 	display: inline-flex;
 	gap: 0.35rem;
-	font: 900 1rem / 1 "Trebuchet MS", system-ui, sans-serif;
+	font:
+		900 1rem / 1 "Trebuchet MS",
+		system-ui,
+		sans-serif;
 	height: 2.45rem;
 	justify-content: center;
 	padding: 0;

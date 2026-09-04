@@ -1,4 +1,3 @@
-import type { GeneratorRequest } from "../../request";
 import {
 	createDigest,
 	bytesToBase64Url,
@@ -9,14 +8,18 @@ import {
 	randomBytes,
 	singleOrList,
 } from "../../../../utils/generation";
+import type { GeneratorRequest } from "../../request";
 
 const HASH_ALGORITHMS = ["md5", "sha1", "sha256", "sha512"] as const;
-const HASH_METADATA: Record<(typeof HASH_ALGORITHMS)[number], {
-	bits: string;
-	description: string;
-	hexLength: string;
-	webCryptoName: DigestAlgorithm;
-}> = {
+const HASH_METADATA: Record<
+	(typeof HASH_ALGORITHMS)[number],
+	{
+		bits: string;
+		description: string;
+		hexLength: string;
+		webCryptoName: DigestAlgorithm;
+	}
+> = {
 	md5: {
 		bits: "128",
 		description: "MD5 128-bit digest",
@@ -45,7 +48,10 @@ const HASH_METADATA: Record<(typeof HASH_ALGORITHMS)[number], {
 
 export async function createHashes(request: GeneratorRequest) {
 	const algorithm = parseChoice(request.fields.algorithm, HASH_ALGORITHMS, "sha256");
-	const includeInput = parseBoolean(request.fields.includeInput ?? request.fields.include_input, false);
+	const includeInput = parseBoolean(
+		request.fields.includeInput ?? request.fields.include_input,
+		false,
+	);
 	const uppercase = parseBoolean(request.fields.uppercase, false);
 	const input = request.fields.value?.trim() || request.fields.input?.trim() || request.input;
 	const count = parseCount(request.fields.count ?? "", 1, 25);

@@ -2,7 +2,10 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
+import { isAuthenticatedApiUrl } from "../lib/api-request";
+import { isCoinFlipStageResult } from "../lib/coin-result";
+import { isDiceStageResult } from "../lib/dice-result";
+import { createFieldDisplayModel } from "../lib/result-field-display";
 import {
 	formatGeneratedAt,
 	formatGeneratedAtTime,
@@ -12,16 +15,13 @@ import {
 	isStringArray,
 	uniqueKeys,
 } from "../lib/result-format";
-import { createResultSummary, type ResultSummary } from "../lib/result-summary";
-import { createFieldDisplayModel } from "../lib/result-field-display";
-import { isDiceStageResult } from "../lib/dice-result";
 import { resultHistoryForResult } from "../lib/result-history";
-import { isCoinFlipStageResult } from "../lib/coin-result";
+import { createResultSummary, type ResultSummary } from "../lib/result-summary";
+import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
 import { CoinFlipResultView } from "./CoinFlipResultView";
 import { DiceResultView } from "./DiceResultView";
 import { ResultHistory } from "./ResultHistory";
 import { SlackmojiBatchResults } from "./SlackmojiBatchResults";
-import { isAuthenticatedApiUrl } from "../lib/api-request";
 
 interface ImagePreviewItem {
 	alt: string;
@@ -47,8 +47,29 @@ interface ResultStageProps {
 	resultHistory?: ResultStageValue[];
 }
 
-const IMAGE_OUTPUT_FORMATS = new Set(["avif", "bmp", "gif", "ico", "jpeg", "jpg", "mjpeg", "png", "svg", "tif", "tiff", "webp"]);
-const IMAGE_URL_KEYS = ["downloadUrl", "imageUrl", "image", "previewUrl", "thumbnailUrl", "url", "src"] as const;
+const IMAGE_OUTPUT_FORMATS = new Set([
+	"avif",
+	"bmp",
+	"gif",
+	"ico",
+	"jpeg",
+	"jpg",
+	"mjpeg",
+	"png",
+	"svg",
+	"tif",
+	"tiff",
+	"webp",
+]);
+const IMAGE_URL_KEYS = [
+	"downloadUrl",
+	"imageUrl",
+	"image",
+	"previewUrl",
+	"thumbnailUrl",
+	"url",
+	"src",
+] as const;
 const RECORD_PREVIEW_KEYS = [
 	"hash",
 	"value",
@@ -84,17 +105,23 @@ export function ResultStage({
 	const [isExpanded, setIsExpanded] = useState(false);
 	const [historyViewKey, setHistoryViewKey] = useState<string | undefined>();
 	const expandedResult = result && isExpanded ? result : undefined;
-	const expandedSummary = expandedResult ? createResultSummary(expandedResult, generatedAtLabel) : undefined;
+	const expandedSummary = expandedResult
+		? createResultSummary(expandedResult, generatedAtLabel)
+		: undefined;
 	const currentHistory = resultHistoryForResult(resultHistory, result);
 	const resultToolKey = result && "type" in result ? result.type : undefined;
-	const resultViewKey = result ? `${resultToolKey ?? result.kind}-${result.generatedAt ?? ""}` : undefined;
+	const resultViewKey = result
+		? `${resultToolKey ?? result.kind}-${result.generatedAt ?? ""}`
+		: undefined;
 	const canShowInlineHistory = Boolean(
 		result &&
 		currentHistory.length > 0 &&
 		!isDiceStageResult(result) &&
 		!isCoinFlipStageResult(result),
 	);
-	const isShowingHistory = Boolean(canShowInlineHistory && resultViewKey && historyViewKey === resultViewKey);
+	const isShowingHistory = Boolean(
+		canShowInlineHistory && resultViewKey && historyViewKey === resultViewKey,
+	);
 
 	useEffect(() => {
 		if (!expandedResult) {
@@ -108,6 +135,7 @@ export function ResultStage({
 		}
 
 		document.addEventListener("keydown", handleKeyDown);
+
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, [expandedResult]);
 
@@ -120,7 +148,11 @@ export function ResultStage({
 			data-result-tone={resultTone(result)}
 			data-result-tool={result && isDiceStageResult(result) ? "dice" : undefined}
 		>
-			<div className="result-box" data-result-kind={result?.kind} data-result-tone={resultTone(result)}>
+			<div
+				className="result-box"
+				data-result-kind={result?.kind}
+				data-result-tone={resultTone(result)}
+			>
 				{result ? (
 					<div className="result-stage-tools">
 						{canShowInlineHistory ? (
@@ -149,10 +181,15 @@ export function ResultStage({
 					</div>
 				) : null}
 				{isLoading ? <div className="loading-generate" aria-hidden="true" /> : null}
-				<div className="result-content" key={`${isShowingHistory ? "history" : "result"}-${result?.generatedAt ?? result?.kind ?? "empty"}`}>
+				<div
+					className="result-content"
+					key={`${isShowingHistory ? "history" : "result"}-${result?.generatedAt ?? result?.kind ?? "empty"}`}
+				>
 					{!result ? (
 						<div className="empty-result">
-							<div aria-hidden="true" className="empty-result-mark">↯</div>
+							<div aria-hidden="true" className="empty-result-mark">
+								↯
+							</div>
 							<p>{emptyMessage}</p>
 							<div aria-hidden="true" className="empty-result-chips">
 								<span>QR</span>
@@ -183,14 +220,14 @@ export function ResultStage({
 							src={result.src}
 						/>
 					) : (
-							<ResultBody
-								generatedAtLabel={generatedAtLabel}
-								history={canShowInlineHistory ? [] : currentHistory}
-								onClearHistory={onClearResultHistory}
-								onRestoreHistory={onRestoreResult}
-								result={result}
-								compact
-							/>
+						<ResultBody
+							generatedAtLabel={generatedAtLabel}
+							history={canShowInlineHistory ? [] : currentHistory}
+							onClearHistory={onClearResultHistory}
+							onRestoreHistory={onRestoreResult}
+							result={result}
+							compact
+						/>
 					)}
 				</div>
 				{summary ? (
@@ -212,52 +249,54 @@ export function ResultStage({
 			<div className="result-action-slot" data-visible={Boolean(result && actions)}>
 				{result ? actions : null}
 			</div>
-			{expandedResult && typeof document !== "undefined" ? createPortal(
-				<div className="result-dialog-backdrop" role="presentation">
-					<div
-						aria-label="Expanded result"
-						aria-modal="true"
-						className="result-dialog"
-						role="dialog"
-					>
-						<div className="result-dialog-header">
-							<span>Result detail</span>
-							<button
-								aria-label="Close result detail"
-								onClick={() => setIsExpanded(false)}
-								type="button"
+			{expandedResult && typeof document !== "undefined"
+				? createPortal(
+						<div className="result-dialog-backdrop" role="presentation">
+							<div
+								aria-label="Expanded result"
+								aria-modal="true"
+								className="result-dialog"
+								role="dialog"
 							>
-								<span aria-hidden="true">×</span>
-							</button>
-						</div>
-						<div className="result-dialog-main">
-							{expandedSummary ? <ResultSummaryPanel summary={expandedSummary} /> : null}
-							<div className="result-dialog-content">
-								{expandedResult.kind === "slackmoji-batch" ? (
-									<SlackmojiBatchResults items={expandedResult.items} />
-								) : expandedResult.kind === "image" ? (
-									<img
-										alt={expandedResult.alt}
-										className="image-result"
-										onError={onImageError}
-										onLoad={onImageLoad}
-										src={expandedResult.src}
-									/>
-								) : (
-										<ResultBody
-											generatedAtLabel={generatedAtLabel}
-											history={currentHistory}
-											onClearHistory={onClearResultHistory}
-											onRestoreHistory={onRestoreResult}
-											result={expandedResult}
-										/>
-								)}
+								<div className="result-dialog-header">
+									<span>Result detail</span>
+									<button
+										aria-label="Close result detail"
+										onClick={() => setIsExpanded(false)}
+										type="button"
+									>
+										<span aria-hidden="true">×</span>
+									</button>
+								</div>
+								<div className="result-dialog-main">
+									{expandedSummary ? <ResultSummaryPanel summary={expandedSummary} /> : null}
+									<div className="result-dialog-content">
+										{expandedResult.kind === "slackmoji-batch" ? (
+											<SlackmojiBatchResults items={expandedResult.items} />
+										) : expandedResult.kind === "image" ? (
+											<img
+												alt={expandedResult.alt}
+												className="image-result"
+												onError={onImageError}
+												onLoad={onImageLoad}
+												src={expandedResult.src}
+											/>
+										) : (
+											<ResultBody
+												generatedAtLabel={generatedAtLabel}
+												history={currentHistory}
+												onClearHistory={onClearResultHistory}
+												onRestoreHistory={onRestoreResult}
+												result={expandedResult}
+											/>
+										)}
+									</div>
+								</div>
 							</div>
-						</div>
-					</div>
-				</div>,
-				document.body,
-			) : null}
+						</div>,
+						document.body,
+					)
+				: null}
 		</section>
 	);
 }
@@ -267,7 +306,12 @@ function resultTone(result: ResultStageValue | undefined) {
 		return undefined;
 	}
 
-	if (result.kind === "image" || result.kind === "palette" || isDiceStageResult(result) || isCoinFlipStageResult(result)) {
+	if (
+		result.kind === "image" ||
+		result.kind === "palette" ||
+		isDiceStageResult(result) ||
+		isCoinFlipStageResult(result)
+	) {
 		return "visual";
 	}
 
@@ -295,7 +339,9 @@ function ResultSummaryPanel({ summary }: { summary: ResultSummary }) {
 						<dt>{detail.label}</dt>
 						<dd>
 							{detail.href && !isAuthenticatedApiUrl(detail.href) ? (
-								<a href={detail.href} rel="noreferrer" target="_blank">{detail.value}</a>
+								<a href={detail.href} rel="noreferrer" target="_blank">
+									{detail.value}
+								</a>
 							) : (
 								detail.value
 							)}
@@ -338,6 +384,7 @@ function ResultBody({
 	}
 
 	const imagePreview = createImagePreview(result);
+
 	if (imagePreview.length > 0) {
 		return withHistory(<ImagePreviewResult compact={compact} items={imagePreview} />);
 	}
@@ -375,7 +422,7 @@ function ResultBody({
 						<span>{colour}</span>
 					</div>
 				))}
-			</div>
+			</div>,
 		);
 	}
 
@@ -384,9 +431,15 @@ function ResultBody({
 			return withHistory(
 				<div className="colour-records-result">
 					{result.result.map((record) => (
-						<article className="colour-card" key={`${record.hex}-${record.rgb}`} style={{ background: record.primary }}>
+						<article
+							className="colour-card"
+							key={`${record.hex}-${record.rgb}`}
+							style={{ background: record.primary }}
+						>
 							<strong>{record.primary}</strong>
-							<span>{record.palette} / {record.format}</span>
+							<span>
+								{record.palette} / {record.format}
+							</span>
 							<dl>
 								<div>
 									<dt>HEX</dt>
@@ -398,7 +451,9 @@ function ResultBody({
 								</div>
 								<div>
 									<dt>Contrast</dt>
-									<dd>W {record.contrastWhite} / B {record.contrastBlack}</dd>
+									<dd>
+										W {record.contrastWhite} / B {record.contrastBlack}
+									</dd>
 								</div>
 								<div>
 									<dt>AA</dt>
@@ -407,18 +462,24 @@ function ResultBody({
 							</dl>
 						</article>
 					))}
-				</div>
+				</div>,
 			);
 		}
 
-			if (compact) {
-				return withHistory(<RecordPreviewResult items={createRecordPreview(result.result)} total={result.result.length} />);
-			}
-
-			const columns = uniqueKeys(result.result);
+		if (compact) {
 			return withHistory(
-				<div className="records-result">
-					<table>
+				<RecordPreviewResult
+					items={createRecordPreview(result.result)}
+					total={result.result.length}
+				/>,
+			);
+		}
+
+		const columns = uniqueKeys(result.result);
+
+		return withHistory(
+			<div className="records-result">
+				<table>
 					<thead>
 						<tr>
 							{columns.map((column) => (
@@ -435,12 +496,16 @@ function ResultBody({
 							</tr>
 						))}
 					</tbody>
-					</table>
-				</div>
-			);
+				</table>
+			</div>,
+		);
 	}
 
-	if (result.kind === "fields" && !Array.isArray(result.result) && typeof result.result !== "string") {
+	if (
+		result.kind === "fields" &&
+		!Array.isArray(result.result) &&
+		typeof result.result !== "string"
+	) {
 		const fieldDisplay = createFieldDisplayModel(result.result);
 
 		return withHistory(
@@ -463,12 +528,17 @@ function ResultBody({
 						<dd>{value}</dd>
 					</div>
 				))}
-			</dl>
+			</dl>,
 		);
 	}
 
 	const text = formatTextResult(result.result);
-	return withHistory(<pre className="text-result" data-density={textResultDensity(text)}>{text}</pre>);
+
+	return withHistory(
+		<pre className="text-result" data-density={textResultDensity(text)}>
+			{text}
+		</pre>,
+	);
 }
 
 function textResultDensity(text: string) {
@@ -499,7 +569,9 @@ function RecordPreviewResult({ items, total }: { items: RecordPreviewItem[]; tot
 					</div>
 				))}
 			</div>
-			{total > visibleItems.length ? <p className="record-preview-more">+{total - visibleItems.length} more</p> : null}
+			{total > visibleItems.length ? (
+				<p className="record-preview-more">+{total - visibleItems.length} more</p>
+			) : null}
 		</div>
 	);
 }
@@ -530,13 +602,21 @@ function ImagePreviewResult({ compact, items }: { compact: boolean; items: Image
 		<div className="image-preview-result" data-compact={compact}>
 			<div className="image-preview-grid">
 				{visibleItems.map((item) => (
-					<a className="image-preview-item" href={item.src} key={`${item.label}-${item.src}`} rel="noreferrer" target="_blank">
+					<a
+						className="image-preview-item"
+						href={item.src}
+						key={`${item.label}-${item.src}`}
+						rel="noreferrer"
+						target="_blank"
+					>
 						<img alt={item.alt} src={item.src} />
 						<span>{item.label}</span>
 					</a>
 				))}
 			</div>
-			{compact && items.length > 4 ? <p className="image-preview-more">+{items.length - 4} more</p> : null}
+			{compact && items.length > 4 ? (
+				<p className="image-preview-more">+{items.length - 4} more</p>
+			) : null}
 		</div>
 	);
 }
@@ -550,15 +630,26 @@ function createImagePreview(result: TextResultStageValue): ImagePreviewItem[] {
 
 	if (Array.isArray(result.result)) {
 		if (isStringArray(result.result)) {
-			return result.result
-				.filter(imageUrlFromString)
-				.map((src, index) => ({ alt: `${result.label} image ${index + 1}`, label: imageLabel(src, index), src }));
+			return result.result.filter(imageUrlFromString).map((src, index) => ({
+				alt: `${result.label} image ${index + 1}`,
+				label: imageLabel(src, index),
+				src,
+			}));
 		}
 
 		if (isRecordArray(result.result)) {
 			return result.result.flatMap((record, index) => {
 				const src = imageUrlFromRecord(record);
-				return src ? [{ alt: `${result.label} image ${index + 1}`, label: imageLabel(record.name || record.label || src, index), src }] : [];
+
+				return src
+					? [
+							{
+								alt: `${result.label} image ${index + 1}`,
+								label: imageLabel(record.name || record.label || src, index),
+								src,
+							},
+						]
+					: [];
 			});
 		}
 
@@ -566,20 +657,24 @@ function createImagePreview(result: TextResultStageValue): ImagePreviewItem[] {
 	}
 
 	const src = imageUrlFromRecord(result.result);
+
 	if (!src || !isImageResultRecord(result.result)) {
 		return [];
 	}
 
-	return [{
-		alt: `${result.label} preview`,
-		label: result.result.outputFormat ? result.result.outputFormat.toUpperCase() : result.label,
-		src,
-	}];
+	return [
+		{
+			alt: `${result.label} preview`,
+			label: result.result.outputFormat ? result.result.outputFormat.toUpperCase() : result.label,
+			src,
+		},
+	];
 }
 
 function imageUrlFromRecord(record: Record<string, string>) {
 	for (const key of IMAGE_URL_KEYS) {
 		const value = record[key];
+
 		if (value) {
 			return value;
 		}
@@ -589,7 +684,10 @@ function imageUrlFromRecord(record: Record<string, string>) {
 }
 
 function isImageResultRecord(record: Record<string, string>) {
-	return isImageOutputFormat(record.outputFormat || record.format || record.mimeType) || Boolean(imageUrlFromString(imageUrlFromRecord(record) ?? ""));
+	return (
+		isImageOutputFormat(record.outputFormat || record.format || record.mimeType) ||
+		Boolean(imageUrlFromString(imageUrlFromRecord(record) ?? ""))
+	);
 }
 
 function isImageOutputFormat(value: string | undefined) {
@@ -597,7 +695,11 @@ function isImageOutputFormat(value: string | undefined) {
 		return false;
 	}
 
-	const normalized = value.toLowerCase().replace(/^image\//, "").replace(/^.*\./, "");
+	const normalized = value
+		.toLowerCase()
+		.replace(/^image\//, "")
+		.replace(/^.*\./, "");
+
 	return IMAGE_OUTPUT_FORMATS.has(normalized);
 }
 
@@ -610,6 +712,7 @@ function imageUrlFromString(value: string | undefined) {
 		const url = new URL(value, window.location.origin);
 		const pathParts = url.pathname.toLowerCase().split(".");
 		const extension = pathParts[pathParts.length - 1];
+
 		return extension && IMAGE_OUTPUT_FORMATS.has(extension) ? value : undefined;
 	} catch {
 		return undefined;
@@ -618,6 +721,7 @@ function imageUrlFromString(value: string | undefined) {
 
 function imageLabel(value: string, index: number) {
 	const trimmed = value.trim();
+
 	if (!trimmed) {
 		return `Image ${index + 1}`;
 	}

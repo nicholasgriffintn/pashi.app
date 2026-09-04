@@ -1,4 +1,3 @@
-import type { TextResultStageValue } from "./result-types";
 import {
 	isRecordArray,
 	isStringArray,
@@ -6,6 +5,7 @@ import {
 	type StringRecord,
 	uniqueKeys,
 } from "../../shared/records";
+import type { TextResultStageValue } from "./result-types";
 
 export type ResultRecord = StringRecord;
 export { isRecordArray, isStringArray, uniqueKeys };
@@ -16,6 +16,7 @@ export function formatGeneratedAt(value: string | undefined) {
 	}
 
 	const date = new Date(value);
+
 	if (Number.isNaN(date.getTime())) {
 		return value;
 	}
@@ -29,6 +30,7 @@ export function formatGeneratedAtTime(value: string | undefined) {
 	}
 
 	const date = new Date(value);
+
 	if (Number.isNaN(date.getTime())) {
 		return value;
 	}

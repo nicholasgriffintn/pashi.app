@@ -1,7 +1,7 @@
-import type { GeneratorRequest } from "../request";
-import { escapeXml } from "../../../utils/text";
 import { normaliseHexColour } from "../../../utils/color";
 import { parseInteger } from "../../../utils/generation";
+import { escapeXml } from "../../../utils/text";
+import type { GeneratorRequest } from "../request";
 
 export function createEmojiImageResponse(request: GeneratorRequest) {
 	const emoji = request.fields.emoji?.trim() || request.input || "⚡";

@@ -1,4 +1,3 @@
-import type { GeneratorRequest } from "../../request";
 import {
 	parseChoice,
 	parseCount,
@@ -11,6 +10,7 @@ import {
 	randomUnitInterval,
 	singleOrList,
 } from "../../../../utils/generation";
+import type { GeneratorRequest } from "../../request";
 
 const DIGITS = "0123456789";
 const IBAN_COUNTRIES = ["DE", "FR", "GB", "IT", "ES", "NL"] as const;
@@ -77,23 +77,29 @@ interface CoordinateBounds {
 
 export function createCards(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 100);
+
 	return singleOrList(Array.from({ length: count }, () => createCard(request)));
 }
 
 export function createCoordinateRecords(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 100);
+
 	return singleOrList(Array.from({ length: count }, () => createCoordinates(request)));
 }
 
 export function createIbans(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 10, 25);
 	const country = parseIbanCountry(request.fields.country);
+
 	return singleOrList(Array.from({ length: count }, () => createIban(country)));
 }
 
 function createCard(request: GeneratorRequest) {
 	const brand = parseChoice(request.fields.type ?? request.fields.brand, CARD_BRANDS, "visa");
-	const includeDetails = parseBoolean(request.fields.includeDetails ?? request.fields.include_details, true);
+	const includeDetails = parseBoolean(
+		request.fields.includeDetails ?? request.fields.include_details,
+		true,
+	);
 	const includeName = parseBoolean(request.fields.includeName ?? request.fields.include_name, true);
 	const profile = cardProfile(brand);
 	const prefix = randomChoice(profile.prefixes);
@@ -142,6 +148,7 @@ function createCardDetails(profile: ReturnType<typeof cardProfile>) {
 function createCardExpiration() {
 	const month = String(randomIntegerInRange(12) + 1).padStart(2, "0");
 	const year = randomIntegerInRange(6) + 27;
+
 	return `${month}/${year}`;
 }
 
@@ -157,6 +164,7 @@ function createCoordinates(request: GeneratorRequest) {
 	const latitude = randomCoordinate(bounds.minLat, bounds.maxLat);
 	const longitude = randomCoordinate(bounds.minLon, bounds.maxLon);
 	const decimal = `${latitude.toFixed(precision)}, ${longitude.toFixed(precision)}`;
+
 	return {
 		decimal,
 		format,
@@ -175,6 +183,7 @@ function customBounds(request: GeneratorRequest): CoordinateBounds | undefined {
 	const maxLatInput = request.fields.maxLat ?? request.fields.max_lat;
 	const minLonInput = request.fields.minLon ?? request.fields.min_lon;
 	const maxLonInput = request.fields.maxLon ?? request.fields.max_lon;
+
 	if (!minLatInput && !maxLatInput && !minLonInput && !maxLonInput) {
 		return undefined;
 	}
@@ -183,6 +192,7 @@ function customBounds(request: GeneratorRequest): CoordinateBounds | undefined {
 	const maxLat = parseNumber(maxLatInput ?? "", 90, -90, 90);
 	const minLon = parseNumber(minLonInput ?? "", -180, -180, 180);
 	const maxLon = parseNumber(maxLonInput ?? "", 180, -180, 180);
+
 	return {
 		label: "Custom bounds",
 		maxLat: Math.max(minLat, maxLat),
@@ -196,10 +206,16 @@ function randomCoordinate(min: number, max: number) {
 	return min + randomUnitInterval() * (max - min);
 }
 
-function formatCoordinatePair(latitude: number, longitude: number, format: (typeof COORDINATE_FORMATS)[number], precision: number) {
+function formatCoordinatePair(
+	latitude: number,
+	longitude: number,
+	format: (typeof COORDINATE_FORMATS)[number],
+	precision: number,
+) {
 	if (format === "dms") {
 		return `${formatDms(latitude, "lat")}, ${formatDms(longitude, "lon")}`;
 	}
+
 	if (format === "dm") {
 		return `${formatDm(latitude, "lat")}, ${formatDm(longitude, "lon")}`;
 	}
@@ -213,6 +229,7 @@ function formatDms(value: number, axis: "lat" | "lon") {
 	const minutesFloat = (absolute - degrees) * 60;
 	const minutes = Math.floor(minutesFloat);
 	const seconds = (minutesFloat - minutes) * 60;
+
 	return `${degrees}°${minutes}'${seconds.toFixed(2)}"${hemisphere(value, axis)}`;
 }
 
@@ -220,6 +237,7 @@ function formatDm(value: number, axis: "lat" | "lon") {
 	const absolute = Math.abs(value);
 	const degrees = Math.floor(absolute);
 	const minutes = (absolute - degrees) * 60;
+
 	return `${degrees}°${minutes.toFixed(4)}'${hemisphere(value, axis)}`;
 }
 
@@ -237,25 +255,30 @@ function luhnCheckDigit(body: string) {
 		.reverse()
 		.reduce((total, character, index) => {
 			let digit = Number.parseInt(character, 10);
+
 			if (index % 2 === 0) {
 				digit *= 2;
 				if (digit > 9) {
 					digit -= 9;
 				}
 			}
+
 			return total + digit;
 		}, 0);
+
 	return `${(10 - (sum % 10)) % 10}`;
 }
 
 function createIban(country: (typeof IBAN_COUNTRIES)[number]) {
 	const bban = createBban(country);
+
 	return `${country}${ibanCheckDigits(country, bban)}${bban}`;
 }
 
 function parseIbanCountry(input: string | undefined) {
 	const normalised = input?.trim().toUpperCase();
 	const country = IBAN_COUNTRIES.find((option) => option === normalised);
+
 	return country ?? "GB";
 }
 
@@ -282,10 +305,12 @@ function ibanCheckDigits(countryCode: string, bban: string) {
 		.split("")
 		.map((character) => {
 			const code = character.charCodeAt(0);
+
 			return code >= 65 && code <= 90 ? `${code - 55}` : character;
 		})
 		.join("");
 	let remainder = 0;
+
 	for (const digit of numeric) {
 		remainder = (remainder * 10 + Number.parseInt(digit, 10)) % 97;
 	}

@@ -1,4 +1,8 @@
-import type { GeneratorRequest } from "../../request";
+import {
+	arrayBufferToPem,
+	requireArrayBuffer,
+	requireCryptoKeyPair,
+} from "../../../../utils/crypto";
 import {
 	bytesToBase64,
 	bytesToBase64Url,
@@ -9,7 +13,7 @@ import {
 	randomBytes,
 	singleOrList,
 } from "../../../../utils/generation";
-import { arrayBufferToPem, requireArrayBuffer, requireCryptoKeyPair } from "../../../../utils/crypto";
+import type { GeneratorRequest } from "../../request";
 
 const KEY_ALGORITHMS = ["aes", "hmac", "rsa"] as const;
 const KEY_FORMATS = ["hex", "base64", "base64url", "pem"] as const;
@@ -20,11 +24,13 @@ type KeyFormat = (typeof KEY_FORMATS)[number];
 export async function createEncryptionKeys(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 10);
 	const keys = await Promise.all(Array.from({ length: count }, () => createEncryptionKey(request)));
+
 	return singleOrList(keys);
 }
 
 async function createEncryptionKey(request: GeneratorRequest) {
 	const algorithm = parseChoice(request.fields.algorithm, KEY_ALGORITHMS, "aes");
+
 	if (algorithm === "rsa") {
 		return createRsaKeyPair(request);
 	}
@@ -35,7 +41,10 @@ async function createEncryptionKey(request: GeneratorRequest) {
 function createSymmetricKey(request: GeneratorRequest, algorithm: Exclude<KeyAlgorithm, "rsa">) {
 	const keySize = parseSymmetricKeySize(request, algorithm);
 	const format = parseChoice(request.fields.format, KEY_FORMATS, "hex");
-	const includeIv = parseBoolean(request.fields.includeIv ?? request.fields.include_iv, algorithm === "aes");
+	const includeIv = parseBoolean(
+		request.fields.includeIv ?? request.fields.include_iv,
+		algorithm === "aes",
+	);
 	const keyBytes = randomBytes(keySize / 8);
 	const record = {
 		algorithm: algorithm === "aes" ? `AES-${keySize}` : `HMAC-SHA-${keySize}`,
@@ -49,6 +58,7 @@ function createSymmetricKey(request: GeneratorRequest, algorithm: Exclude<KeyAlg
 	}
 
 	const iv = randomBytes(algorithm === "aes" ? 16 : 32);
+
 	return {
 		...record,
 		iv: encodeKeyMaterial(iv, format === "pem" ? "base64" : format),
@@ -57,7 +67,12 @@ function createSymmetricKey(request: GeneratorRequest, algorithm: Exclude<KeyAlg
 }
 
 async function createRsaKeyPair(request: GeneratorRequest) {
-	const keySize = parseInteger(request.fields.keySize ?? request.fields.key_size ?? request.fields.bits ?? "", 2048, 2048, 4096);
+	const keySize = parseInteger(
+		request.fields.keySize ?? request.fields.key_size ?? request.fields.bits ?? "",
+		2048,
+		2048,
+		4096,
+	);
 	const generatedKey = await crypto.subtle.generateKey(
 		{
 			hash: "SHA-256",
@@ -85,7 +100,13 @@ async function createRsaKeyPair(request: GeneratorRequest) {
 
 function parseSymmetricKeySize(request: GeneratorRequest, algorithm: Exclude<KeyAlgorithm, "rsa">) {
 	const fallback = algorithm === "aes" ? 256 : 512;
-	const rawSize = parseInteger(request.fields.keySize ?? request.fields.key_size ?? request.fields.bits ?? "", fallback, 128, 512);
+	const rawSize = parseInteger(
+		request.fields.keySize ?? request.fields.key_size ?? request.fields.bits ?? "",
+		fallback,
+		128,
+		512,
+	);
+
 	if (algorithm === "aes") {
 		return closestAllowedSize(rawSize, [128, 192, 256]);
 	}

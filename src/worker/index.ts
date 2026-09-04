@@ -35,44 +35,39 @@ app.get("/api/info", (c) => c.json(createApiIndexResponse(c.env)));
 
 app.get("/sitemap.xml", (c) => {
 	const origin = new URL(c.req.url).origin;
+
 	return createSitemapResponse(origin);
 });
 
 app.get("/export/:type/:format", async (c) => {
 	const generator = findGenerator(c.req.param("type"));
 	const request = createGeneratorRequestFromSearchParams(new URL(c.req.url).searchParams);
+
 	if (generator?.modes?.includes("ai") && usesAiMode(request)) {
 		const denied = await requireApiKey(c);
+
 		if (denied) {
 			return denied;
 		}
 	}
 
-	return createExportResponse(
-		c.req.param("type"),
-		c.req.param("format"),
-		request,
-		c.env,
-	);
+	return createExportResponse(c.req.param("type"), c.req.param("format"), request, c.env);
 });
 
 app.post("/export/:type/:format", async (c) => {
 	const body = await readGeneratorBody(c);
 	const generator = findGenerator(c.req.param("type"));
 	const request = createGeneratorRequest(body.input, body.fields);
+
 	if (generator?.modes?.includes("ai") && usesAiMode(request)) {
 		const denied = await requireApiKey(c);
+
 		if (denied) {
 			return denied;
 		}
 	}
 
-	return createExportResponse(
-		c.req.param("type"),
-		c.req.param("format"),
-		request,
-		c.env,
-	);
+	return createExportResponse(c.req.param("type"), c.req.param("format"), request, c.env);
 });
 
 app.get("/api/:type", async (c) => {
@@ -81,31 +76,31 @@ app.get("/api/:type", async (c) => {
 	const request = createGeneratorRequestFromSearchParams(params);
 
 	const generatorTool = findGenerator(type);
+
 	if (generatorTool) {
 		if (generatorTool.modes?.includes("ai") && usesAiMode(request)) {
 			const denied = await requireApiKey(c);
+
 			if (denied) {
 				return denied;
 			}
 		}
 
-		return createGeneratorResponse(
-			type,
-			request,
-			params,
-			c.env,
-		);
+		return createGeneratorResponse(type, request, params, c.env);
 	}
 
 	const converterTool = findConverterTool(type);
+
 	if (converterTool) {
 		if (converterTool.runtime === "container") {
 			const denied = await requireApiKey(c);
+
 			if (denied) {
 				return denied;
 			}
 
 			const application = c.get("application");
+
 			if (!application) {
 				return c.json({ error: "API key authentication is unavailable." }, 503);
 			}
@@ -126,35 +121,36 @@ app.post("/api/:type", async (c) => {
 	if (generatorTool) {
 		const body = await readGeneratorBody(c);
 		const request = createGeneratorRequest(body.input, body.fields);
+
 		if (generatorTool.modes?.includes("ai") && usesAiMode(request)) {
 			const denied = await requireApiKey(c);
+
 			if (denied) {
 				return denied;
 			}
 		}
 
-		return createGeneratorResponse(
-			type,
-			request,
-			new URLSearchParams(),
-			c.env,
-		);
+		return createGeneratorResponse(type, request, new URLSearchParams(), c.env);
 	}
 
 	const converterTool = findConverterTool(type);
+
 	if (converterTool) {
 		if (converterTool.runtime === "container") {
 			const denied = await requireApiKey(c);
+
 			if (denied) {
 				return denied;
 			}
 
 			const application = c.get("application");
+
 			if (!application) {
 				return c.json({ error: "API key authentication is unavailable." }, 503);
 			}
 
 			const contentType = c.req.header("content-type")?.toLowerCase() ?? "";
+
 			if (isQueuedConversionUploadRequest(converterTool.id, contentType)) {
 				return createQueuedConversionUploadResponse(
 					converterTool.id,
@@ -166,6 +162,7 @@ app.post("/api/:type", async (c) => {
 			}
 
 			const body = await readConverterBody(c);
+
 			return createConverterResponse(
 				type,
 				createGeneratorRequest(body.input, body.fields),
@@ -176,6 +173,7 @@ app.post("/api/:type", async (c) => {
 		}
 
 		const body = await readConverterBody(c);
+
 		return createConverterResponse(type, createGeneratorRequest(body.input, body.fields), c.env);
 	}
 

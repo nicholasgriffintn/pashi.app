@@ -29,6 +29,7 @@ export function createImageResult(
 	if (input) {
 		params.set("input", input);
 	}
+
 	for (const [key, value] of Object.entries(fields)) {
 		if (value) {
 			params.set(key, value);
@@ -65,6 +66,7 @@ export function getInitialValues(tool: GeneratorInfoTool): GeneratorValues {
 		...Object.fromEntries(
 			(tool.input.fields ?? []).flatMap((field) => {
 				const value = params.get(field.id);
+
 				return value === null ? [] : [[field.id, value]];
 			}),
 		),
@@ -75,17 +77,22 @@ export function getInitialValues(tool: GeneratorInfoTool): GeneratorValues {
 
 export function getRouteToolId() {
 	const [toolId] = window.location.pathname.split("/").filter(Boolean);
+
 	return toolId && toolId !== "api" && toolId !== "convert" ? toolId : undefined;
 }
 
-export function findToolByRoute(tools: readonly GeneratorInfoTool[], routeToolId: string | undefined) {
+export function findToolByRoute(
+	tools: readonly GeneratorInfoTool[],
+	routeToolId: string | undefined,
+) {
 	const normalisedRouteToolId = routeToolId?.trim().toLowerCase();
+
 	if (!normalisedRouteToolId) {
 		return undefined;
 	}
 
-	return tools.find((tool) =>
-		tool.id === normalisedRouteToolId || tool.aliases.includes(normalisedRouteToolId),
+	return tools.find(
+		(tool) => tool.id === normalisedRouteToolId || tool.aliases.includes(normalisedRouteToolId),
 	);
 }
 

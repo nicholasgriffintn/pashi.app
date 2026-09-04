@@ -37,12 +37,16 @@ export function hslToRgb({ hue, lightness, saturation }: HslColor): RgbColor {
 }
 
 export function rgbToHex({ blue, green, red }: RgbColor) {
-	return `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, "0")).join("").toUpperCase()}`;
+	return `#${[red, green, blue]
+		.map((channel) => channel.toString(16).padStart(2, "0"))
+		.join("")
+		.toUpperCase()}`;
 }
 
 export function relativeLuminance({ blue, green, red }: RgbColor) {
 	const [linearRed, linearGreen, linearBlue] = [red, green, blue].map((channel) => {
 		const value = channel / 255;
+
 		return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
 	});
 
@@ -52,10 +56,12 @@ export function relativeLuminance({ blue, green, red }: RgbColor) {
 export function contrastRatio(firstLuminance: number, secondLuminance: number) {
 	const lighter = Math.max(firstLuminance, secondLuminance);
 	const darker = Math.min(firstLuminance, secondLuminance);
+
 	return (lighter + 0.05) / (darker + 0.05);
 }
 
 export function normaliseHexColour(value: string | undefined) {
 	const colour = value?.trim().replace(/^#/, "");
+
 	return colour && /^[0-9a-fA-F]{6}$/.test(colour) ? colour : undefined;
 }

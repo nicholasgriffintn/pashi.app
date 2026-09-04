@@ -10,8 +10,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { searchTools } from "../lib/tool-search";
 import { isStringArray } from "../../shared/records";
+import { searchTools } from "../lib/tool-search";
 
 const MENU_GAP = 8;
 const MENU_MAX_HEIGHT = 448;
@@ -80,6 +80,7 @@ function groupTools(tools: ToolPickerTool[], recentToolIds: string[]) {
 		}
 
 		const group = groups.get(tool.display.category) ?? [];
+
 		group.push(tool);
 		groups.set(tool.display.category, group);
 	}
@@ -97,7 +98,8 @@ function isTypingTarget(target: EventTarget | null) {
 function readRecentToolIds(recentKey: string) {
 	try {
 		const value = localStorage.getItem(recentKey);
-		const parsed = value ? JSON.parse(value) as unknown : [];
+		const parsed = value ? (JSON.parse(value) as unknown) : [];
+
 		return isStringArray(parsed) ? parsed : [];
 	} catch {
 		return [];
@@ -112,7 +114,14 @@ function writeRecentToolIds(recentKey: string, toolIds: string[]) {
 	}
 }
 
-export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey, tools }: ToolPickerProps) {
+export function ToolPicker({
+	activeTool,
+	label,
+	onChange,
+	placeholder,
+	recentKey,
+	tools,
+}: ToolPickerProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeIndex, setActiveIndex] = useState(0);
 	const [menuPlacement, setMenuPlacement] = useState<MenuPlacement>({
@@ -134,7 +143,9 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 		[query, recentToolIds, tools],
 	);
 	const flatTools = useMemo(() => groups.flatMap((group) => group.tools), [groups]);
-	const activeOptionId = flatTools[activeIndex] ? optionId(listboxId, flatTools[activeIndex].id) : undefined;
+	const activeOptionId = flatTools[activeIndex]
+		? optionId(listboxId, flatTools[activeIndex].id)
+		: undefined;
 	const menuStyle = useMemo<ToolMenuStyle>(
 		() => ({
 			bottom: menuPlacement.bottom,
@@ -147,6 +158,7 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 	);
 	const updatePlacement = useCallback(() => {
 		const trigger = triggerRef.current;
+
 		if (!trigger) {
 			return;
 		}
@@ -159,7 +171,10 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 		const side = below >= MENU_MIN_HEIGHT || below >= above ? "bottom" : "top";
 		const available = Math.max(0, side === "bottom" ? below : above);
 		const maxHeight = Math.max(96, Math.min(MENU_MAX_HEIGHT, available));
-		const left = Math.max(MENU_VIEWPORT_PADDING, Math.min(rect.left, window.innerWidth - MENU_VIEWPORT_PADDING - rect.width));
+		const left = Math.max(
+			MENU_VIEWPORT_PADDING,
+			Math.min(rect.left, window.innerWidth - MENU_VIEWPORT_PADDING - rect.width),
+		);
 
 		setMenuPlacement({
 			bottom: side === "top" ? window.innerHeight - rect.top + MENU_GAP : undefined,
@@ -172,6 +187,7 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 	}, []);
 	const openPicker = useCallback(() => {
 		const selectedIndex = activeTool ? flatTools.findIndex((tool) => tool.id === activeTool.id) : 0;
+
 		setActiveIndex(Math.max(0, selectedIndex));
 		updatePlacement();
 		setIsOpen(true);
@@ -213,12 +229,14 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 
 	useEffect(() => {
 		const activeOption = activeOptionId ? document.getElementById(activeOptionId) : null;
+
 		activeOption?.scrollIntoView({ block: "nearest" });
 	}, [activeOptionId]);
 
 	useEffect(() => {
 		function handlePointerDown(event: MouseEvent) {
 			const target = event.target as Node;
+
 			if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) {
 				setIsOpen(false);
 			}
@@ -227,12 +245,14 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 		function handleKeyDown(event: KeyboardEvent) {
 			if (event.key === "Escape") {
 				closePicker();
+
 				return;
 			}
 
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 				event.preventDefault();
 				openPicker();
+
 				return;
 			}
 
@@ -253,6 +273,7 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 
 	function selectTool(toolId: string) {
 		const nextRecentToolIds = [toolId, ...recentToolIds.filter((id) => id !== toolId)].slice(0, 4);
+
 		setRecentToolIds(nextRecentToolIds);
 		writeRecentToolIds(recentKey, nextRecentToolIds);
 		onChange(toolId);
@@ -264,6 +285,7 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 		if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 			event.preventDefault();
 			openPicker();
+
 			return;
 		}
 
@@ -272,42 +294,49 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 				event.preventDefault();
 				openPicker();
 			}
+
 			return;
 		}
 
 		if (event.key === "Escape") {
 			event.preventDefault();
 			closePicker(true);
+
 			return;
 		}
 
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
 			setActiveIndex((index) => nextOptionIndex(index, flatTools.length, 1));
+
 			return;
 		}
 
 		if (event.key === "ArrowUp") {
 			event.preventDefault();
 			setActiveIndex((index) => nextOptionIndex(index, flatTools.length, -1));
+
 			return;
 		}
 
 		if (event.key === "Home") {
 			event.preventDefault();
 			setActiveIndex(0);
+
 			return;
 		}
 
 		if (event.key === "End") {
 			event.preventDefault();
 			setActiveIndex(Math.max(0, flatTools.length - 1));
+
 			return;
 		}
 
 		if (event.key === "Enter") {
 			event.preventDefault();
 			const tool = flatTools[activeIndex];
+
 			if (tool) {
 				selectTool(tool.id);
 			}
@@ -315,12 +344,7 @@ export function ToolPicker({ activeTool, label, onChange, placeholder, recentKey
 	}
 
 	const menu = isOpen ? (
-		<div
-			className="tool-menu"
-			data-side={menuPlacement.side}
-			ref={menuRef}
-			style={menuStyle}
-		>
+		<div className="tool-menu" data-side={menuPlacement.side} ref={menuRef} style={menuStyle}>
 			<input
 				aria-label={`Search ${label.toLowerCase()}`}
 				aria-activedescendant={activeOptionId}

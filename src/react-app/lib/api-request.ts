@@ -1,6 +1,7 @@
 export function createApiHeaders(apiKey: string, initialHeaders?: HeadersInit) {
 	const headers = new Headers(initialHeaders);
 	const credential = apiKey.trim();
+
 	if (credential) {
 		headers.set("X-API-Key", credential);
 	}
@@ -8,12 +9,9 @@ export function createApiHeaders(apiKey: string, initialHeaders?: HeadersInit) {
 	return headers;
 }
 
-export function apiFetch(
-	input: RequestInfo | URL,
-	apiKey: string,
-	init: RequestInit = {},
-) {
+export function apiFetch(input: RequestInfo | URL, apiKey: string, init: RequestInit = {}) {
 	const shouldSendCredential = isSameOriginHttpRequest(input);
+
 	return fetch(input, {
 		...init,
 		headers: createApiHeaders(
@@ -27,6 +25,7 @@ export function isAuthenticatedApiUrl(value: string) {
 	const baseUrl = typeof window === "undefined" ? "https://pashi.local" : window.location.href;
 	const url = new URL(value, baseUrl);
 	const isSameOrigin = typeof window === "undefined" || url.origin === window.location.origin;
+
 	return isSameOrigin && (url.pathname.startsWith("/api/") || url.pathname.startsWith("/export/"));
 }
 
@@ -37,8 +36,8 @@ function isSameOriginHttpRequest(input: RequestInfo | URL) {
 
 	const value = input instanceof Request ? input.url : input.toString();
 	const url = new URL(value, window.location.href);
+
 	return (
-		(url.protocol === "http:" || url.protocol === "https:") &&
-		url.origin === window.location.origin
+		(url.protocol === "http:" || url.protocol === "https:") && url.origin === window.location.origin
 	);
 }

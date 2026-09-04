@@ -65,10 +65,15 @@ function stripTags(input: string) {
 function htmlToMarkdown(input: string) {
 	let markdown = unescapeHtml(input)
 		.replace(/<!--[\s\S]*?-->/g, "")
-		.replace(/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi, (_match, level: string, text: string) =>
-			`${"#".repeat(Number(level))} ${inlineMarkdown(text)}\n\n`
+		.replace(
+			/<h([1-6])\b[^>]*>([\s\S]*?)<\/h\1>/gi,
+			(_match, level: string, text: string) =>
+				`${"#".repeat(Number(level))} ${inlineMarkdown(text)}\n\n`,
 		)
-		.replace(/<li\b[^>]*>([\s\S]*?)<\/li>/gi, (_match, text: string) => `- ${inlineMarkdown(text)}\n`)
+		.replace(
+			/<li\b[^>]*>([\s\S]*?)<\/li>/gi,
+			(_match, text: string) => `- ${inlineMarkdown(text)}\n`,
+		)
 		.replace(/<\/?(?:ul|ol)\b[^>]*>/gi, "")
 		.replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, (_match, text: string) => `${inlineMarkdown(text)}\n\n`)
 		.replace(/<br\s*\/?>/gi, "\n")
@@ -85,26 +90,40 @@ function htmlToMarkdown(input: string) {
 
 function inlineMarkdown(input: string) {
 	return input
-		.replace(/<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi, (_match, _quote: string, href: string, text: string) =>
-			`[${stripInlineTags(text)}](${unescapeHtml(href)})`
+		.replace(
+			/<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1[^>]*>([\s\S]*?)<\/a>/gi,
+			(_match, _quote: string, href: string, text: string) =>
+				`[${stripInlineTags(text)}](${unescapeHtml(href)})`,
 		)
-		.replace(/<(?:strong|b)\b[^>]*>([\s\S]*?)<\/(?:strong|b)>/gi, (_match, text: string) => `**${stripInlineTags(text)}**`)
-		.replace(/<(?:em|i)\b[^>]*>([\s\S]*?)<\/(?:em|i)>/gi, (_match, text: string) => `*${stripInlineTags(text)}*`)
-		.replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, (_match, text: string) => `\`${stripInlineTags(text)}\``)
+		.replace(
+			/<(?:strong|b)\b[^>]*>([\s\S]*?)<\/(?:strong|b)>/gi,
+			(_match, text: string) => `**${stripInlineTags(text)}**`,
+		)
+		.replace(
+			/<(?:em|i)\b[^>]*>([\s\S]*?)<\/(?:em|i)>/gi,
+			(_match, text: string) => `*${stripInlineTags(text)}*`,
+		)
+		.replace(
+			/<code\b[^>]*>([\s\S]*?)<\/code>/gi,
+			(_match, text: string) => `\`${stripInlineTags(text)}\``,
+		)
 		.replace(/<[^>]+>/g, "")
 		.trim()
 		.replace(/\s+/g, " ");
 }
 
 function stripInlineTags(input: string) {
-	return input.replace(/<[^>]+>/g, "").trim().replace(/\s+/g, " ");
+	return input
+		.replace(/<[^>]+>/g, "")
+		.trim()
+		.replace(/\s+/g, " ");
 }
 
 function unescapeHtml(input: string) {
 	return input
 		.replace(/&lt;/g, "<")
 		.replace(/&gt;/g, ">")
-		.replace(/&quot;/g, "\"")
+		.replace(/&quot;/g, '"')
 		.replace(/&#39;/g, "'")
 		.replace(/&apos;/g, "'")
 		.replace(/&amp;/g, "&");

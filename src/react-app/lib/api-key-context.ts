@@ -9,6 +9,7 @@ export const ApiKeyContext = createContext<ApiKeyContextValue | undefined>(undef
 
 export function useApiKey() {
 	const context = useContext(ApiKeyContext);
+
 	if (!context) {
 		throw new Error("useApiKey must be used within ApiKeyProvider.");
 	}

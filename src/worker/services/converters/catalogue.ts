@@ -1,14 +1,11 @@
-import type { ConverterTool } from "./types";
-import { TEXT_FILE_FORMATS } from "./text-file-conversion.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
 import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
-import { HTML_TRANSFORM_FORMATS } from "./html-transform.ts";
-import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
-import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
 import { DEVELOPER_INSPECT_FORMATS } from "./developer-inspect.ts";
 import { DEVELOPER_TEXT_FORMATS } from "./developer-text.ts";
-import { REQUEST_TRANSFORM_FORMATS } from "./request-transform.ts";
+import { HTML_TRANSFORM_FORMATS } from "./html-transform.ts";
+import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
+import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
 import {
 	AUDIO_FORMAT_OUTPUTS,
 	DOCUMENT_FORMAT_OUTPUTS,
@@ -17,7 +14,10 @@ import {
 	SLACKMOJI_OUTPUTS,
 	VIDEO_FORMAT_OUTPUTS,
 } from "./queued-output-formats.ts";
+import { REQUEST_TRANSFORM_FORMATS } from "./request-transform.ts";
+import { TEXT_FILE_FORMATS } from "./text-file-conversion.ts";
 import { TIMESTAMP_TRANSFORM_FORMATS } from "./timestamp-transform.ts";
+import type { ConverterTool } from "./types";
 import { URL_TRANSFORM_FORMATS } from "./url-transform.ts";
 
 const TEXT_REQUEST_FORMATS = [
@@ -209,9 +209,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert Markdown",
 			category: "Markdown",
-			examples: [
-				"## Release notes\n\n- **Fixed** auth\n- [Pashi](https://pashi.app)",
-			],
+			examples: ["## Release notes\n\n- **Fixed** auth\n- [Pashi](https://pashi.app)"],
 		},
 		endpoint: "/api/markdown-format",
 		id: "markdown-format",
@@ -262,9 +260,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform HTML",
 			category: "HTML",
-			examples: [
-				"<h1>Title</h1><p>Hello <strong>world</strong>.</p>",
-			],
+			examples: ["<h1>Title</h1><p>Hello <strong>world</strong>.</p>"],
 		},
 		endpoint: "/api/html-transform",
 		id: "html-transform",
@@ -334,14 +330,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Convert timestamps and dates between Unix, milliseconds, ISO, readable UTC, RFC, Discord, and simple date math outputs.",
+		description:
+			"Convert timestamps and dates between Unix, milliseconds, ISO, readable UTC, RFC, Discord, and simple date math outputs.",
 		display: {
 			actionLabel: "Convert timestamp",
 			category: "Dates",
-			examples: [
-				"2024-01-02T03:04:05Z",
-				"1704164645",
-			],
+			examples: ["2024-01-02T03:04:05Z", "1704164645"],
 		},
 		endpoint: "/api/timestamp-transform",
 		id: "timestamp-transform",
@@ -443,10 +437,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform text",
 			category: "Text",
-			examples: [
-				"Hello, Pashi App!",
-				"01001000 01101001",
-			],
+			examples: ["Hello, Pashi App!", "01001000 01101001"],
 		},
 		endpoint: "/api/text-transform",
 		id: "text-transform",
@@ -479,7 +470,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			accepts: TEXT_REQUEST_FORMATS,
 			examples: [
 				{
-					body: "{\"b\":2,\"a\":1}",
+					body: '{"b":2,"a":1}',
 					contentType: "application/json",
 					description: "Post JSON and select a transform with outputFormat.",
 					method: "POST",
@@ -502,9 +493,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform JSON",
 			category: "JSON",
-			examples: [
-				"{\"b\":2,\"a\":{\"c\":3}}",
-			],
+			examples: ['{"b":2,"a":{"c":3}}'],
 		},
 		endpoint: "/api/json-transform",
 		id: "json-transform",
@@ -515,7 +504,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		},
 		label: "JSON transform",
 		outputs: JSON_TRANSFORM_FORMATS,
-		placeholder: "{\"b\":2,\"a\":{\"c\":3}}",
+		placeholder: '{"b":2,"a":{"c":3}}',
 		runtime: "worker",
 		status: "available",
 	},
@@ -533,7 +522,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			accepts: TEXT_REQUEST_FORMATS,
 			examples: [
 				{
-					body: "{\"users\":[{\"id\":1,\"name\":\"Ada\"}]}",
+					body: '{"users":[{"id":1,"name":"Ada"}]}',
 					contentType: "application/json",
 					description: "Inspect JSON structure and inferred value kinds.",
 					method: "POST",
@@ -559,14 +548,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Inspect JSON and CSV structure, including fields, row counts, examples, and inferred scalar types.",
+		description:
+			"Inspect JSON and CSV structure, including fields, row counts, examples, and inferred scalar types.",
 		display: {
 			actionLabel: "Inspect data",
 			category: "Data",
-			examples: [
-				"{\"users\":[{\"id\":1,\"name\":\"Ada\"}]}",
-				"id,name\n1,Ada\n2,Grace",
-			],
+			examples: ['{"users":[{"id":1,"name":"Ada"}]}', "id,name\n1,Ada\n2,Grace"],
 		},
 		endpoint: "/api/data-shape",
 		id: "data-shape",
@@ -577,7 +564,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		},
 		label: "Data shape",
 		outputs: DATA_SHAPE_FORMATS,
-		placeholder: "{\"users\":[{\"id\":1,\"name\":\"Ada\"}]}",
+		placeholder: '{"users":[{"id":1,"name":"Ada"}]}',
 		runtime: "worker",
 		status: "available",
 	},
@@ -631,14 +618,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Decode JWTs, inspect UUIDs, explain cron expressions, check colour contrast, and identify common file signatures.",
+		description:
+			"Decode JWTs, inspect UUIDs, explain cron expressions, check colour contrast, and identify common file signatures.",
 		display: {
 			actionLabel: "Inspect value",
 			category: "Developer",
-			examples: [
-				"0 9 * * 1",
-				"018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00",
-			],
+			examples: ["0 9 * * 1", "018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00"],
 		},
 		endpoint: "/api/developer-inspect",
 		id: "developer-inspect",
@@ -720,10 +705,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform text",
 			category: "Developer",
-			examples: [
-				"one\ntwo\n---\none\nthree",
-				"body{color:#111;background:#fff}",
-			],
+			examples: ["one\ntwo\n---\none\nthree", "body{color:#111;background:#fff}"],
 		},
 		endpoint: "/api/developer-text",
 		id: "developer-text",
@@ -778,7 +760,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Convert common request formats between curl, Fetch API snippets, HAR requests, and raw HTTP request text.",
+		description:
+			"Convert common request formats between curl, Fetch API snippets, HAR requests, and raw HTTP request text.",
 		display: {
 			actionLabel: "Convert request",
 			category: "Requests",
@@ -813,7 +796,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				{
 					body: "https://example.com/search?q=pashi&tag=tools",
 					contentType: "text/plain",
-					description: "Post a URL or text containing URLs and choose a transform with outputFormat.",
+					description:
+						"Post a URL or text containing URLs and choose a transform with outputFormat.",
 					method: "POST",
 					url: "/api/url-transform?outputFormat=parse",
 				},
@@ -830,7 +814,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Parse URLs, extract query parameters, pull links and email addresses from text, and deduplicate links.",
+		description:
+			"Parse URLs, extract query parameters, pull links and email addresses from text, and deduplicate links.",
 		display: {
 			actionLabel: "Inspect URL",
 			category: "URLs",
@@ -910,15 +895,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Convert common length, mass, temperature, data, speed, area, volume, angle, time, pressure, energy, power, force, frequency, and torque units.",
+		description:
+			"Convert common length, mass, temperature, data, speed, area, volume, angle, time, pressure, energy, power, force, frequency, and torque units.",
 		display: {
 			actionLabel: "Convert unit",
 			category: "Units",
-			examples: [
-				"10 m",
-				"100 c",
-				"1048576 b",
-			],
+			examples: ["10 m", "100 c", "1048576 b"],
 		},
 		endpoint: "/api/unit-converter",
 		id: "unit-converter",
@@ -985,7 +967,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Media",
-		description: "Convert image URLs immediately, or upload image files into the async ffmpeg pipeline.",
+		description:
+			"Convert image URLs immediately, or upload image files into the async ffmpeg pipeline.",
 		display: {
 			actionLabel: "Convert image",
 			category: "Media",
@@ -994,7 +977,20 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		endpoint: "/api/image-format",
 		id: "image-format",
 		input: {
-			accept: ["image/*", ".avif", ".bmp", ".gif", ".ico", ".jpg", ".jpeg", ".mjpeg", ".png", ".tif", ".tiff", ".webp"],
+			accept: [
+				"image/*",
+				".avif",
+				".bmp",
+				".gif",
+				".ico",
+				".jpg",
+				".jpeg",
+				".mjpeg",
+				".png",
+				".tif",
+				".tiff",
+				".webp",
+			],
 			label: "Image file",
 			kind: "file",
 			required: true,
@@ -1123,7 +1119,20 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		endpoint: "/api/slackmoji",
 		id: "slackmoji",
 		input: {
-			accept: ["image/*", ".avif", ".bmp", ".gif", ".ico", ".jpg", ".jpeg", ".mjpeg", ".png", ".tif", ".tiff", ".webp"],
+			accept: [
+				"image/*",
+				".avif",
+				".bmp",
+				".gif",
+				".ico",
+				".jpg",
+				".jpeg",
+				".mjpeg",
+				".png",
+				".tif",
+				".tiff",
+				".webp",
+			],
 			label: "Image file",
 			kind: "file",
 			required: true,
@@ -1200,7 +1209,20 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		endpoint: "/api/slack-hdr-emoji",
 		id: "slack-hdr-emoji",
 		input: {
-			accept: ["image/*", ".avif", ".bmp", ".gif", ".ico", ".jpg", ".jpeg", ".mjpeg", ".png", ".tif", ".tiff", ".webp"],
+			accept: [
+				"image/*",
+				".avif",
+				".bmp",
+				".gif",
+				".ico",
+				".jpg",
+				".jpeg",
+				".mjpeg",
+				".png",
+				".tif",
+				".tiff",
+				".webp",
+			],
 			label: "Image file",
 			kind: "file",
 			required: true,
@@ -1266,12 +1288,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				},
 			],
 			fields: [
-					{
-						description: "Target text-file format.",
-						id: "outputFormat",
-						required: true,
-						values: TEXT_FILE_FORMATS,
-					},
+				{
+					description: "Target text-file format.",
+					id: "outputFormat",
+					required: true,
+					values: TEXT_FILE_FORMATS,
+				},
 				{
 					description: "Optional source filename used for conversion context and download names.",
 					id: "sourceName",
@@ -1281,7 +1303,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Media",
-			description: "Convert text, Markdown, JSON, CSV, HTML, YAML, TOML, XML, INI, env, properties, and SQL files.",
+		description:
+			"Convert text, Markdown, JSON, CSV, HTML, YAML, TOML, XML, INI, env, properties, and SQL files.",
 		display: {
 			actionLabel: "Convert file",
 			category: "Files",
@@ -1290,28 +1313,55 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		id: "file-format",
 		endpoint: "/api/file-format",
 		input: {
-				accept: ["text/plain", "text/markdown", "text/csv", "text/tab-separated-values", "text/html", "application/json", "application/xml", "application/yaml", "application/sql", ".txt", ".md", ".markdown", ".csv", ".tsv", ".tab", ".xls", ".html", ".json", ".yaml", ".yml", ".toml", ".xml", ".ini", ".properties", ".env", ".sql"],
+			accept: [
+				"text/plain",
+				"text/markdown",
+				"text/csv",
+				"text/tab-separated-values",
+				"text/html",
+				"application/json",
+				"application/xml",
+				"application/yaml",
+				"application/sql",
+				".txt",
+				".md",
+				".markdown",
+				".csv",
+				".tsv",
+				".tab",
+				".xls",
+				".html",
+				".json",
+				".yaml",
+				".yml",
+				".toml",
+				".xml",
+				".ini",
+				".properties",
+				".env",
+				".sql",
+			],
 			label: "Text file",
 			kind: "file",
 			required: true,
 		},
 		label: "Text file formats",
-			outputs: TEXT_FILE_FORMATS,
-			placeholder: "TXT, Markdown, JSON, CSV, HTML, YAML, TOML, XML, INI, env, properties, or SQL",
+		outputs: TEXT_FILE_FORMATS,
+		placeholder: "TXT, Markdown, JSON, CSV, HTML, YAML, TOML, XML, INI, env, properties, or SQL",
 		runtime: "worker",
 		status: "available",
 	},
 	{
-			aliases: [
-				"document-format",
-				"document-convert",
-				"docx-to-markdown",
-				"markdown-to-docx",
-				"md-to-docx",
-				"html-to-docx",
-				"docx-to-html",
-				"markdown-to-wordpress-html-converter",
-			],
+		aliases: [
+			"document-format",
+			"document-convert",
+			"docx-to-markdown",
+			"markdown-to-docx",
+			"md-to-docx",
+			"html-to-docx",
+			"docx-to-html",
+			"markdown-to-wordpress-html-converter",
+		],
 		api: {
 			accepts: DOCUMENT_REQUEST_FORMATS,
 			examples: [
@@ -1340,7 +1390,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Convert uploaded documents through the async Cloudflare Container running Pandoc.",
+		description:
+			"Convert uploaded documents through the async Cloudflare Container running Pandoc.",
 		display: {
 			actionLabel: "Convert document",
 			category: "Documents",
@@ -1376,28 +1427,28 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		status: "available",
 	},
 	{
-			aliases: [
-				"video-format",
-				"video-transcode",
-				"video-format-converter",
-				"mp4-to-webm",
-				"webm-to-mp4",
-				"mov-to-mp4",
-				"extract-audio-from-video",
-				"video-audio-remover",
-				"video-bitrate-changer",
-				"video-compressor",
-				"video-compressor-simple",
-				"video-duration-cutter",
-				"video-frame-extractor",
-				"video-frame-sequence-exporter",
-				"video-grayscale",
-				"video-keyframe-extractor",
-				"video-speed-changer",
-				"video-thumbnail-generator",
-				"change-video-fps",
-				"resize-video-dimensions",
-			],
+		aliases: [
+			"video-format",
+			"video-transcode",
+			"video-format-converter",
+			"mp4-to-webm",
+			"webm-to-mp4",
+			"mov-to-mp4",
+			"extract-audio-from-video",
+			"video-audio-remover",
+			"video-bitrate-changer",
+			"video-compressor",
+			"video-compressor-simple",
+			"video-duration-cutter",
+			"video-frame-extractor",
+			"video-frame-sequence-exporter",
+			"video-grayscale",
+			"video-keyframe-extractor",
+			"video-speed-changer",
+			"video-thumbnail-generator",
+			"change-video-fps",
+			"resize-video-dimensions",
+		],
 		api: {
 			accepts: VIDEO_REQUEST_FORMATS,
 			examples: [
@@ -1427,7 +1478,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: ["thumbnail", "extract-audio", "remove-audio", "resize", "trim", "grayscale"],
 				},
 				{
-					description: "Optional timestamp, duration, fps, bitrate, width, height, speed, or volume fields.",
+					description:
+						"Optional timestamp, duration, fps, bitrate, width, height, speed, or volume fields.",
 					id: "time",
 				},
 			],
@@ -1444,7 +1496,23 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		endpoint: "/api/video-format",
 		id: "video-format",
 		input: {
-			accept: ["video/*", "audio/*", ".3gp", ".avi", ".flv", ".m4v", ".mkv", ".mov", ".mp4", ".mpeg", ".mpg", ".ogv", ".ts", ".webm", ".wmv"],
+			accept: [
+				"video/*",
+				"audio/*",
+				".3gp",
+				".avi",
+				".flv",
+				".m4v",
+				".mkv",
+				".mov",
+				".mp4",
+				".mpeg",
+				".mpg",
+				".ogv",
+				".ts",
+				".webm",
+				".wmv",
+			],
 			label: "Video or audio file",
 			kind: "file",
 			required: true,
@@ -1456,23 +1524,23 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		status: "available",
 	},
 	{
-			aliases: [
-				"audio-format",
-				"audio-transcode",
-				"audio-format-converter",
-				"mp3-to-wav",
-				"wav-to-mp3",
-				"mp3-to-flac",
-				"flac-to-mp3",
-				"wav-to-flac",
-				"audio-bitrate-changer",
-				"audio-channel-remover",
-				"audio-mono-stereo-converter",
-				"audio-sample-rate-converter",
-				"audio-thumbnail-generator",
-				"audio-trimmer",
-				"audio-waveform-generator",
-			],
+		aliases: [
+			"audio-format",
+			"audio-transcode",
+			"audio-format-converter",
+			"mp3-to-wav",
+			"wav-to-mp3",
+			"mp3-to-flac",
+			"flac-to-mp3",
+			"wav-to-flac",
+			"audio-bitrate-changer",
+			"audio-channel-remover",
+			"audio-mono-stereo-converter",
+			"audio-sample-rate-converter",
+			"audio-thumbnail-generator",
+			"audio-trimmer",
+			"audio-waveform-generator",
+		],
 		api: {
 			accepts: AUDIO_REQUEST_FORMATS,
 			examples: [
@@ -1519,7 +1587,20 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		endpoint: "/api/audio-format",
 		id: "audio-format",
 		input: {
-			accept: ["audio/*", ".aac", ".aiff", ".flac", ".m4a", ".mka", ".mp3", ".oga", ".ogg", ".opus", ".wav", ".wma"],
+			accept: [
+				"audio/*",
+				".aac",
+				".aiff",
+				".flac",
+				".m4a",
+				".mka",
+				".mp3",
+				".oga",
+				".ogg",
+				".opus",
+				".wav",
+				".wma",
+			],
 			label: "Audio file",
 			kind: "file",
 			required: true,
@@ -1538,7 +1619,8 @@ export function listConverterTools() {
 
 export function findConverterTool(type: string) {
 	const normalisedType = type.trim().toLowerCase();
-	return CONVERTER_TOOLS.find((tool) =>
-		tool.id === normalisedType || tool.aliases.includes(normalisedType),
+
+	return CONVERTER_TOOLS.find(
+		(tool) => tool.id === normalisedType || tool.aliases.includes(normalisedType),
 	);
 }

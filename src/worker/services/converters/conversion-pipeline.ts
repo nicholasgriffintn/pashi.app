@@ -1,7 +1,11 @@
 import { Container, getContainer } from "@cloudflare/containers";
 
 import { safeFilename } from "../../utils/text";
-import { appendConversionOperationSearchParams, createConversionOperationFields, type ConversionOperationFields } from "./conversion-options";
+import {
+	appendConversionOperationSearchParams,
+	createConversionOperationFields,
+	type ConversionOperationFields,
+} from "./conversion-options";
 import { applyConverterPresetFields } from "./presets";
 import { QUEUED_CONVERTER_OUTPUTS } from "./queued-output-formats";
 import { isAllowedPresetKey, SLACKMOJI_PRESET_PREFIX } from "./slackmoji-presets";
@@ -46,7 +50,20 @@ interface UploadedConversionSource {
 }
 
 const OUTPUT_FORMAT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/;
-const KNOWN_AUDIO_OUTPUT_FORMATS = new Set(["aac", "aiff", "alac", "flac", "m4a", "mka", "mp3", "oga", "ogg", "opus", "wav", "wma"]);
+const KNOWN_AUDIO_OUTPUT_FORMATS = new Set([
+	"aac",
+	"aiff",
+	"alac",
+	"flac",
+	"m4a",
+	"mka",
+	"mp3",
+	"oga",
+	"ogg",
+	"opus",
+	"wav",
+	"wma",
+]);
 const KNOWN_DOCUMENT_OUTPUT_FORMATS = new Set(["docx", "epub", "html", "md", "odt", "rtf", "txt"]);
 const MAX_UPLOAD_BYTES = 250 * 1024 * 1024;
 const CONTAINER_PORT = 8080;
@@ -83,20 +100,28 @@ export async function createQueuedConversionUploadResponse(
 	presetType = converterId,
 ) {
 	const kind = queuedConversionKindForConverter(converterId);
+
 	if (!kind) {
 		return Response.json({ error: "Queued converter not found." }, { status: 404 });
 	}
 
 	const source = await readUploadedConversionSource(request, env);
+
 	if (!source) {
 		return Response.json({ error: "Upload a file to convert." }, { status: 400 });
 	}
 
 	const converterFields = applyConverterPresetFields(presetType, source.fields);
-	const outputFormat = normaliseOutputFormat(converterId, kind, converterFields.outputFormat || converterFields.format);
+	const outputFormat = normaliseOutputFormat(
+		converterId,
+		kind,
+		converterFields.outputFormat || converterFields.format,
+	);
+
 	if (!outputFormat.format) {
 		return Response.json({ error: outputFormat.error }, { status: 400 });
 	}
+
 	const finalOutputFormat = outputFormat.format;
 
 	const now = new Date().toISOString();
@@ -140,6 +165,7 @@ export async function createQueuedConversionLookupResponse(
 	applicationId: string,
 ) {
 	const jobId = fields.job || fields.download;
+
 	if (!jobId) {
 		return undefined;
 	}
@@ -149,11 +175,8 @@ export async function createQueuedConversionLookupResponse(
 	}
 
 	const record = await readJobRecord(env, jobId);
-	if (
-		!record ||
-		record.applicationId !== applicationId ||
-		record.converterId !== converterId
-	) {
+
+	if (!record || record.applicationId !== applicationId || record.converterId !== converterId) {
 		return Response.json({ error: "Conversion job not found." }, { status: 404 });
 	}
 
@@ -163,22 +186,34 @@ export async function createQueuedConversionLookupResponse(
 		}
 
 		const object = await env.CONVERSION_BUCKET.get(record.outputKey);
+
 		if (!object) {
 			return Response.json({ error: "Converted file is missing." }, { status: 404 });
 		}
 
 		const headers = new Headers();
+
 		object.writeHttpMetadata(headers);
-		headers.set("Content-Disposition", `attachment; filename="pashi-${record.jobId}.${extensionForFormat(record.outputFormat)}"`);
-		headers.set("Content-Type", headers.get("Content-Type") || contentTypeForOutput(record.kind, record.outputFormat));
+		headers.set(
+			"Content-Disposition",
+			`attachment; filename="pashi-${record.jobId}.${extensionForFormat(record.outputFormat)}"`,
+		);
+		headers.set(
+			"Content-Type",
+			headers.get("Content-Type") || contentTypeForOutput(record.kind, record.outputFormat),
+		);
 		headers.set("Cache-Control", "no-store");
+
 		return new Response(object.body, { headers });
 	}
 
 	return Response.json(createJobResult(record));
 }
 
-export async function processConversionQueue(batch: MessageBatch<ConversionJobMessage>, env: ConversionEnv) {
+export async function processConversionQueue(
+	batch: MessageBatch<ConversionJobMessage>,
+	env: ConversionEnv,
+) {
 	for (const message of batch.messages) {
 		try {
 			await processConversionJob(message.body, env);
@@ -194,6 +229,7 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	await updateJobStatus(env, message.jobId, "processing");
 
 	const source = await env.CONVERSION_BUCKET.get(message.sourceKey);
+
 	if (!source) {
 		throw new Error("Source object is missing.");
 	}
@@ -202,18 +238,22 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	const bodyPipe = source.body.pipeTo(fixedLengthBody.writable);
 	const container = getContainer(env.CONVERSION_CONTAINER, "media-converter");
 	const url = new URL("http://localhost/convert");
+
 	url.searchParams.set("kind", message.kind);
 	url.searchParams.set("outputFormat", message.outputFormat);
 	url.searchParams.set("sourceName", message.sourceName);
 	appendConversionOperationSearchParams(url, message.operationFields ?? {});
-	const response = await container.fetch(new Request(url, {
-		body: fixedLengthBody.readable,
-		headers: {
-			"Content-Length": String(source.size),
-			"Content-Type": message.inputContentType,
-		},
-		method: "POST",
-	}));
+	const response = await container.fetch(
+		new Request(url, {
+			body: fixedLengthBody.readable,
+			headers: {
+				"Content-Length": String(source.size),
+				"Content-Type": message.inputContentType,
+			},
+			method: "POST",
+		}),
+	);
+
 	await bodyPipe;
 
 	if (!response.ok || !response.body) {
@@ -221,6 +261,7 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	}
 
 	const outputBody = await createKnownLengthBody(response);
+
 	await env.CONVERSION_BUCKET.put(message.outputKey, outputBody.body, {
 		httpMetadata: {
 			contentType: contentTypeForOutput(message.kind, message.outputFormat),
@@ -232,17 +273,15 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	});
 }
 
-
 export async function listSlackmojiPresets(env: ConversionEnv): Promise<SlackmojiPreset[]> {
-	const presets = await loadPresetBatch(
-		env,
-		SLACKMOJI_PRESET_PREFIX,
-	);
+	const presets = await loadPresetBatch(env, SLACKMOJI_PRESET_PREFIX);
 
 	return presets.sort((a, b) => a.name.localeCompare(b.name));
 }
+
 async function loadPresetBatch(env: ConversionEnv, prefix: string) {
 	const list = await env.CONVERSION_BUCKET.list({ prefix, limit: MAX_PRESET_LIST });
+
 	return list.objects
 		.filter((object) => isImageKey(object.key))
 		.map((object) => ({
@@ -256,16 +295,31 @@ async function loadPresetBatch(env: ConversionEnv, prefix: string) {
 
 function isImageKey(key: string) {
 	const value = key.toLowerCase();
-	return value.endsWith(".png") || value.endsWith(".jpg") || value.endsWith(".jpeg") || value.endsWith(".gif") || value.endsWith(".webp")
-		|| value.endsWith(".avif") || value.endsWith(".bmp") || value.endsWith(".tiff") || value.endsWith(".tif") || value.endsWith(".ico");
+
+	return (
+		value.endsWith(".png") ||
+		value.endsWith(".jpg") ||
+		value.endsWith(".jpeg") ||
+		value.endsWith(".gif") ||
+		value.endsWith(".webp") ||
+		value.endsWith(".avif") ||
+		value.endsWith(".bmp") ||
+		value.endsWith(".tiff") ||
+		value.endsWith(".tif") ||
+		value.endsWith(".ico")
+	);
 }
 
-export async function readSlackmojiPresetSource(env: ConversionEnv, key: string): Promise<UploadedConversionSource | undefined> {
+export async function readSlackmojiPresetSource(
+	env: ConversionEnv,
+	key: string,
+): Promise<UploadedConversionSource | undefined> {
 	if (!isAllowedPresetKey(key)) {
 		return undefined;
 	}
 
 	const preset = await env.CONVERSION_BUCKET.get(key);
+
 	if (!preset || !preset.body) {
 		return undefined;
 	}
@@ -278,21 +332,27 @@ export async function readSlackmojiPresetSource(env: ConversionEnv, key: string)
 	};
 }
 
-async function readUploadedConversionSource(request: Request, env: ConversionEnv): Promise<UploadedConversionSource | undefined> {
+async function readUploadedConversionSource(
+	request: Request,
+	env: ConversionEnv,
+): Promise<UploadedConversionSource | undefined> {
 	const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
 	const contentLength = Number(request.headers.get("content-length") ?? 0);
+
 	if (contentLength > MAX_UPLOAD_BYTES) {
 		return undefined;
 	}
 
 	const url = new URL(request.url);
 	const fields = Object.fromEntries(url.searchParams.entries());
+
 	for (const key of ["data", "file", "input"]) {
 		delete fields[key];
 	}
 
 	if (contentType.includes("multipart/form-data")) {
 		const formData = await request.formData();
+
 		for (const [key, value] of formData.entries()) {
 			if (typeof value === "string" && key !== "input" && key !== "data") {
 				fields[key] = value;
@@ -300,15 +360,18 @@ async function readUploadedConversionSource(request: Request, env: ConversionEnv
 		}
 
 		const file = formData.get("file");
+
 		if (!(file instanceof File) || file.size > MAX_UPLOAD_BYTES) {
 			const sourceKey = typeof fields.sourceKey === "string" ? fields.sourceKey : "";
+
 			if (sourceKey) {
 				const presetSource = await readSlackmojiPresetSource(env, sourceKey);
+
 				return presetSource
 					? {
-						...presetSource,
-						fields,
-					}
+							...presetSource,
+							fields,
+						}
 					: undefined;
 			}
 
@@ -337,6 +400,7 @@ async function readUploadedConversionSource(request: Request, env: ConversionEnv
 
 async function readJobRecord(env: ConversionEnv, jobId: string) {
 	const object = await env.CONVERSION_BUCKET.get(jobRecordKey(jobId));
+
 	if (!object) {
 		return undefined;
 	}
@@ -357,6 +421,7 @@ async function updateJobStatus(
 	patch: Partial<ConversionJobRecord> = {},
 ) {
 	const record = await readJobRecord(env, jobId);
+
 	if (!record) {
 		throw new Error("Conversion job not found.");
 	}
@@ -417,43 +482,56 @@ function queuedConversionKindForConverter(converterId: string): QueuedConversion
 	if (converterId === "image-format") {
 		return "image";
 	}
+
 	if (converterId === "slackmoji") {
 		return "image";
 	}
+
 	if (converterId === "slack-hdr-emoji") {
 		return "image";
 	}
+
 	if (converterId === "audio-format") {
 		return "audio";
 	}
+
 	if (converterId === "document-format") {
 		return "document";
 	}
+
 	if (converterId === "video-format") {
 		return "video";
 	}
+
 	return undefined;
 }
 
-function normaliseOutputFormat(converterId: string, kind: QueuedConversionKind, value: string | undefined) {
-	const defaultFormat = converterId === "slackmoji"
-		? "gif"
-		: converterId === "slack-hdr-emoji"
-		? "png"
-		: kind === "image"
-		? "webp"
-		: kind === "audio"
-		? "mp3"
-		: kind === "document"
-		? "docx"
-		: "mp4";
+function normaliseOutputFormat(
+	converterId: string,
+	kind: QueuedConversionKind,
+	value: string | undefined,
+) {
+	const defaultFormat =
+		converterId === "slackmoji"
+			? "gif"
+			: converterId === "slack-hdr-emoji"
+				? "png"
+				: kind === "image"
+					? "webp"
+					: kind === "audio"
+						? "mp3"
+						: kind === "document"
+							? "docx"
+							: "mp4";
 	const format = value?.trim().toLowerCase() || defaultFormat;
+
 	if (!OUTPUT_FORMAT_PATTERN.test(format)) {
 		return { error: "Choose a safe output format such as webp, mp4, or mp3." };
 	}
 
 	const normalisedFormat = format === "jpg" ? "jpeg" : format;
 	const supportedFormats = QUEUED_CONVERTER_OUTPUTS[converterId] ?? [];
+
 	if (!supportedFormats.includes(normalisedFormat)) {
 		return { error: `Choose a supported output format: ${supportedFormats.join(", ")}.` };
 	}
@@ -529,9 +607,11 @@ function contentTypeForOutput(kind: QueuedConversionKind, outputFormat: string) 
 	if (kind === "image") {
 		return "image/" + outputFormat;
 	}
+
 	if (kind === "audio" || KNOWN_AUDIO_OUTPUT_FORMATS.has(outputFormat)) {
 		return "audio/" + outputFormat;
 	}
+
 	if (kind === "document" || KNOWN_DOCUMENT_OUTPUT_FORMATS.has(outputFormat)) {
 		return "application/octet-stream";
 	}
@@ -539,10 +619,14 @@ function contentTypeForOutput(kind: QueuedConversionKind, outputFormat: string) 
 	return "video/" + outputFormat;
 }
 
-async function createKnownLengthBody(response: Response): Promise<{ body: ArrayBuffer | ReadableStream; done?: Promise<void> }> {
+async function createKnownLengthBody(
+	response: Response,
+): Promise<{ body: ArrayBuffer | ReadableStream; done?: Promise<void> }> {
 	const contentLength = Number(response.headers.get("Content-Length") ?? 0);
+
 	if (response.body && Number.isSafeInteger(contentLength) && contentLength > 0) {
 		const fixedLengthBody = new FixedLengthStream(contentLength);
+
 		return {
 			body: fixedLengthBody.readable,
 			done: response.body.pipeTo(fixedLengthBody.writable),

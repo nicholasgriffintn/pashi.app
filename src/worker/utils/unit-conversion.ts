@@ -87,11 +87,23 @@ const UNITS: Record<UnitOutput, UnitDefinition> = {
 	acre: linearUnit("area", "acre", 4046.8564224, ["acres"]),
 	b: linearUnit("data", "B", 1, ["byte", "bytes"]),
 	bar: linearUnit("pressure", "bar", 100000, ["bars"]),
-	c: temperatureUnit("temperature", "°C", (value) => value + 273.15, (value) => value - 273.15, ["celsius", "°c"]),
+	c: temperatureUnit(
+		"temperature",
+		"°C",
+		(value) => value + 273.15,
+		(value) => value - 273.15,
+		["celsius", "°c"],
+	),
 	cal: linearUnit("energy", "cal", 4.184, ["calorie", "calories"]),
 	cm: linearUnit("length", "cm", 0.01, ["centimeter", "centimeters", "centimetre", "centimetres"]),
 	deg: linearUnit("angle", "deg", Math.PI / 180, ["degree", "degrees"]),
-	f: temperatureUnit("temperature", "°F", (value) => (value - 32) * 5 / 9 + 273.15, (value) => (value - 273.15) * 9 / 5 + 32, ["fahrenheit", "°f"]),
+	f: temperatureUnit(
+		"temperature",
+		"°F",
+		(value) => ((value - 32) * 5) / 9 + 273.15,
+		(value) => ((value - 273.15) * 9) / 5 + 32,
+		["fahrenheit", "°f"],
+	),
 	ft: linearUnit("length", "ft", 0.3048, ["foot", "feet"]),
 	g: linearUnit("mass", "g", 0.001, ["gram", "grams"]),
 	gal: linearUnit("volume", "gal", 3.785411784, ["gallon", "gallons"]),
@@ -101,7 +113,13 @@ const UNITS: Record<UnitOutput, UnitDefinition> = {
 	hz: linearUnit("frequency", "Hz", 1, ["hertz"]),
 	in: linearUnit("length", "in", 0.0254, ["inch", "inches"]),
 	j: linearUnit("energy", "J", 1, ["joule", "joules"]),
-	k: temperatureUnit("temperature", "K", (value) => value, (value) => value, ["kelvin"]),
+	k: temperatureUnit(
+		"temperature",
+		"K",
+		(value) => value,
+		(value) => value,
+		["kelvin"],
+	),
 	kb: linearUnit("data", "KB", 1024, ["kilobyte", "kilobytes"]),
 	kg: linearUnit("mass", "kg", 1, ["kilogram", "kilograms"]),
 	khz: linearUnit("frequency", "kHz", 1000, ["kilohertz"]),
@@ -110,7 +128,11 @@ const UNITS: Record<UnitOutput, UnitDefinition> = {
 	kn: linearUnit("speed", "kn", 0.5144444444, ["knot", "knots"]),
 	kw: linearUnit("power", "kW", 1000, ["kilowatt", "kilowatts"]),
 	kpa: linearUnit("pressure", "kPa", 1000, ["kilopascal", "kilopascals"]),
-	kph: linearUnit("speed", "km/h", 1000 / 3600, ["kmh", "kilometer-per-hour", "kilometre-per-hour"]),
+	kph: linearUnit("speed", "km/h", 1000 / 3600, [
+		"kmh",
+		"kilometer-per-hour",
+		"kilometre-per-hour",
+	]),
 	kwh: linearUnit("energy", "kWh", 3600000, ["kilowatt-hour", "kilowatt-hours"]),
 	l: linearUnit("volume", "L", 1, ["liter", "liters", "litre", "litres"]),
 	lb: linearUnit("mass", "lb", 0.45359237, ["pound", "pounds"]),
@@ -126,14 +148,25 @@ const UNITS: Record<UnitOutput, UnitDefinition> = {
 	mph: linearUnit("speed", "mph", 0.44704, ["mile-per-hour", "miles-per-hour"]),
 	mps: linearUnit("speed", "m/s", 1, ["meter-per-second", "metre-per-second"]),
 	n: linearUnit("force", "N", 1, ["newton", "newtons"]),
-	nm: linearUnit("torque", "N m", 1, ["n-m", "newton-meter", "newton-meters", "newton-metre", "newton-metres"]),
+	nm: linearUnit("torque", "N m", 1, [
+		"n-m",
+		"newton-meter",
+		"newton-meters",
+		"newton-metre",
+		"newton-metres",
+	]),
 	oz: linearUnit("mass", "oz", 0.028349523125, ["ounce", "ounces"]),
 	pa: linearUnit("pressure", "Pa", 1, ["pascal", "pascals"]),
 	psi: linearUnit("pressure", "psi", 6894.757293168, ["pound-per-square-inch"]),
 	rad: linearUnit("angle", "rad", 1, ["radian", "radians"]),
 	s: linearUnit("time", "s", 1, ["sec", "second", "seconds"]),
 	sqft: linearUnit("area", "sq ft", 0.09290304, ["square-foot", "square-feet"]),
-	sqm: linearUnit("area", "m²", 1, ["square-meter", "square-meters", "square-metre", "square-metres"]),
+	sqm: linearUnit("area", "m²", 1, [
+		"square-meter",
+		"square-meters",
+		"square-metre",
+		"square-metres",
+	]),
 	tb: linearUnit("data", "TB", 1024 ** 4, ["terabyte", "terabytes"]),
 	w: linearUnit("power", "W", 1, ["watt", "watts"]),
 	yd: linearUnit("length", "yd", 0.9144, ["yard", "yards"]),
@@ -145,15 +178,18 @@ export function convertUnitText(input: string, toUnitValue: string, fromUnitValu
 	const parsed = parseUnitInput(input);
 	const fromUnit = findUnit(fromUnitValue || parsed.unit);
 	const toUnit = findUnit(toUnitValue);
+
 	if (!fromUnit || !toUnit) {
 		throw new UnitConversionError("Use a supported source and output unit.");
 	}
+
 	if (fromUnit.definition.dimension !== toUnit.definition.dimension) {
 		throw new UnitConversionError("Source and output units must measure the same dimension.");
 	}
 
 	const baseValue = fromUnit.definition.toBase(parsed.value);
 	const converted = toUnit.definition.fromBase(baseValue);
+
 	return `${formatNumber(converted)} ${toUnit.definition.label}`;
 }
 
@@ -184,6 +220,7 @@ function temperatureUnit(
 
 function createUnitAliases() {
 	const aliases = new Map<string, UnitOutput>();
+
 	for (const [unit, definition] of Object.entries(UNITS) as Array<[UnitOutput, UnitDefinition]>) {
 		aliases.set(unit, unit);
 		for (const alias of definition.aliases) {
@@ -200,11 +237,13 @@ function findUnit(value: string | undefined) {
 	}
 
 	const unit = UNIT_ALIASES.get(value.trim().toLowerCase());
+
 	return unit ? { definition: UNITS[unit], unit } : undefined;
 }
 
 function parseUnitInput(input: string) {
 	const match = /^\s*(-?\d+(?:\.\d+)?)\s*([A-Za-z°²/^_-]+)?\s*$/.exec(input);
+
 	if (!match) {
 		throw new UnitConversionError("Enter a value with a source unit, for example 10 m.");
 	}

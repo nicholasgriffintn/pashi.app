@@ -13,6 +13,7 @@ export function getDefaultConverterInput(tool: ConverterInfoTool) {
 
 export function getInitialConverterValues(tool: ConverterInfoTool): ConverterValues {
 	const params = new URLSearchParams(window.location.search);
+
 	return {
 		input: params.get("input") ?? getDefaultConverterInput(tool),
 	};
@@ -20,6 +21,7 @@ export function getInitialConverterValues(tool: ConverterInfoTool): ConverterVal
 
 export function getRouteConverterId() {
 	const [, converterId] = window.location.pathname.split("/").filter(Boolean);
+
 	return window.location.pathname.startsWith("/convert/") ? converterId : undefined;
 }
 
@@ -28,12 +30,14 @@ export function findConverterByRoute(
 	routeConverterId: string | undefined,
 ) {
 	const normalisedRouteConverterId = routeConverterId?.trim().toLowerCase();
+
 	if (!normalisedRouteConverterId) {
 		return undefined;
 	}
 
-	return tools.find((tool) =>
-		tool.id === normalisedRouteConverterId || tool.aliases.includes(normalisedRouteConverterId),
+	return tools.find(
+		(tool) =>
+			tool.id === normalisedRouteConverterId || tool.aliases.includes(normalisedRouteConverterId),
 	);
 }
 

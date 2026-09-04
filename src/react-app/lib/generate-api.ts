@@ -25,6 +25,7 @@ export async function generateThing(
 	});
 
 	const body = (await response.json()) as GenerateResult | { error?: string };
+
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Generation failed.");
 	}

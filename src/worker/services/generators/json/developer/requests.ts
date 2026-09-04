@@ -1,6 +1,6 @@
-import type { GeneratorRequest } from "../../request.ts";
 import { parseChoice } from "../../../../utils/generation.ts";
 import { safeHttpUrl } from "../../../../utils/text.ts";
+import type { GeneratorRequest } from "../../request.ts";
 
 interface RequestShape {
 	body: string;
@@ -12,6 +12,7 @@ interface RequestShape {
 export function createAxiosSnippet(request: GeneratorRequest) {
 	const shape = createRequestShape(request);
 	const method = shape.method.toLowerCase();
+
 	if (method === "get" || method === "delete") {
 		return `const response = await axios.${method}("${shape.url}", {\n  headers: ${jsonBlock(shape.headers, 2)}\n});`;
 	}
@@ -24,7 +25,9 @@ export function createCurlCommand(request: GeneratorRequest) {
 	const lines = [
 		"curl",
 		`  -X ${shellQuote(shape.method)}`,
-		...Object.entries(shape.headers).map(([name, value]) => `  -H ${shellQuote(`${name}: ${value}`)}`),
+		...Object.entries(shape.headers).map(
+			([name, value]) => `  -H ${shellQuote(`${name}: ${value}`)}`,
+		),
 		requiresRequestBody(shape.method) ? `  --data-raw ${shellQuote(shape.body)}` : "",
 		`  ${shellQuote(shape.url)}`,
 	].filter(Boolean);
@@ -55,9 +58,9 @@ export function createHarRequest(request: GeneratorRequest) {
 						method: shape.method,
 						postData: requiresRequestBody(shape.method)
 							? {
-								mimeType: shape.headers["Content-Type"] ?? "application/json",
-								text: shape.body,
-							}
+									mimeType: shape.headers["Content-Type"] ?? "application/json",
+									text: shape.body,
+								}
 							: undefined,
 						url: shape.url,
 					},
@@ -87,17 +90,23 @@ export function createHttpRequestExample(request: GeneratorRequest) {
 export function createJsonApiResponse(request: GeneratorRequest) {
 	const success = request.fields.success?.toLowerCase() !== "false";
 	const status = parseStatus(request.fields.status, success ? 200 : 400);
-	return JSON.stringify({
-		data: parseJsonSample(request.input || request.fields.json || "{}"),
-		error: success ? null : { message: "Request failed" },
-		status,
-		success,
-	}, null, 2);
+
+	return JSON.stringify(
+		{
+			data: parseJsonSample(request.input || request.fields.json || "{}"),
+			error: success ? null : { message: "Request failed" },
+			status,
+			success,
+		},
+		null,
+		2,
+	);
 }
 
 function createRequestShape(request: GeneratorRequest): RequestShape {
 	const method = requestMethod(request.fields.method);
 	const body = jsonBody(request);
+
 	return {
 		body,
 		headers: requestHeaders(request, method),
@@ -108,9 +117,11 @@ function createRequestShape(request: GeneratorRequest): RequestShape {
 
 function requestHeaders(request: GeneratorRequest, method: string) {
 	const headers = parseHeaders(request.fields.headers);
+
 	if (!headers.Accept) {
 		headers.Accept = "application/json";
 	}
+
 	if (requiresRequestBody(method) && !headers["Content-Type"]) {
 		headers["Content-Type"] = "application/json";
 	}
@@ -120,11 +131,14 @@ function requestHeaders(request: GeneratorRequest, method: string) {
 
 function parseHeaders(input: string | undefined) {
 	const headers: Record<string, string> = {};
+
 	for (const line of (input ?? "").split(/\r?\n/)) {
 		const match = /^([^:]+):\s*(.+)$/.exec(line.trim());
+
 		if (!match) {
 			continue;
 		}
+
 		headers[match[1].trim()] = match[2].trim();
 	}
 
@@ -144,7 +158,11 @@ function parseJsonSample(input: string): unknown {
 }
 
 function requestMethod(value: string | undefined) {
-	return parseChoice(value ?? "", ["get", "post", "put", "patch", "delete"] as const, "post").toUpperCase();
+	return parseChoice(
+		value ?? "",
+		["get", "post", "put", "patch", "delete"] as const,
+		"post",
+	).toUpperCase();
 }
 
 function requiresRequestBody(method: string) {
@@ -153,22 +171,25 @@ function requiresRequestBody(method: string) {
 
 function parseStatus(value: string | undefined, fallback: number) {
 	const parsed = Number.parseInt(value ?? "", 10);
+
 	return Number.isInteger(parsed) && parsed >= 100 && parsed <= 599 ? parsed : fallback;
 }
 
 function jsonBlock(value: unknown, indent: number) {
 	const padding = " ".repeat(indent);
+
 	return JSON.stringify(value, null, 2)
 		.split("\n")
-		.map((line, index) => index === 0 ? line : `${padding}${line}`)
+		.map((line, index) => (index === 0 ? line : `${padding}${line}`))
 		.join("\n");
 }
 
 function expressionBlock(value: string, indent: number) {
 	const padding = " ".repeat(indent);
+
 	return value
 		.split("\n")
-		.map((line, index) => index === 0 ? line : `${padding}${line}`)
+		.map((line, index) => (index === 0 ? line : `${padding}${line}`))
 		.join("\n");
 }
 

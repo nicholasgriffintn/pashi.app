@@ -1,4 +1,10 @@
-import { bytesToBase64, bytesToBase64Url, randomBytes, randomCharacters, randomHex } from "./generation";
+import {
+	bytesToBase64,
+	bytesToBase64Url,
+	randomBytes,
+	randomCharacters,
+	randomHex,
+} from "./generation";
 
 export type TokenFormat = "alphanumeric" | "base64" | "base64url" | "hex" | "numeric" | "uuid";
 
@@ -8,6 +14,7 @@ const NUMERIC = "0123456789";
 export function arrayBufferToPem(label: string, value: ArrayBuffer) {
 	const base64 = bytesToBase64(new Uint8Array(value));
 	const lines = base64.match(/.{1,64}/g) ?? [];
+
 	return `-----BEGIN ${label}-----\n${lines.join("\n")}\n-----END ${label}-----`;
 }
 

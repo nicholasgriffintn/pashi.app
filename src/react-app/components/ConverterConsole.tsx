@@ -36,20 +36,22 @@ export function ConverterConsole({ controls }: ConverterConsoleProps) {
 		setSelectedFile,
 		tools,
 	} = consoleState;
-	const actions = result && activeTool ? (
-		<ResultActions
-			exportFormats={[]}
-			fields={{}}
-			input={input}
-			onClear={clearResult}
-			onNotify={notify}
-			onRegenerate={() => {
-				void convertActiveTool();
-			}}
-			result={result}
-			tool={activeTool}
-		/>
-	) : undefined;
+	const actions =
+		result && activeTool ? (
+			<ResultActions
+				exportFormats={[]}
+				fields={{}}
+				input={input}
+				onClear={clearResult}
+				onNotify={notify}
+				onRegenerate={() => {
+					void convertActiveTool();
+				}}
+				result={result}
+				tool={activeTool}
+			/>
+		) : undefined;
+
 	return (
 		<PashiShell
 			actions={actions}

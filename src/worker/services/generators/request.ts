@@ -39,5 +39,6 @@ export function generatorDataFields(request: GeneratorRequest) {
 export function usesAiMode(request: GeneratorRequest) {
 	const mode = fieldValue(request, "mode").toLowerCase();
 	const ai = fieldValue(request, "ai").toLowerCase();
+
 	return AI_MODE_VALUES.has(mode) || ai === "true" || ai === "1";
 }

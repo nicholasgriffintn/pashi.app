@@ -1,6 +1,6 @@
-import type { GeneratorTool, JsonResult } from "../types";
-import type { GeneratorRequest } from "../request";
 import { slugify } from "../../../utils/generation";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { textResult } from "./result";
 
 export function createProductResult(
@@ -8,6 +8,7 @@ export function createProductResult(
 	request: GeneratorRequest,
 ): JsonResult | undefined {
 	const { input } = request;
+
 	switch (generator.id) {
 		case "utm":
 			return textResult(generator, input, createUtmLink(request));
@@ -19,6 +20,7 @@ export function createProductResult(
 function createUtmLink(request: GeneratorRequest) {
 	let url: URL;
 	const input = primaryValueFor(request, "url", "https://nicholasgriffin.dev/");
+
 	try {
 		url = new URL(input);
 	} catch {
@@ -35,6 +37,7 @@ function createUtmLink(request: GeneratorRequest) {
 		"utm_campaign",
 		slugify(fieldValueFor(request, "campaign", url.hostname.replace(/^www\./, ""))) || "campaign",
 	);
+
 	return url.toString();
 }
 

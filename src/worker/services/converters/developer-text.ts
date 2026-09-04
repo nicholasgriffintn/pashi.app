@@ -94,6 +94,7 @@ function diffLines(input: string, options: DeveloperTextOptions) {
 
 	let leftIndex = 0;
 	let rightIndex = 0;
+
 	while (leftIndex < leftLines.length || rightIndex < rightLines.length) {
 		if (leftLines[leftIndex] === rightLines[rightIndex]) {
 			output.push(`  ${leftLines[leftIndex] ?? ""}`);
@@ -104,7 +105,8 @@ function diffLines(input: string, options: DeveloperTextOptions) {
 
 		if (
 			leftIndex < leftLines.length &&
-			(rightIndex === rightLines.length || table[leftIndex + 1][rightIndex] >= table[leftIndex][rightIndex + 1])
+			(rightIndex === rightLines.length ||
+				table[leftIndex + 1][rightIndex] >= table[leftIndex][rightIndex + 1])
 		) {
 			output.push(`- ${leftLines[leftIndex]}`);
 			leftIndex += 1;
@@ -127,23 +129,27 @@ function diffInputs(input: string, options: DeveloperTextOptions): [string, stri
 
 	const separator = options.separator || "\n---\n";
 	const index = input.indexOf(separator);
+
 	if (index === -1) {
-		throw new DeveloperTextError("Provide left and right fields, or separate two text blocks with a line containing ---.");
+		throw new DeveloperTextError(
+			"Provide left and right fields, or separate two text blocks with a line containing ---.",
+		);
 	}
 
-	return [
-		input.slice(0, index),
-		input.slice(index + separator.length),
-	];
+	return [input.slice(0, index), input.slice(index + separator.length)];
 }
 
 function lcsTable(left: readonly string[], right: readonly string[]) {
-	const table = Array.from({ length: left.length + 1 }, () => Array.from({ length: right.length + 1 }, () => 0));
+	const table = Array.from({ length: left.length + 1 }, () =>
+		Array.from({ length: right.length + 1 }, () => 0),
+	);
+
 	for (let leftIndex = left.length - 1; leftIndex >= 0; leftIndex -= 1) {
 		for (let rightIndex = right.length - 1; rightIndex >= 0; rightIndex -= 1) {
-			table[leftIndex][rightIndex] = left[leftIndex] === right[rightIndex]
-				? table[leftIndex + 1][rightIndex + 1] + 1
-				: Math.max(table[leftIndex + 1][rightIndex], table[leftIndex][rightIndex + 1]);
+			table[leftIndex][rightIndex] =
+				left[leftIndex] === right[rightIndex]
+					? table[leftIndex + 1][rightIndex + 1] + 1
+					: Math.max(table[leftIndex + 1][rightIndex], table[leftIndex][rightIndex + 1]);
 		}
 	}
 
@@ -177,6 +183,7 @@ function prettyCss(input: string) {
 			if (current.trim()) {
 				lines.push(`${tabs(indent)}${cssDeclaration(current.trim())}`);
 			}
+
 			indent = Math.max(0, indent - 1);
 			lines.push(`${tabs(indent)}}`);
 			current = "";
@@ -187,6 +194,7 @@ function prettyCss(input: string) {
 			if (current.trim()) {
 				lines.push(`${tabs(indent)}${current.trim()};`);
 			}
+
 			current = "";
 			continue;
 		}
@@ -211,9 +219,11 @@ function cssDeclaration(value: string) {
 }
 
 function minifyMarkup(input: string, kind: "html" | "xml") {
-	const withoutComments = kind === "html"
-		? input.replace(/<!--[\s\S]*?-->/g, "")
-		: input.replace(/<!--[\s\S]*?-->/g, "").replace(/<\?xml\b[^>]*\?>/i, (match) => match.trim());
+	const withoutComments =
+		kind === "html"
+			? input.replace(/<!--[\s\S]*?-->/g, "")
+			: input.replace(/<!--[\s\S]*?-->/g, "").replace(/<\?xml\b[^>]*\?>/i, (match) => match.trim());
+
 	return withoutComments
 		.replace(/>\s+</g, "><")
 		.replace(/\s{2,}/g, " ")
@@ -227,6 +237,7 @@ function prettyMarkup(input: string, kind: "html" | "xml") {
 
 	for (const token of tokens) {
 		const trimmed = token.trim();
+
 		if (!trimmed) {
 			continue;
 		}
@@ -250,16 +261,17 @@ function prettyMarkup(input: string, kind: "html" | "xml") {
 }
 
 function isClosingTag(token: string) {
-	return /^<\//.test(token);
+	return token.startsWith("</");
 }
 
 function isOpeningTag(token: string, kind: "html" | "xml") {
-	if (!/^<[A-Za-z]/.test(token) || /\/>$/.test(token)) {
+	if (!/^<[A-Za-z]/.test(token) || token.endsWith("/>")) {
 		return false;
 	}
 
 	if (kind === "html") {
 		const name = /^<([A-Za-z0-9-]+)/.exec(token)?.[1]?.toLowerCase();
+
 		return !name || !HTML_VOID_TAGS.has(name);
 	}
 

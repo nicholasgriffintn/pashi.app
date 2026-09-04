@@ -6,7 +6,7 @@ import {
 	type ConvertResult,
 } from "./converter-api.ts";
 
-type TimerId = number | ReturnType<typeof setTimeout>;
+type TimerId = number;
 
 interface ConversionJobPollerOptions {
 	fetchJob?: (statusUrl: string) => Promise<ConvertResult>;
@@ -55,12 +55,15 @@ export function createConversionJobPoller({
 
 		if (!isPendingConversionJob(initialResult)) {
 			onSettled(conversionJobStatus(initialResult));
+
 			return;
 		}
 
 		const pollUrl = conversionJobStatusUrl(initialResult);
+
 		if (!pollUrl) {
 			onSettled(conversionJobStatus(initialResult));
+
 			return;
 		}
 
@@ -70,6 +73,7 @@ export function createConversionJobPoller({
 		async function poll() {
 			try {
 				const nextResult = await fetchJob(statusUrl);
+
 				if (runId !== currentRunId) {
 					return;
 				}
@@ -77,6 +81,7 @@ export function createConversionJobPoller({
 				onResult(nextResult);
 				if (isPendingConversionJob(nextResult)) {
 					timerId = scheduler.setTimeout(poll, intervalMs);
+
 					return;
 				}
 

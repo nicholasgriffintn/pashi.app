@@ -1,11 +1,11 @@
-import type { GeneratorRequest } from "../request";
-import type { GeneratorTool, JsonResult } from "../types";
 import {
 	parseDelimitedList,
 	parseInteger,
 	randomIntegerInRange,
 	shuffle,
 } from "../../../utils/generation";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { fieldsResult, textResult } from "./result";
 
 export function createToolsResult(
@@ -30,16 +30,19 @@ export function createToolsResult(
 
 function randomiseList(request: GeneratorRequest) {
 	const items = parseItems(request);
+
 	return shuffle(items);
 }
 
 function createYesNo(request: GeneratorRequest) {
 	const yesWeight = parseInteger(request.fields.yesWeight ?? "", 50, 0, 100);
+
 	return randomIntegerInRange(100) < yesWeight ? "Yes" : "No";
 }
 
 function pickListItem(request: GeneratorRequest) {
 	const items = parseItems(request);
+
 	return items[randomIntegerInRange(items.length)];
 }
 
@@ -60,12 +63,14 @@ function createTeams(request: GeneratorRequest) {
 
 function createSecretSanta(request: GeneratorRequest) {
 	const members = parseItems(request);
+
 	if (members.length < 2) {
 		throw new Error("Add at least two people.");
 	}
 
 	const donors = shuffle(members);
 	const receivers = rotate(donors);
+
 	return Object.fromEntries(donors.map((member, index) => [member, receivers[index]]));
 }
 
@@ -75,6 +80,7 @@ function rotate<T>(items: readonly T[]) {
 
 function parseItems(request: GeneratorRequest) {
 	const items = parseDelimitedList(request.fields.items || request.input);
+
 	if (items.length === 0) {
 		throw new Error("Add at least one list item.");
 	}

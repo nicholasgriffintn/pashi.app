@@ -5,10 +5,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function isStringRecord(value: unknown): value is StringRecord {
-	return (
-		isRecord(value) &&
-		Object.values(value).every((item) => typeof item === "string")
-	);
+	return isRecord(value) && Object.values(value).every((item) => typeof item === "string");
 }
 
 export function isStringRecordArray(value: unknown): value is StringRecord[] {

@@ -9,6 +9,7 @@ import { json } from "../../../utils/http";
 
 export function createQrResponse(input: string, params: URLSearchParams) {
 	const payload = input.trim();
+
 	if (!payload) {
 		return json({ error: "Pass a non-empty input." }, 400);
 	}
@@ -16,10 +17,7 @@ export function createQrResponse(input: string, params: URLSearchParams) {
 	try {
 		assertQrPayloadByteLength(payload);
 	} catch {
-		return json(
-			{ error: `QR payloads are limited to ${MAX_QR_PAYLOAD_BYTES} UTF-8 bytes.` },
-			400,
-		);
+		return json({ error: `QR payloads are limited to ${MAX_QR_PAYLOAD_BYTES} UTF-8 bytes.` }, 400);
 	}
 
 	const format = params.get("format") === "svg" ? "svg" : "png";

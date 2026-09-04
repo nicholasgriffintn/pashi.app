@@ -1,4 +1,8 @@
-import type { GeneratorRequest } from "../../request";
+import {
+	arrayBufferToPem,
+	requireArrayBuffer,
+	requireCryptoKeyPair,
+} from "../../../../utils/crypto";
 import {
 	bytesToBase64Url,
 	parseBoolean,
@@ -8,7 +12,7 @@ import {
 	randomBytes,
 	singleOrList,
 } from "../../../../utils/generation";
-import { arrayBufferToPem, requireArrayBuffer, requireCryptoKeyPair } from "../../../../utils/crypto";
+import type { GeneratorRequest } from "../../request";
 
 const JWT_ALGORITHMS = ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512"] as const;
 
@@ -26,7 +30,12 @@ export async function createJwtTokens(request: GeneratorRequest) {
 
 async function createJwtToken(request: GeneratorRequest, algorithm: JwtAlgorithm) {
 	const issuedAt = Math.floor(Date.now() / 1000);
-	const expiresIn = parseInteger(request.fields.expiresIn ?? request.fields.expires_in ?? "", 3600, 60, 31_536_000);
+	const expiresIn = parseInteger(
+		request.fields.expiresIn ?? request.fields.expires_in ?? "",
+		3600,
+		60,
+		31_536_000,
+	);
 	const includeNbf = parseBoolean(request.fields.includeNbf ?? request.fields.include_nbf, false);
 	const includeJti = parseBoolean(request.fields.includeJti ?? request.fields.include_jti, true);
 	const header = { alg: algorithm, typ: "JWT" };
@@ -61,6 +70,7 @@ async function createSigner(algorithm: JwtAlgorithm): Promise<{
 }> {
 	if (algorithm.startsWith("HS")) {
 		const secret = randomBytes(32);
+
 		return {
 			material: {
 				secret: bytesToBase64Url(secret),
@@ -69,16 +79,18 @@ async function createSigner(algorithm: JwtAlgorithm): Promise<{
 		};
 	}
 
-	const keyPair = requireCryptoKeyPair(await crypto.subtle.generateKey(
-		{
-			hash: hashNameFor(algorithm),
-			modulusLength: 2048,
-			name: "RSASSA-PKCS1-v1_5",
-			publicExponent: new Uint8Array([1, 0, 1]),
-		},
-		true,
-		["sign", "verify"],
-	));
+	const keyPair = requireCryptoKeyPair(
+		await crypto.subtle.generateKey(
+			{
+				hash: hashNameFor(algorithm),
+				modulusLength: 2048,
+				name: "RSASSA-PKCS1-v1_5",
+				publicExponent: new Uint8Array([1, 0, 1]),
+			},
+			true,
+			["sign", "verify"],
+		),
+	);
 	const [privateKey, publicKey] = await Promise.all([
 		crypto.subtle.exportKey("pkcs8", keyPair.privateKey),
 		crypto.subtle.exportKey("spki", keyPair.publicKey),
@@ -100,6 +112,7 @@ function customClaims(value: string | undefined) {
 
 	try {
 		const parsed = JSON.parse(value) as unknown;
+
 		return isPlainClaimObject(parsed) ? sanitizeClaimObject(parsed) : {};
 	} catch {
 		return {};
@@ -117,6 +130,7 @@ function sanitizeClaimObject(value: Record<string, unknown>) {
 		if (!/^[a-zA-Z0-9_.:-]{1,64}$/.test(key)) {
 			continue;
 		}
+
 		if (typeof entry === "string" || typeof entry === "number" || typeof entry === "boolean") {
 			claims[key] = entry;
 		}
@@ -138,11 +152,17 @@ async function signHmac(value: string, secret: Uint8Array, algorithm: JwtAlgorit
 		["sign"],
 	);
 	const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
+
 	return bytesToBase64Url(new Uint8Array(signature));
 }
 
 async function signRsa(value: string, privateKey: CryptoKey) {
-	const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", privateKey, new TextEncoder().encode(value));
+	const signature = await crypto.subtle.sign(
+		"RSASSA-PKCS1-v1_5",
+		privateKey,
+		new TextEncoder().encode(value),
+	);
+
 	return bytesToBase64Url(new Uint8Array(signature));
 }
 

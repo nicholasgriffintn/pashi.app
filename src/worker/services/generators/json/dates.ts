@@ -1,6 +1,3 @@
-import type { GeneratorRequest } from "../request";
-import type { GeneratorTool, JsonResult } from "../types";
-import { todayIsoDate } from "../../../utils/text";
 import {
 	parseBoolean,
 	parseChoice,
@@ -11,6 +8,9 @@ import {
 	randomIntegerInRange,
 	singleOrList,
 } from "../../../utils/generation";
+import { todayIsoDate } from "../../../utils/text";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { fieldsResult, textResult } from "./result";
 
 const DEFAULT_START_DATE = "1970-01-01";
@@ -37,24 +37,35 @@ export function createDateResult(
 function createDates(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 10, 100);
 	const format = parseChoice(request.fields.format, DATE_FORMATS, "iso8601");
+
 	return singleOrList(Array.from({ length: count }, () => formatDate(randomDate(request), format)));
 }
 
 function createTimes(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 100);
+
 	return singleOrList(Array.from({ length: count }, () => createTimeRecord(request)));
 }
 
 function createDateTimes(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 100);
+
 	return singleOrList(Array.from({ length: count }, () => createTimestampRecord(request)));
 }
 
 function createTimeRecord(request: GeneratorRequest) {
 	const format = parseChoice(request.fields.format, TIME_FORMATS, "24-hour");
-	const startHour = parseInteger(request.fields.startHour ?? request.fields.start_hour ?? "", 0, 0, 23);
+	const startHour = parseInteger(
+		request.fields.startHour ?? request.fields.start_hour ?? "",
+		0,
+		0,
+		23,
+	);
 	const endHour = parseInteger(request.fields.endHour ?? request.fields.end_hour ?? "", 23, 0, 23);
-	const includeSeconds = parseBoolean(request.fields.includeSeconds ?? request.fields.include_seconds, true);
+	const includeSeconds = parseBoolean(
+		request.fields.includeSeconds ?? request.fields.include_seconds,
+		true,
+	);
 	const hour = randomIntegerBetween(startHour, endHour);
 	const minute = randomIntegerInRange(60);
 	const second = includeSeconds ? randomIntegerInRange(60) : 0;
@@ -77,6 +88,7 @@ function createTimestampRecord(request: GeneratorRequest) {
 	const date = randomDate(request);
 	const format = parseChoice(request.fields.format, TIMESTAMP_FORMATS, "unix");
 	const unix = Math.floor(date.getTime() / 1000);
+
 	return {
 		formatted: format === "iso8601" ? date.toISOString() : `${unix}`,
 		human: date.toUTCString(),
@@ -87,7 +99,10 @@ function createTimestampRecord(request: GeneratorRequest) {
 
 function randomDate(request: GeneratorRequest) {
 	return randomDateInRange(
-		request.fields.startDate ?? request.fields.start_date ?? request.fields.start ?? DEFAULT_START_DATE,
+		request.fields.startDate ??
+			request.fields.start_date ??
+			request.fields.start ??
+			DEFAULT_START_DATE,
 		request.fields.endDate ?? request.fields.end_date ?? request.fields.end ?? todayIsoDate(),
 	);
 }
@@ -125,6 +140,7 @@ function formatDate(date: Date, format: (typeof DATE_FORMATS)[number]) {
 
 function format12Hour(hour: number, minute: number, second: number, includeSeconds: boolean) {
 	const displayHour = hour % 12 || 12;
+
 	return `${pad(displayHour)}:${pad(minute)}${includeSeconds ? `:${pad(second)}` : ""} ${hour >= 12 ? "PM" : "AM"}`;
 }
 

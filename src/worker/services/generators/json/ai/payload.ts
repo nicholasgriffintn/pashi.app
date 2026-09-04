@@ -10,6 +10,7 @@ type AiPayload = Pick<JsonResult, "meta" | "result">;
 
 export function readAiPayload(output: unknown): AiPayload {
 	const payload = parseAiPayload(readAiContent(output), output);
+
 	if (!isAiPayload(payload)) {
 		assertAiOutputComplete(output);
 		throw new Error("AI returned an invalid structured result.");
@@ -24,6 +25,7 @@ function assertAiOutputComplete(output: unknown) {
 	}
 
 	const finishReason = output.choices[0]?.finish_reason;
+
 	if (finishReason === "length") {
 		throw new Error("AI response was cut off before it returned valid data.");
 	}
@@ -59,11 +61,7 @@ function parseAiPayload(value: unknown, output: unknown) {
 }
 
 function isAiPayload(value: unknown): value is AiPayload {
-	if (
-		!isRecord(value) ||
-		typeof value.meta !== "string" ||
-		!("result" in value)
-	) {
+	if (!isRecord(value) || typeof value.meta !== "string" || !("result" in value)) {
 		return false;
 	}
 
@@ -83,9 +81,7 @@ function isChatCompletionOutput(
 	value: unknown,
 ): value is { choices: { finish_reason?: unknown; message: { content: unknown } }[] } {
 	return (
-		isRecord(value) &&
-		Array.isArray(value.choices) &&
-		value.choices.every(isChatCompletionChoice)
+		isRecord(value) && Array.isArray(value.choices) && value.choices.every(isChatCompletionChoice)
 	);
 }
 

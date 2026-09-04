@@ -1,6 +1,6 @@
-import { ConverterOutputControl } from "./ConverterOutputControl";
+import type { ConverterInfoTool } from "../lib/converter-api";
 import { ConverterFieldControl } from "./ConverterFieldControl";
-import { type ConverterInfoTool } from "../lib/converter-api";
+import { ConverterOutputControl } from "./ConverterOutputControl";
 
 interface FileConverterControlsProps {
 	onFileChange: (file: File | undefined) => void;
@@ -58,15 +58,17 @@ export function FileConverterControls({
 				outputFormat={outputFormat}
 				tool={tool}
 			/>
-			{fields.filter((field) => field.id !== "outputFormat").map((field) => (
-				<ConverterFieldControl
-					key={field.id}
-					field={field}
-					onChange={(value) => onConverterFieldChange(field.id, value)}
-					onFileChange={onFileChange}
-					value={converterFields[field.id] ?? ""}
-				/>
-			))}
+			{fields
+				.filter((field) => field.id !== "outputFormat")
+				.map((field) => (
+					<ConverterFieldControl
+						key={field.id}
+						field={field}
+						onChange={(value) => onConverterFieldChange(field.id, value)}
+						onFileChange={onFileChange}
+						value={converterFields[field.id] ?? ""}
+					/>
+				))}
 			{selectedFile ? (
 				<p className="selected-file">
 					{selectedFile.name} / {Math.ceil(selectedFile.size / 1024)} KB

@@ -6,7 +6,11 @@ export function isAllowedPresetKey(key: string) {
 		return false;
 	}
 
-	if (!PRESET_KEY_PATTERN.test(key) || key.startsWith("/") || !key.startsWith(SLACKMOJI_PRESET_PREFIX)) {
+	if (
+		!PRESET_KEY_PATTERN.test(key) ||
+		key.startsWith("/") ||
+		!key.startsWith(SLACKMOJI_PRESET_PREFIX)
+	) {
 		return false;
 	}
 

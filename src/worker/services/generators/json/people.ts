@@ -1,5 +1,3 @@
-import type { GeneratorRequest } from "../request";
-import type { GeneratorTool, JsonResult } from "../types";
 import {
 	parseBoolean,
 	parseCount,
@@ -10,41 +8,379 @@ import {
 	singleOrList,
 	slugify,
 } from "../../../utils/generation";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { fieldsResult } from "./result";
 
-const PERSON_LOCALES = ["en_GB", "en_US", "fr_FR", "es_ES", "it_IT", "de_DE", "pt_PT", "nl_NL", "pl_PL"] as const;
+const PERSON_LOCALES = [
+	"en_GB",
+	"en_US",
+	"fr_FR",
+	"es_ES",
+	"it_IT",
+	"de_DE",
+	"pt_PT",
+	"nl_NL",
+	"pl_PL",
+] as const;
 const GENDERS = ["male", "female"] as const;
 const DIGITS = "0123456789";
 const FIRST_NAMES = {
 	female: ["Ada", "Amara", "Bea", "Dina", "Grace", "Iris", "Lena", "Nia", "Rae", "Sofia"],
 	male: ["Caleb", "Eli", "Jules", "Kai", "Milo", "Owen", "Sam", "Theo", "Luca", "Noah"],
 } as const;
-const LAST_NAMES = ["Archer", "Blake", "Chen", "Diaz", "Ellis", "Foster", "Grant", "Hale", "Ito", "Jones", "Khan", "Lee", "Moore", "Nguyen", "Patel", "Stone"] as const;
-const STREETS = ["Arcade Road", "Beacon Street", "Circuit Lane", "Foundry Avenue", "Harbour Way", "Signal Street", "Vector Close", "Wave Terrace"] as const;
-const JOB_TITLES = ["Software Engineer", "Product Manager", "Design Lead", "QA Analyst", "Data Engineer", "Operations Manager", "Support Specialist", "Marketing Manager"] as const;
-const COMPANIES = ["Arc Labs", "Beacon Works", "Circuit Studio", "Foundry Systems", "Signal Dynamics", "Vector Analytics"] as const;
+const LAST_NAMES = [
+	"Archer",
+	"Blake",
+	"Chen",
+	"Diaz",
+	"Ellis",
+	"Foster",
+	"Grant",
+	"Hale",
+	"Ito",
+	"Jones",
+	"Khan",
+	"Lee",
+	"Moore",
+	"Nguyen",
+	"Patel",
+	"Stone",
+] as const;
+const STREETS = [
+	"Arcade Road",
+	"Beacon Street",
+	"Circuit Lane",
+	"Foundry Avenue",
+	"Harbour Way",
+	"Signal Street",
+	"Vector Close",
+	"Wave Terrace",
+] as const;
+const JOB_TITLES = [
+	"Software Engineer",
+	"Product Manager",
+	"Design Lead",
+	"QA Analyst",
+	"Data Engineer",
+	"Operations Manager",
+	"Support Specialist",
+	"Marketing Manager",
+] as const;
+const COMPANIES = [
+	"Arc Labs",
+	"Beacon Works",
+	"Circuit Studio",
+	"Foundry Systems",
+	"Signal Dynamics",
+	"Vector Analytics",
+] as const;
 const CITIES_BY_LOCALE: Record<(typeof PERSON_LOCALES)[number], readonly string[]> = {
-	en_GB: ["Aberdeen", "Belfast", "Birmingham", "Bristol", "Cardiff", "Edinburgh", "Glasgow", "Leeds", "Liverpool", "London", "Manchester", "Newcastle upon Tyne", "Nottingham", "Sheffield", "Southampton", "Swansea", "Bournemouth", "Bristol", "Bath", "Coventry", "Nottingham", "Leicester", "Liverpool", "Cambridge", "Oxford"],
-	de_DE: ["Aachen", "Berlin", "Bielefeld", "Bochum", "Bonn", "Braunschweig", "Bremen", "Cologne", "Dresden", "Düsseldorf", "Dortmund", "Duisburg", "Frankfurt", "Freiburg", "Hamburg", "Hannover", "Karlsruhe", "Leipzig", "Mannheim", "Munich", "Nuremberg", "Stuttgart", "Wiesbaden", "Wuppertal", "Kiel", "Essen"],
-	en_US: ["Austin", "Boston", "Chicago", "Denver", "Detroit", "Fort Worth", "Houston", "Indianapolis", "Jacksonville", "Los Angeles", "Miami", "New York", "Nashville", "Orlando", "Philadelphia", "Phoenix", "Portland", "Raleigh", "San Diego", "San Francisco", "Seattle", "San Antonio", "San Jose", "Charlotte", "Atlanta", "Las Vegas"],
-	fr_FR: ["Bordeaux", "Le Havre", "Lille", "Lyon", "Marseille", "Nantes", "Nice", "Paris", "Reims", "Rennes", "Rouen", "Saint-Étienne", "Strasbourg", "Toulouse", "Toulon", "Grenoble", "Montpellier", "Dijon", "Nîmes", "Limoges", "Angers"],
-	es_ES: ["Alicante", "Bilbao", "Burgos", "Gijón", "Granada", "Madrid", "Málaga", "Murcia", "Palma", "Seville", "Salamanca", "Santander", "Santiago de Compostela", "Toledo", "Valencia", "Zaragoza", "Vitoria-Gasteiz", "Córdoba", "Oviedo", "Valladolid", "A Coruña", "León"],
-	it_IT: ["Bari", "Bologna", "Catania", "Florence", "Genoa", "Milan", "Naples", "Palermo", "Padua", "Parma", "Rome", "Turin", "Venice", "Verona", "Trieste", "Brescia", "Reggio Calabria", "Modena", "Siena", "Pisa", "Vicenza"],
-	nl_NL: ["Amersfoort", "Amsterdam", "Arnhem", "Breda", "Eindhoven", "Enschede", "Groningen", "Haarlem", "Leeuwarden", "Maastricht", "Nijmegen", "Utrecht", "Rotterdam", "The Hague", "Tilburg", "Almere", "Zwolle", "Apeldoorn", "Delft", "Breda", "Venlo"],
-	pl_PL: ["Białystok", "Bydgoszcz", "Gdańsk", "Katowice", "Kraków", "Lublin", "Łódź", "Łódź", "Poznań", "Rzeszów", "Szczecin", "Torun", "Warsaw", "Wrocław", "Zabrze", "Bydgoszcz", "Częstochowa", "Gdynia", "Opole", "Olsztyn", "Poznań"],
-	pt_PT: ["Aveiro", "Coimbra", "Faro", "Funchal", "Guimarães", "Lisbon", "Madeira", "Porto", "Setúbal", "Sintra", "Vila Nova de Gaia", "Braga", "Évora", "Leiria", "Viseu", "Ponta Delgada", "Coimbra", "Covilhã", "Évora", "Faro", "Tomar"],
+	en_GB: [
+		"Aberdeen",
+		"Belfast",
+		"Birmingham",
+		"Bristol",
+		"Cardiff",
+		"Edinburgh",
+		"Glasgow",
+		"Leeds",
+		"Liverpool",
+		"London",
+		"Manchester",
+		"Newcastle upon Tyne",
+		"Nottingham",
+		"Sheffield",
+		"Southampton",
+		"Swansea",
+		"Bournemouth",
+		"Bristol",
+		"Bath",
+		"Coventry",
+		"Nottingham",
+		"Leicester",
+		"Liverpool",
+		"Cambridge",
+		"Oxford",
+	],
+	de_DE: [
+		"Aachen",
+		"Berlin",
+		"Bielefeld",
+		"Bochum",
+		"Bonn",
+		"Braunschweig",
+		"Bremen",
+		"Cologne",
+		"Dresden",
+		"Düsseldorf",
+		"Dortmund",
+		"Duisburg",
+		"Frankfurt",
+		"Freiburg",
+		"Hamburg",
+		"Hannover",
+		"Karlsruhe",
+		"Leipzig",
+		"Mannheim",
+		"Munich",
+		"Nuremberg",
+		"Stuttgart",
+		"Wiesbaden",
+		"Wuppertal",
+		"Kiel",
+		"Essen",
+	],
+	en_US: [
+		"Austin",
+		"Boston",
+		"Chicago",
+		"Denver",
+		"Detroit",
+		"Fort Worth",
+		"Houston",
+		"Indianapolis",
+		"Jacksonville",
+		"Los Angeles",
+		"Miami",
+		"New York",
+		"Nashville",
+		"Orlando",
+		"Philadelphia",
+		"Phoenix",
+		"Portland",
+		"Raleigh",
+		"San Diego",
+		"San Francisco",
+		"Seattle",
+		"San Antonio",
+		"San Jose",
+		"Charlotte",
+		"Atlanta",
+		"Las Vegas",
+	],
+	fr_FR: [
+		"Bordeaux",
+		"Le Havre",
+		"Lille",
+		"Lyon",
+		"Marseille",
+		"Nantes",
+		"Nice",
+		"Paris",
+		"Reims",
+		"Rennes",
+		"Rouen",
+		"Saint-Étienne",
+		"Strasbourg",
+		"Toulouse",
+		"Toulon",
+		"Grenoble",
+		"Montpellier",
+		"Dijon",
+		"Nîmes",
+		"Limoges",
+		"Angers",
+	],
+	es_ES: [
+		"Alicante",
+		"Bilbao",
+		"Burgos",
+		"Gijón",
+		"Granada",
+		"Madrid",
+		"Málaga",
+		"Murcia",
+		"Palma",
+		"Seville",
+		"Salamanca",
+		"Santander",
+		"Santiago de Compostela",
+		"Toledo",
+		"Valencia",
+		"Zaragoza",
+		"Vitoria-Gasteiz",
+		"Córdoba",
+		"Oviedo",
+		"Valladolid",
+		"A Coruña",
+		"León",
+	],
+	it_IT: [
+		"Bari",
+		"Bologna",
+		"Catania",
+		"Florence",
+		"Genoa",
+		"Milan",
+		"Naples",
+		"Palermo",
+		"Padua",
+		"Parma",
+		"Rome",
+		"Turin",
+		"Venice",
+		"Verona",
+		"Trieste",
+		"Brescia",
+		"Reggio Calabria",
+		"Modena",
+		"Siena",
+		"Pisa",
+		"Vicenza",
+	],
+	nl_NL: [
+		"Amersfoort",
+		"Amsterdam",
+		"Arnhem",
+		"Breda",
+		"Eindhoven",
+		"Enschede",
+		"Groningen",
+		"Haarlem",
+		"Leeuwarden",
+		"Maastricht",
+		"Nijmegen",
+		"Utrecht",
+		"Rotterdam",
+		"The Hague",
+		"Tilburg",
+		"Almere",
+		"Zwolle",
+		"Apeldoorn",
+		"Delft",
+		"Breda",
+		"Venlo",
+	],
+	pl_PL: [
+		"Białystok",
+		"Bydgoszcz",
+		"Gdańsk",
+		"Katowice",
+		"Kraków",
+		"Lublin",
+		"Łódź",
+		"Łódź",
+		"Poznań",
+		"Rzeszów",
+		"Szczecin",
+		"Torun",
+		"Warsaw",
+		"Wrocław",
+		"Zabrze",
+		"Bydgoszcz",
+		"Częstochowa",
+		"Gdynia",
+		"Opole",
+		"Olsztyn",
+		"Poznań",
+	],
+	pt_PT: [
+		"Aveiro",
+		"Coimbra",
+		"Faro",
+		"Funchal",
+		"Guimarães",
+		"Lisbon",
+		"Madeira",
+		"Porto",
+		"Setúbal",
+		"Sintra",
+		"Vila Nova de Gaia",
+		"Braga",
+		"Évora",
+		"Leiria",
+		"Viseu",
+		"Ponta Delgada",
+		"Coimbra",
+		"Covilhã",
+		"Évora",
+		"Faro",
+		"Tomar",
+	],
 };
 
 const LOCALE_DATA: Record<(typeof PERSON_LOCALES)[number], LocaleData> = {
-	en_GB: { country: "United Kingdom", countryCode: "GB", phoneCode: "44", postCode: () => `${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}${randomIntegerInRange(90) + 10} ${randomCharacters(DIGITS, 1)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}`, state: () => randomChoice(["ENG", "NIR", "SCT", "WAL"]), taxId: () => `${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}${randomIntegerInRange(10_000_000)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}` },
-	de_DE: { country: "Germany", countryCode: "DE", phoneCode: "49", postCode: () => randomCharacters(DIGITS, 5), state: () => randomChoice(["BE", "BY", "HH", "HE", "NW"]), taxId: () => `${randomCharacters(DIGITS, 11)}` },
-	en_US: { country: "United States", countryCode: "US", phoneCode: "1", postCode: () => `${randomIntegerInRange(90_000) + 10_000}`, state: () => randomChoice(["CA", "IL", "NY", "OR", "TX", "WA"]), taxId: () => `${randomCharacters(DIGITS, 3)}-${randomCharacters(DIGITS, 2)}-${randomCharacters(DIGITS, 4)}` },
-	es_ES: { country: "Spain", countryCode: "ES", phoneCode: "34", postCode: () => randomCharacters(DIGITS, 5), state: () => randomChoice(["AN", "CT", "MD", "VC", "PV"]), taxId: () => `${randomCharacters(DIGITS, 8)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}` },
-	fr_FR: { country: "France", countryCode: "FR", phoneCode: "33", postCode: () => randomCharacters(DIGITS, 5), state: () => randomChoice(["IDF", "NAQ", "ARA", "OCC", "PAC"]), taxId: () => `${randomCharacters(DIGITS, 13)}` },
-	it_IT: { country: "Italy", countryCode: "IT", phoneCode: "39", postCode: () => randomCharacters(DIGITS, 5), state: () => randomChoice(["LAZ", "LOM", "PIE", "TOS", "VEN"]), taxId: () => `${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6)}${randomCharacters(DIGITS, 2)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}${randomCharacters(DIGITS, 2)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}${randomCharacters(DIGITS, 3)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}` },
-	nl_NL: { country: "Netherlands", countryCode: "NL", phoneCode: "31", postCode: () => `${randomIntegerInRange(9000) + 1000} ${randomCharacters("ABCDEFGHJKLMNPQRSTUVWXYZ", 2)}`, state: () => randomChoice(["NH", "ZH", "UT", "GE", "NB"]), taxId: () => `${randomCharacters(DIGITS, 9)}` },
-	pl_PL: { country: "Poland", countryCode: "PL", phoneCode: "48", postCode: () => `${randomIntegerInRange(90) + 10}-${String(randomIntegerInRange(1000)).padStart(3, "0")}`, state: () => randomChoice(["DS", "MA", "MZ", "PM", "WP"]), taxId: () => `${randomCharacters(DIGITS, 10)}` },
-	pt_PT: { country: "Portugal", countryCode: "PT", phoneCode: "351", postCode: () => `${randomIntegerInRange(9000) + 1000}-${String(randomIntegerInRange(1000)).padStart(3, "0")}`, state: () => randomChoice(["LX", "PT", "BR", "AV", "FA"]), taxId: () => `${randomCharacters(DIGITS, 9)}` },
+	en_GB: {
+		country: "United Kingdom",
+		countryCode: "GB",
+		phoneCode: "44",
+		postCode: () =>
+			`${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}${randomIntegerInRange(90) + 10} ${randomCharacters(DIGITS, 1)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}`,
+		state: () => randomChoice(["ENG", "NIR", "SCT", "WAL"]),
+		taxId: () =>
+			`${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 2)}${randomIntegerInRange(10_000_000)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}`,
+	},
+	de_DE: {
+		country: "Germany",
+		countryCode: "DE",
+		phoneCode: "49",
+		postCode: () => randomCharacters(DIGITS, 5),
+		state: () => randomChoice(["BE", "BY", "HH", "HE", "NW"]),
+		taxId: () => randomCharacters(DIGITS, 11),
+	},
+	en_US: {
+		country: "United States",
+		countryCode: "US",
+		phoneCode: "1",
+		postCode: () => `${randomIntegerInRange(90_000) + 10_000}`,
+		state: () => randomChoice(["CA", "IL", "NY", "OR", "TX", "WA"]),
+		taxId: () =>
+			`${randomCharacters(DIGITS, 3)}-${randomCharacters(DIGITS, 2)}-${randomCharacters(DIGITS, 4)}`,
+	},
+	es_ES: {
+		country: "Spain",
+		countryCode: "ES",
+		phoneCode: "34",
+		postCode: () => randomCharacters(DIGITS, 5),
+		state: () => randomChoice(["AN", "CT", "MD", "VC", "PV"]),
+		taxId: () =>
+			`${randomCharacters(DIGITS, 8)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}`,
+	},
+	fr_FR: {
+		country: "France",
+		countryCode: "FR",
+		phoneCode: "33",
+		postCode: () => randomCharacters(DIGITS, 5),
+		state: () => randomChoice(["IDF", "NAQ", "ARA", "OCC", "PAC"]),
+		taxId: () => randomCharacters(DIGITS, 13),
+	},
+	it_IT: {
+		country: "Italy",
+		countryCode: "IT",
+		phoneCode: "39",
+		postCode: () => randomCharacters(DIGITS, 5),
+		state: () => randomChoice(["LAZ", "LOM", "PIE", "TOS", "VEN"]),
+		taxId: () =>
+			`${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6)}${randomCharacters(DIGITS, 2)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}${randomCharacters(DIGITS, 2)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}${randomCharacters(DIGITS, 3)}${randomCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 1)}`,
+	},
+	nl_NL: {
+		country: "Netherlands",
+		countryCode: "NL",
+		phoneCode: "31",
+		postCode: () =>
+			`${randomIntegerInRange(9000) + 1000} ${randomCharacters("ABCDEFGHJKLMNPQRSTUVWXYZ", 2)}`,
+		state: () => randomChoice(["NH", "ZH", "UT", "GE", "NB"]),
+		taxId: () => randomCharacters(DIGITS, 9),
+	},
+	pl_PL: {
+		country: "Poland",
+		countryCode: "PL",
+		phoneCode: "48",
+		postCode: () =>
+			`${randomIntegerInRange(90) + 10}-${String(randomIntegerInRange(1000)).padStart(3, "0")}`,
+		state: () => randomChoice(["DS", "MA", "MZ", "PM", "WP"]),
+		taxId: () => randomCharacters(DIGITS, 10),
+	},
+	pt_PT: {
+		country: "Portugal",
+		countryCode: "PT",
+		phoneCode: "351",
+		postCode: () =>
+			`${randomIntegerInRange(9000) + 1000}-${String(randomIntegerInRange(1000)).padStart(3, "0")}`,
+		state: () => randomChoice(["LX", "PT", "BR", "AV", "FA"]),
+		taxId: () => randomCharacters(DIGITS, 9),
+	},
 };
 
 interface LocaleData {
@@ -70,6 +406,7 @@ export function createPeopleResult(
 
 function createPeople(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 100);
+
 	return singleOrList(Array.from({ length: count }, () => createPerson(request)));
 }
 
@@ -107,29 +444,50 @@ function createPerson(request: GeneratorRequest) {
 
 	return {
 		...person,
-		...(parseBoolean(request.fields.includeFinancial ?? request.fields.include_financial, true) ? createFinancialData(localeData.countryCode) : {}),
-		...(parseBoolean(request.fields.includeProfessional ?? request.fields.include_professional, true) ? createProfessionalData() : {}),
+		...(parseBoolean(request.fields.includeFinancial ?? request.fields.include_financial, true)
+			? createFinancialData(localeData.countryCode)
+			: {}),
+		...(parseBoolean(
+			request.fields.includeProfessional ?? request.fields.include_professional,
+			true,
+		)
+			? createProfessionalData()
+			: {}),
 	};
 }
 
 function createAge(request: GeneratorRequest) {
-	const minAge = parseInteger(request.fields.ageMin ?? request.fields.age_min ?? request.fields.minAge ?? "", 18, 1, 120);
-	const maxAge = parseInteger(request.fields.ageMax ?? request.fields.age_max ?? request.fields.maxAge ?? "", 80, 1, 120);
+	const minAge = parseInteger(
+		request.fields.ageMin ?? request.fields.age_min ?? request.fields.minAge ?? "",
+		18,
+		1,
+		120,
+	);
+	const maxAge = parseInteger(
+		request.fields.ageMax ?? request.fields.age_max ?? request.fields.maxAge ?? "",
+		80,
+		1,
+		120,
+	);
 	const lower = Math.min(minAge, maxAge);
 	const upper = Math.max(minAge, maxAge);
+
 	return lower + randomIntegerInRange(upper - lower + 1);
 }
 
 function createBirthDate(age: number) {
 	const date = new Date();
+
 	date.setUTCFullYear(date.getUTCFullYear() - age);
 	date.setUTCMonth(randomIntegerInRange(12));
 	date.setUTCDate(randomIntegerInRange(28) + 1);
+
 	return date.toISOString().slice(0, 10);
 }
 
 function createFinancialData(countryCode: string) {
 	const card = createCreditCard();
+
 	return {
 		bankAccount: randomCharacters(DIGITS, 8),
 		creditCardExpiration: `${String(randomIntegerInRange(12) + 1).padStart(2, "0")}/${randomIntegerInRange(6) + 27}`,
@@ -149,9 +507,15 @@ function createProfessionalData() {
 
 function createCreditCard() {
 	const type = randomChoice(["Visa", "Mastercard", "American Express"] as const);
-	const prefix = type === "American Express" ? randomChoice(["34", "37"]) : type === "Mastercard" ? `${randomIntegerInRange(5) + 51}` : "4";
+	const prefix =
+		type === "American Express"
+			? randomChoice(["34", "37"])
+			: type === "Mastercard"
+				? `${randomIntegerInRange(5) + 51}`
+				: "4";
 	const length = type === "American Express" ? 15 : 16;
 	const body = `${prefix}${randomCharacters(DIGITS, length - prefix.length - 1)}`;
+
 	return {
 		number: `${body}${luhnCheckDigit(body)}`,
 		type,
@@ -161,6 +525,7 @@ function createCreditCard() {
 function createIban(countryCode: string) {
 	const ibanCountry = normaliseIbanCountry(countryCode);
 	const bban = createBban(ibanCountry);
+
 	return `${ibanCountry}${ibanCheckDigits(ibanCountry, bban)}${bban}`;
 }
 
@@ -201,10 +566,12 @@ function ibanCheckDigits(countryCode: string, bban: string) {
 		.split("")
 		.map((character) => {
 			const code = character.charCodeAt(0);
+
 			return code >= 65 && code <= 90 ? `${code - 55}` : character;
 		})
 		.join("");
 	let remainder = 0;
+
 	for (const digit of numeric) {
 		remainder = (remainder * 10 + Number.parseInt(digit, 10)) % 97;
 	}
@@ -218,14 +585,17 @@ function luhnCheckDigit(body: string) {
 		.reverse()
 		.reduce((total, character, index) => {
 			let digit = Number.parseInt(character, 10);
+
 			if (index % 2 === 0) {
 				digit *= 2;
 				if (digit > 9) {
 					digit -= 9;
 				}
 			}
+
 			return total + digit;
 		}, 0);
+
 	return `${(10 - (sum % 10)) % 10}`;
 }
 
@@ -240,11 +610,13 @@ function citiesFor(locale: (typeof PERSON_LOCALES)[number]) {
 function parseGender(input: string | undefined) {
 	const normalised = input?.trim().toLowerCase();
 	const gender = GENDERS.find((option) => option === normalised);
+
 	return gender ?? randomChoice(GENDERS);
 }
 
 function parseLocale(input: string | undefined) {
 	const normalised = input?.trim();
+
 	return PERSON_LOCALES.find((option) => option === normalised) ?? "en_GB";
 }
 
@@ -253,5 +625,7 @@ function randomCoordinate(min: number, max: number) {
 }
 
 function titleFor(gender: (typeof GENDERS)[number]) {
-	return gender === "male" ? randomChoice(["Mr.", "Dr.", "Prof."]) : randomChoice(["Ms.", "Mrs.", "Dr.", "Prof."]);
+	return gender === "male"
+		? randomChoice(["Mr.", "Dr.", "Prof."])
+		: randomChoice(["Ms.", "Mrs.", "Dr.", "Prof."]);
 }

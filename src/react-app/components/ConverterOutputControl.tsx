@@ -13,7 +13,8 @@ export function ConverterOutputControl({
 	outputFormat,
 	tool,
 }: ConverterOutputControlProps) {
-	const className = field?.display?.width === "full" ? "field-control field-control-full" : "field-control";
+	const className =
+		field?.display?.width === "full" ? "field-control field-control-full" : "field-control";
 
 	return (
 		<label className={className}>

@@ -34,7 +34,7 @@ export function transformJson(input: string, format: JsonTransformFormat) {
 		case "base64":
 			return bytesToBase64(new TextEncoder().encode(input));
 		case "escape":
-			return input.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+			return input.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 		case "flatten":
 			return JSON.stringify(flattenJson(parseJson(input)), null, 2);
 		case "format":
@@ -48,7 +48,7 @@ export function transformJson(input: string, format: JsonTransformFormat) {
 		case "sort":
 			return JSON.stringify(sortJson(parseJson(input)), null, 2);
 		case "unescape":
-			return input.replace(/\\"/g, "\"").replace(/\\\\/g, "\\");
+			return input.replace(/\\"/g, '"').replace(/\\\\/g, "\\");
 	}
 }
 
@@ -64,6 +64,7 @@ function sortJson(value: unknown): unknown {
 	if (Array.isArray(value)) {
 		return value.map(sortJson);
 	}
+
 	if (isRecord(value)) {
 		return Object.fromEntries(
 			Object.entries(value)
@@ -77,6 +78,7 @@ function sortJson(value: unknown): unknown {
 
 function flattenJson(value: unknown) {
 	const flattened: Record<string, unknown> = {};
+
 	visitJson(value, "", (path, item) => {
 		if (path && !isContainer(item)) {
 			flattened[path] = item;
@@ -88,6 +90,7 @@ function flattenJson(value: unknown) {
 
 function jsonKeys(value: unknown) {
 	const keys: string[] = [];
+
 	visitJson(value, "", (path) => {
 		if (path) {
 			keys.push(path);
@@ -103,8 +106,10 @@ function visitJson(value: unknown, path: string, visit: (path: string, value: un
 		value.forEach((item, index) => {
 			visitJson(item, childPath(path, String(index)), visit);
 		});
+
 		return;
 	}
+
 	if (isRecord(value)) {
 		for (const [key, item] of Object.entries(value)) {
 			visitJson(item, childPath(path, key), visit);
@@ -122,15 +127,18 @@ function isContainer(value: unknown) {
 
 function bytesToBase64(bytes: Uint8Array) {
 	let binary = "";
+
 	for (const byte of bytes) {
 		binary += String.fromCodePoint(byte);
 	}
+
 	return btoa(binary);
 }
 
 function base64ToText(value: string) {
 	try {
 		const binary = atob(value.trim());
+
 		return new TextDecoder().decode(Uint8Array.from(binary, (char) => char.codePointAt(0) ?? 0));
 	} catch {
 		throw new JsonTransformError("Enter valid base64 text.");

@@ -20,6 +20,7 @@ export function AuthenticatedImage({ alt, src, ...props }: AuthenticatedImagePro
 				if (!response.ok) {
 					throw new Error("Image could not be loaded.");
 				}
+
 				return response.blob();
 			})
 			.then((blob) => {

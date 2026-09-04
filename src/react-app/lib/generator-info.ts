@@ -68,13 +68,15 @@ function isGeneratorInfoTool(tool: ApiInfoTool): tool is GeneratorInfoTool {
 
 export async function fetchGeneratorInfo(): Promise<GeneratorInfo> {
 	const body = await fetchPashiInfo<ApiInfoTool>();
+
 	if (!("tools" in body)) {
 		throw new Error("Could not load generators.");
 	}
 
 	return {
 		...body,
-		exportFormats: "exportFormats" in body && Array.isArray(body.exportFormats) ? body.exportFormats : [],
+		exportFormats:
+			"exportFormats" in body && Array.isArray(body.exportFormats) ? body.exportFormats : [],
 		tools: body.tools.filter(isGeneratorInfoTool),
 	};
 }

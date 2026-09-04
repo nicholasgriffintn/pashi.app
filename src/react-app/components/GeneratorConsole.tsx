@@ -40,20 +40,21 @@ export function GeneratorConsole({ controls }: GeneratorConsoleProps) {
 		tools,
 	} = consoleState;
 	const resultFields = resultMode === "ai" ? { ...fieldValues, mode: "ai" } : fieldValues;
-	const actions = result && activeTool ? (
-		<ResultActions
-			exportFormats={exportFormats}
-			fields={resultFields}
-			input={input}
-			onClear={clearResult}
-			onNotify={notify}
-			onRegenerate={() => {
-				void generateActiveTool();
-			}}
-			result={result}
-			tool={activeTool}
-		/>
-	) : undefined;
+	const actions =
+		result && activeTool ? (
+			<ResultActions
+				exportFormats={exportFormats}
+				fields={resultFields}
+				input={input}
+				onClear={clearResult}
+				onNotify={notify}
+				onRegenerate={() => {
+					void generateActiveTool();
+				}}
+				result={result}
+				tool={activeTool}
+			/>
+		) : undefined;
 
 	return (
 		<PashiShell

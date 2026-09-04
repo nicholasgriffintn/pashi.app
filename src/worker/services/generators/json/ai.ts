@@ -1,14 +1,6 @@
-import {
-	isStringArray,
-	isStringRecord,
-	isStringRecordArray,
-} from "../../../../shared/records";
+import { isStringArray, isStringRecord, isStringRecordArray } from "../../../../shared/records";
+import { type GeneratorRequest, generatorDataFields, usesAiMode } from "../request";
 import type { GeneratorTool, JsonResult, ResultKind } from "../types";
-import {
-	type GeneratorRequest,
-	generatorDataFields,
-	usesAiMode,
-} from "../request";
 
 const AI_MODEL = "@cf/zai-org/glm-4.7-flash";
 const MAX_FIELD_COUNT = 12;
@@ -23,19 +15,19 @@ type AiSupportedResultKind = Exclude<ResultKind, "image">;
 type JsonSchema =
 	| { type: "string"; description?: string; pattern?: string }
 	| {
-		type: "array";
-		description?: string;
-		items: JsonSchema;
-		minItems?: number;
-		maxItems?: number;
-	}
+			type: "array";
+			description?: string;
+			items: JsonSchema;
+			minItems?: number;
+			maxItems?: number;
+	  }
 	| {
-		type: "object";
-		additionalProperties?: boolean | JsonSchema;
-		description?: string;
-		properties?: Record<string, JsonSchema>;
-		required?: string[];
-	};
+			type: "object";
+			additionalProperties?: boolean | JsonSchema;
+			description?: string;
+			properties?: Record<string, JsonSchema>;
+			required?: string[];
+	  };
 
 const TEXT_RESULT_SCHEMA = {
 	type: "object",
@@ -153,6 +145,7 @@ function schemaFor(kind: AiSupportedResultKind) {
 
 function parseAiPayload(value: unknown) {
 	const payload = typeof value === "string" ? parseJson(value) : value;
+
 	if (!isAiPayload(payload)) {
 		throw new Error("AI returned an invalid payload.");
 	}
@@ -206,10 +199,7 @@ function isAiPayload(value: unknown): value is Pick<JsonResult, "meta" | "result
 
 function isResponseOutput(value: unknown): value is { response: unknown } {
 	return (
-		typeof value === "object" &&
-		value !== null &&
-		!Array.isArray(value) &&
-		"response" in value
+		typeof value === "object" && value !== null && !Array.isArray(value) && "response" in value
 	);
 }
 

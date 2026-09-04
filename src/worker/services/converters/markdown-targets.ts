@@ -22,11 +22,13 @@ function markdownToSlack(input: string) {
 		.split(/\r?\n/)
 		.map((line) => {
 			const heading = /^(#{1,6})\s+(.+)$/.exec(line);
+
 			if (heading) {
 				return `*${slackInline(heading[2])}*`;
 			}
 
 			const bullet = /^\s*[-*]\s+(.+)$/.exec(line);
+
 			if (bullet) {
 				return `• ${slackInline(bullet[1])}`;
 			}
@@ -44,31 +46,38 @@ function markdownToWordPressHtml(input: string) {
 
 	for (const line of lines) {
 		const trimmed = line.trim();
+
 		if (!trimmed) {
 			if (inList) {
 				html.push("</ul>");
 				inList = false;
 			}
+
 			continue;
 		}
 
 		const heading = /^(#{1,6})\s+(.+)$/.exec(trimmed);
+
 		if (heading) {
 			if (inList) {
 				html.push("</ul>");
 				inList = false;
 			}
+
 			const level = heading[1].length;
+
 			html.push(`<h${level}>${htmlInline(heading[2])}</h${level}>`);
 			continue;
 		}
 
 		const bullet = /^[-*]\s+(.+)$/.exec(trimmed);
+
 		if (bullet) {
 			if (!inList) {
 				html.push("<ul>");
 				inList = true;
 			}
+
 			html.push(`<li>${htmlInline(bullet[1])}</li>`);
 			continue;
 		}
@@ -77,6 +86,7 @@ function markdownToWordPressHtml(input: string) {
 			html.push("</ul>");
 			inList = false;
 		}
+
 		html.push(`<p>${htmlInline(trimmed)}</p>`);
 	}
 
@@ -91,6 +101,7 @@ function slackInline(input: string) {
 	return input
 		.replace(/\[([^\]]+)]\(([^)]+)\)/g, (_match, label: string, url: string) => {
 			const safeUrl = safeLinkUrl(url);
+
 			return safeUrl ? `<${safeUrl}|${label}>` : label;
 		})
 		.replace(/\*\*([^*]+)\*\*/g, "*$1*")
@@ -99,9 +110,11 @@ function slackInline(input: string) {
 
 function htmlInline(input: string) {
 	const escaped = escapeXml(input);
+
 	return escaped
 		.replace(/\[([^\]]+)]\(([^)]+)\)/g, (_match, label: string, url: string) => {
 			const safeUrl = safeLinkUrl(url);
+
 			return safeUrl ? `<a href="${escapeXml(safeUrl)}">${label}</a>` : label;
 		})
 		.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
@@ -111,8 +124,10 @@ function htmlInline(input: string) {
 
 function safeLinkUrl(value: string) {
 	const trimmed = value.trim();
+
 	try {
 		const url = new URL(trimmed);
+
 		return url.protocol === "http:" || url.protocol === "https:" || url.protocol === "mailto:"
 			? trimmed
 			: undefined;

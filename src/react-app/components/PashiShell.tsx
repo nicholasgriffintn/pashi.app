@@ -1,9 +1,9 @@
 import type React from "react";
 
-import { PashiLogoButton } from "./PashiLogoButton";
-import { ResultStage } from "./ResultStage";
 import type { ResultStageValue } from "../lib/result-types";
 import { ApiKeyControl } from "./ApiKeyControl";
+import { PashiLogoButton } from "./PashiLogoButton";
+import { ResultStage } from "./ResultStage";
 
 interface PashiShellProps {
 	actions?: React.ReactNode;

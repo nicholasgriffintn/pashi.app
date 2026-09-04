@@ -1,14 +1,14 @@
-import { findGenerator } from "./generators/catalogue";
-import type { GeneratorRequest } from "./generators/request";
-import { createJsonResult } from "./generators/json";
-import type { GeneratorResultValue, JsonResult } from "./generators/types";
 import { isRecordArray, recordToText, uniqueKeys } from "../../shared/records";
-import { safeFilename } from "../utils/text";
 import { csvRow } from "../utils/csv";
 import { json } from "../utils/http";
-import { createFeatureStatus, type FeatureEnv } from "./features";
-import { usesAiMode } from "./generators/request";
+import { safeFilename } from "../utils/text";
 import { isExportFormat, type ExportFormat } from "./export-formats";
+import { createFeatureStatus, type FeatureEnv } from "./features";
+import { findGenerator } from "./generators/catalogue";
+import { createJsonResult } from "./generators/json";
+import type { GeneratorRequest } from "./generators/request";
+import { usesAiMode } from "./generators/request";
+import type { GeneratorResultValue, JsonResult } from "./generators/types";
 
 export async function createExportResponse(
 	type: string,
@@ -17,6 +17,7 @@ export async function createExportResponse(
 	env?: FeatureEnv,
 ) {
 	const generator = findGenerator(type);
+
 	if (!generator) {
 		return json({ error: "Unknown generator type." }, 404);
 	}
@@ -35,6 +36,7 @@ export async function createExportResponse(
 
 	try {
 		const result = await createJsonResult(generator, request, env?.AI ? { AI: env.AI } : undefined);
+
 		return new Response(formatExportResult(result, format), {
 			headers: {
 				"Content-Disposition": `attachment; filename="${safeFilename(type)}.${format}"`,
@@ -43,10 +45,7 @@ export async function createExportResponse(
 			},
 		});
 	} catch (error) {
-		return json(
-			{ error: error instanceof Error ? error.message : "Export failed." },
-			400,
-		);
+		return json({ error: error instanceof Error ? error.message : "Export failed." }, 400);
 	}
 }
 
@@ -70,27 +69,33 @@ function formatCsv(value: GeneratorResultValue) {
 	if (Array.isArray(value)) {
 		if (isRecordArray(value)) {
 			const columns = uniqueKeys(value);
+
 			return [
 				csvRow(columns),
 				...value.map((record) => csvRow(columns.map((column) => record[column] ?? ""))),
-			].join("\n").concat("\n");
+			]
+				.join("\n")
+				.concat("\n");
 		}
 
 		return [
 			csvRow(["index", "value"]),
 			...value.map((item, index) => csvRow([`${index + 1}`, item])),
-		].join("\n").concat("\n");
+		]
+			.join("\n")
+			.concat("\n");
 	}
 
 	const entries = Object.entries(value);
-	return [
-		csvRow(entries.map(([key]) => key)),
-		csvRow(entries.map(([, entryValue]) => entryValue)),
-	].join("\n").concat("\n");
+
+	return [csvRow(entries.map(([key]) => key)), csvRow(entries.map(([, entryValue]) => entryValue))]
+		.join("\n")
+		.concat("\n");
 }
 
 function formatText(result: JsonResult) {
 	const { result: value } = result;
+
 	if (typeof value === "string") {
 		return `${value}\n`;
 	}

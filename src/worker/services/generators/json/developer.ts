@@ -1,9 +1,8 @@
-import type { GeneratorRequest } from "../request.ts";
-import type { GeneratorResultRecord, GeneratorTool, JsonResult } from "../types.ts";
 import { isRecord } from "../../../../shared/records.ts";
 import { parseChoice, parseInteger } from "../../../utils/generation.ts";
 import { escapeXml, safeHttpUrl } from "../../../utils/text.ts";
-import { fieldsResult, textResult } from "./result.ts";
+import type { GeneratorRequest } from "../request.ts";
+import type { GeneratorResultRecord, GeneratorTool, JsonResult } from "../types.ts";
 import {
 	createAxiosSnippet,
 	createCurlCommand,
@@ -12,6 +11,7 @@ import {
 	createHttpRequestExample,
 	createJsonApiResponse,
 } from "./developer/requests.ts";
+import { fieldsResult, textResult } from "./result.ts";
 
 const CRON_PRESETS = ["hourly", "daily", "weekly", "monthly"] as const;
 const REGEX_PRESETS = [
@@ -137,8 +137,8 @@ function regexPreset(preset: (typeof REGEX_PRESETS)[number]): RegexPreset {
 		case "html-tag":
 			return {
 				description: "Simple HTML tag token.",
-				exampleMatch: "<meta name=\"description\">",
-				exampleNonMatch: "meta name=\"description\"",
+				exampleMatch: '<meta name="description">',
+				exampleNonMatch: 'meta name="description"',
 				pattern: "<\\/?[A-Za-z][A-Za-z0-9-]*\\b[^<>]*>",
 			};
 		case "integer":
@@ -153,7 +153,8 @@ function regexPreset(preset: (typeof REGEX_PRESETS)[number]): RegexPreset {
 				description: "IPv4 address with octets from 0 to 255.",
 				exampleMatch: "192.168.0.1",
 				exampleNonMatch: "999.168.0.1",
-				pattern: "(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
+				pattern:
+					"(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)",
 			};
 		case "iso-date":
 			return {
@@ -236,6 +237,7 @@ function createHtmlMetaTags(request: GeneratorRequest) {
 		`<meta property="og:url" content="${escapeXml(url)}">`,
 		`<meta name="twitter:card" content="${image ? "summary_large_image" : "summary"}">`,
 	];
+
 	if (image) {
 		tags.push(`<meta property="og:image" content="${escapeXml(image)}">`);
 	}
@@ -247,8 +249,8 @@ function createTypeScriptInterface(request: GeneratorRequest) {
 	const sample = parseJsonSample(request.fields.json || request.input || "{}");
 	const name = pascalCase(request.fields.name || "Root");
 	const shape = isRecord(sample) ? sample : { value: sample };
-	const lines = Object.entries(shape).map(([key, value]) =>
-		`  ${typescriptPropertyName(key)}: ${typescriptType(value)};`
+	const lines = Object.entries(shape).map(
+		([key, value]) => `  ${typescriptPropertyName(key)}: ${typescriptType(value)};`,
 	);
 
 	return [`interface ${name} {`, ...lines, "}"].join("\n");
@@ -261,6 +263,7 @@ function parseSchemaFields(input: string) {
 		.filter(Boolean)
 		.map((line) => {
 			const [rawName = "value", rawType = "string"] = line.split(/\s*:\s*/);
+
 			return {
 				name: safePropertyName(rawName),
 				type: schemaType(rawType),
@@ -270,13 +273,20 @@ function parseSchemaFields(input: string) {
 
 function schemaType(value: string) {
 	const normalised = value.toLowerCase();
-	return normalised === "number" || normalised === "integer" || normalised === "boolean" || normalised === "array" || normalised === "object" || normalised === "null"
+
+	return normalised === "number" ||
+		normalised === "integer" ||
+		normalised === "boolean" ||
+		normalised === "array" ||
+		normalised === "object" ||
+		normalised === "null"
 		? normalised
 		: "string";
 }
 
 function safePropertyName(value: string) {
 	const name = value.trim().replace(/[^\w.-]/g, "_");
+
 	return name || "value";
 }
 
@@ -299,17 +309,22 @@ function parseJsonSample(input: string): unknown {
 function typescriptType(value: unknown): string {
 	if (Array.isArray(value)) {
 		const sample = value.find((item) => item !== null);
+
 		return sample === undefined ? "unknown[]" : `${typescriptType(sample)}[]`;
 	}
+
 	if (isRecord(value)) {
-		const fields = Object.entries(value).map(([key, item]) =>
-			`${typescriptPropertyName(key)}: ${typescriptType(item)}`
+		const fields = Object.entries(value).map(
+			([key, item]) => `${typescriptPropertyName(key)}: ${typescriptType(item)}`,
 		);
+
 		return `{ ${fields.join("; ")} }`;
 	}
+
 	if (value === null) {
 		return "null";
 	}
+
 	if (typeof value === "boolean" || typeof value === "number" || typeof value === "string") {
 		return typeof value;
 	}
@@ -323,5 +338,6 @@ function typescriptPropertyName(value: string) {
 
 function pascalCase(value: string) {
 	const words = value.match(/[A-Za-z0-9]+/g) ?? ["Root"];
+
 	return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join("") || "Root";
 }

@@ -11,7 +11,9 @@ export interface CoinFlipStageResult {
 	type: "coinflip";
 }
 
-export function isCoinFlipStageResult(result: ResultStageValue | undefined): result is CoinFlipStageResult {
+export function isCoinFlipStageResult(
+	result: ResultStageValue | undefined,
+): result is CoinFlipStageResult {
 	return Boolean(
 		result &&
 		result.kind === "text" &&

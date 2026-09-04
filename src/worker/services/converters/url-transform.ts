@@ -36,6 +36,7 @@ export function transformUrl(input: string, format: UrlTransformFormat) {
 
 function parseUrl(input: string) {
 	const url = parseHttpUrl(input);
+
 	return {
 		hash: url.hash,
 		host: url.host,
@@ -51,8 +52,10 @@ function parseUrl(input: string) {
 
 function queryParams(params: URLSearchParams) {
 	const values: Record<string, string | string[]> = {};
+
 	for (const [key, value] of params.entries()) {
 		const existing = values[key];
+
 		if (existing === undefined) {
 			values[key] = value;
 		} else if (Array.isArray(existing)) {
@@ -68,6 +71,7 @@ function queryParams(params: URLSearchParams) {
 function parseHttpUrl(input: string) {
 	try {
 		const url = new URL(input.trim());
+
 		if (url.protocol !== "http:" && url.protocol !== "https:") {
 			throw new UrlTransformError("Enter an HTTP or HTTPS URL.");
 		}

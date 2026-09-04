@@ -26,6 +26,7 @@ export function createPashiImpactSequence(): PashiImpactSequence {
 
 export async function playPashiImpact() {
 	const AudioContext = window.AudioContext;
+
 	if (!AudioContext) {
 		return;
 	}
@@ -52,6 +53,7 @@ function playNoiseHit(audio: AudioContext, hit: PashiImpactHit, startedAt: numbe
 
 	for (let index = 0; index < frameCount; index += 1) {
 		const fade = 1 - index / frameCount;
+
 		channel[index] = (Math.random() * 2 - 1) * fade;
 	}
 

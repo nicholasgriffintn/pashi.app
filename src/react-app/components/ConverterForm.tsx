@@ -1,8 +1,8 @@
-import { type FormEvent } from "react";
+import type { FormEvent } from "react";
 
 import type { ConverterInfoTool } from "../lib/converter-api";
-import { FileConverterControls } from "./FileConverterControls";
 import { ConverterOutputControl } from "./ConverterOutputControl";
+import { FileConverterControls } from "./FileConverterControls";
 import { ToolPicker } from "./ToolPicker";
 
 interface ConverterFormProps {
@@ -22,10 +22,7 @@ interface ConverterFormProps {
 	tools: ConverterInfoTool[];
 }
 
-function applyExample(
-	example: string,
-	onInputChange: (value: string) => void,
-) {
+function applyExample(example: string, onInputChange: (value: string) => void) {
 	onInputChange(example);
 }
 

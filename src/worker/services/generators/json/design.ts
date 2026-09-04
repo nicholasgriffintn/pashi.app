@@ -1,5 +1,3 @@
-import type { GeneratorTool, JsonResult } from "../types";
-import type { GeneratorRequest } from "../request";
 import { contrastRatio, hslToRgb, relativeLuminance, rgbToHex } from "../../../utils/color";
 import {
 	hashSeed,
@@ -11,6 +9,8 @@ import {
 	randomIntegerBetween,
 } from "../../../utils/generation";
 import { LOREM_WORDS } from "../data/words";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { fieldsResult, paletteResult, textResult } from "./result";
 
 type ColourFormat = "all" | "hex" | "hsl" | "hsla" | "rgb" | "rgba";
@@ -19,13 +19,21 @@ type PaletteHarmony = "analogous" | "complementary" | "monochrome" | "random" | 
 
 const COLOUR_FORMATS = ["hex", "rgb", "hsl", "rgba", "hsla", "all"] as const;
 const COLOUR_PALETTES = ["random", "pastel", "vibrant", "dark", "light", "grayscale"] as const;
-const PALETTE_HARMONIES = ["analogous", "complementary", "triadic", "split", "monochrome", "random"] as const;
+const PALETTE_HARMONIES = [
+	"analogous",
+	"complementary",
+	"triadic",
+	"split",
+	"monochrome",
+	"random",
+] as const;
 
 export function createDesignResult(
 	generator: GeneratorTool,
 	request: GeneratorRequest,
 ): JsonResult | undefined {
 	const { input } = request;
+
 	switch (generator.id) {
 		case "colour":
 			return fieldsResult(generator, input, createColours(request));
@@ -51,11 +59,13 @@ function createLoremIpsum(request: GeneratorRequest) {
 function createLoremSentence(topic: string) {
 	const wordCount = 8 + Math.floor(hashSeed(`${topic}-${crypto.randomUUID()}`) % 9);
 	const words: string[] = Array.from({ length: wordCount }, () => randomChoice(LOREM_WORDS));
+
 	if (topic) {
 		words.splice(2, 0, ...topic.toLowerCase().split(/\s+/).slice(0, 2));
 	}
 
 	const sentence = words.join(" ");
+
 	return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
 }
 
@@ -69,16 +79,19 @@ function createPalette(request: GeneratorRequest) {
 	const hues = paletteHues(base % 360, count, harmony);
 
 	return hues.map((hue, index) =>
-		rgbToHex(hslToRgb({
-			hue,
-			lightness: clampLightness(lightness + seededOffset(base, index, 7)),
-			saturation: clampPercentage(saturation + seededOffset(base, index, 9)),
-		})),
+		rgbToHex(
+			hslToRgb({
+				hue,
+				lightness: clampLightness(lightness + seededOffset(base, index, 7)),
+				saturation: clampPercentage(saturation + seededOffset(base, index, 9)),
+			}),
+		),
 	);
 }
 
 function paletteHues(baseHue: number, count: number, harmony: PaletteHarmony) {
 	const offsets = paletteOffsets(count, harmony);
+
 	return offsets.map((offset) => wrapHue(baseHue + offset));
 }
 
@@ -101,11 +114,15 @@ function paletteOffsets(count: number, harmony: PaletteHarmony) {
 
 function centredSteps(count: number, step: number) {
 	const midpoint = (count - 1) / 2;
+
 	return Array.from({ length: count }, (_, index) => Math.round((index - midpoint) * step));
 }
 
 function repeatPattern(count: number, pattern: readonly number[]) {
-	return Array.from({ length: count }, (_, index) => pattern[index % pattern.length] + Math.floor(index / pattern.length) * 10);
+	return Array.from(
+		{ length: count },
+		(_, index) => pattern[index % pattern.length] + Math.floor(index / pattern.length) * 10,
+	);
 }
 
 function wrapHue(value: number) {
@@ -154,7 +171,13 @@ function createColourRecord(format: ColourFormat, palette: ColourPalette, alpha:
 		hsla: hslaValue,
 		luminance: luminance.toFixed(3),
 		palette,
-		primary: primaryColour(format, { hex, hsl: hslValue, hsla: hslaValue, rgb: rgbValue, rgba: rgbaValue }),
+		primary: primaryColour(format, {
+			hex,
+			hsl: hslValue,
+			hsla: hslaValue,
+			rgb: rgbValue,
+			rgba: rgbaValue,
+		}),
 		rgb: rgbValue,
 		rgba: rgbaValue,
 		wcagAaLarge: contrastWhite >= 3 || contrastBlack >= 3 ? "yes" : "no",
@@ -178,7 +201,10 @@ function randomHsl(palette: ColourPalette) {
 		pastel: { lightness: [70, 90], saturation: [25, 80] },
 		random: { lightness: [0, 100], saturation: [0, 100] },
 		vibrant: { lightness: [40, 60], saturation: [70, 100] },
-	} satisfies Record<Exclude<ColourPalette, "grayscale">, { lightness: [number, number]; saturation: [number, number] }>;
+	} satisfies Record<
+		Exclude<ColourPalette, "grayscale">,
+		{ lightness: [number, number]; saturation: [number, number] }
+	>;
 	const range = ranges[palette];
 
 	return {
@@ -188,7 +214,10 @@ function randomHsl(palette: ColourPalette) {
 	};
 }
 
-function primaryColour(format: ColourFormat, colours: Record<Exclude<ColourFormat, "all">, string>) {
+function primaryColour(
+	format: ColourFormat,
+	colours: Record<Exclude<ColourFormat, "all">, string>,
+) {
 	return format === "all" ? colours.hex : colours[format];
 }
 

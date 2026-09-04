@@ -1,4 +1,8 @@
-import { coinFlipValues, isCoinFlipStageResult, type CoinFlipStageResult } from "../lib/coin-result";
+import {
+	coinFlipValues,
+	isCoinFlipStageResult,
+	type CoinFlipStageResult,
+} from "../lib/coin-result";
 import type { TextResultStageValue } from "../lib/result-types";
 import { ResultHistory, type ResultHistoryDescription } from "./ResultHistory";
 
@@ -26,7 +30,9 @@ export function CoinFlipResultView({
 			<header className="coin-result-header">
 				<div>
 					<span>Coin flip</span>
-					<strong>{flips.length} flip{flips.length === 1 ? "" : "s"}</strong>
+					<strong>
+						{flips.length} flip{flips.length === 1 ? "" : "s"}
+					</strong>
 				</div>
 				<div>
 					<span>Heads</span>

@@ -1,12 +1,12 @@
 import { type AnchorHTMLAttributes, useMemo } from "react";
 
-import type { GeneratorInfoTool } from "../lib/generator-info";
-import type { ConverterInfoTool } from "../lib/converter-api";
-import type { ResultStageValue } from "../lib/result-types";
-import { resultToText } from "../lib/result-format";
 import { useApiKey } from "../lib/api-key-context";
 import { apiFetch } from "../lib/api-request";
+import type { ConverterInfoTool } from "../lib/converter-api";
 import { downloadApiResource } from "../lib/download";
+import type { GeneratorInfoTool } from "../lib/generator-info";
+import { resultToText } from "../lib/result-format";
+import type { ResultStageValue } from "../lib/result-types";
 
 interface ResultActionsProps {
 	exportFormats: string[];
@@ -31,7 +31,13 @@ function ActionButton({
 	text?: string;
 }) {
 	return (
-		<button aria-label={label} data-has-label={Boolean(text)} onClick={onClick} title={label} type="button">
+		<button
+			aria-label={label}
+			data-has-label={Boolean(text)}
+			onClick={onClick}
+			title={label}
+			type="button"
+		>
 			<span aria-hidden="true">{icon}</span>
 			{text ? <strong>{text}</strong> : null}
 		</button>
@@ -84,9 +90,11 @@ function createExportHrefs(
 	}
 
 	const params = new URLSearchParams();
+
 	if (input) {
 		params.set("input", input);
 	}
+
 	for (const [key, value] of Object.entries(fields)) {
 		if (value) {
 			params.set(key, value);
@@ -94,6 +102,7 @@ function createExportHrefs(
 	}
 
 	const suffix = params.size > 0 ? `?${params.toString()}` : "";
+
 	return formats.map((format) => ({
 		format,
 		href: `/export/${tool.id}/${format}${suffix}`,
@@ -114,11 +123,13 @@ async function copyImage(src: string, apiKey: string) {
 	}
 
 	const response = await apiFetch(src, apiKey);
+
 	if (!response.ok) {
 		throw new Error("Image could not be loaded.");
 	}
 
 	const blob = await response.blob();
+
 	if (!blob.type.startsWith("image/")) {
 		throw new Error("Clipboard source is not an image.");
 	}
@@ -139,17 +150,19 @@ function copyableImageSrc(result: ResultStageValue) {
 }
 
 function slackmojiDownloadUrls(result: Extract<ResultStageValue, { kind: "slackmoji-batch" }>) {
-	return result.items
-		.map((item) => item.downloadUrl)
-		.filter((url) => url !== "");
+	return result.items.map((item) => item.downloadUrl).filter((url) => url !== "");
 }
 
 function createResultText(result: ResultStageValue) {
 	if (result.kind === "slackmoji-batch") {
 		return result.items
-			.map((item) => `${item.effect}: ${item.status}${item.downloadUrl ? ` (${item.downloadUrl})` : ""}`)
+			.map(
+				(item) =>
+					`${item.effect}: ${item.status}${item.downloadUrl ? ` (${item.downloadUrl})` : ""}`,
+			)
 			.join("\n");
 	}
+
 	if (result.kind === "image") {
 		return "";
 	}
@@ -215,7 +228,12 @@ export function ResultActions({
 					<ActionButton
 						icon="⌘"
 						label={urls.length === 1 ? "Copy image URL" : "Copy image URLs"}
-						onClick={() => runAction(() => copyText(urls.join("\n")), urls.length === 1 ? "Image URL copied" : "Image URLs copied")}
+						onClick={() =>
+							runAction(
+								() => copyText(urls.join("\n")),
+								urls.length === 1 ? "Image URL copied" : "Image URLs copied",
+							)
+						}
 					/>
 				) : null}
 				<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
@@ -248,7 +266,13 @@ export function ResultActions({
 					label="Copy image URL"
 					onClick={() => runAction(() => copyText(imageSrc ?? result.src), "Image URL copied")}
 				/>
-				<ActionLink href={result.src} icon="↗" label="Open image" rel="noreferrer" target="_blank" />
+				<ActionLink
+					href={result.src}
+					icon="↗"
+					label="Open image"
+					rel="noreferrer"
+					target="_blank"
+				/>
 				<ActionButton icon="↻" label="Regenerate" onClick={onRegenerate} />
 				<ActionButton icon="×" label="Clear result" onClick={onClear} />
 			</div>
@@ -272,10 +296,12 @@ export function ResultActions({
 					icon={formatIcon(format)}
 					key={format}
 					label={`Download ${format.toUpperCase()}`}
-					onClick={() => runAction(
-						() => downloadApiResource(href, `pashi-${tool.id}.${format}`, apiKey),
-						"Downloaded",
-					)}
+					onClick={() =>
+						runAction(
+							() => downloadApiResource(href, `pashi-${tool.id}.${format}`, apiKey),
+							"Downloaded",
+						)
+					}
 					text={formatActionText(format, index)}
 				/>
 			))}
@@ -292,14 +318,17 @@ export function ResultActions({
 				<ActionButton
 					icon="↓"
 					label="Download converted file"
-					onClick={() => runAction(
-						() => downloadApiResource(
-							downloadUrl,
-							("downloadName" in result && result.downloadName) || `pashi-${tool.id}`,
-							apiKey,
-						),
-						"Downloaded",
-					)}
+					onClick={() =>
+						runAction(
+							() =>
+								downloadApiResource(
+									downloadUrl,
+									("downloadName" in result && result.downloadName) || `pashi-${tool.id}`,
+									apiKey,
+								),
+							"Downloaded",
+						)
+					}
 					text="Download"
 				/>
 			) : null}

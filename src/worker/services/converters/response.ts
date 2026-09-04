@@ -1,16 +1,16 @@
-import type { ConverterRequest } from "./types";
 import { json } from "../../utils/http";
+import { hasQueuedConversionServices, isConverterFeatureEnabled } from "./availability";
 import { findConverterTool } from "./catalogue";
-import { ConverterRequestError, converterHandlers } from "./handlers";
-import { createImageFormatResponse } from "./image";
 import {
 	createQueuedConversionLookupResponse,
 	listSlackmojiPresets,
 	readSlackmojiPresetSource,
 	type ConversionEnv,
 } from "./conversion-pipeline";
-import { hasQueuedConversionServices, isConverterFeatureEnabled } from "./availability";
+import { ConverterRequestError, converterHandlers } from "./handlers";
+import { createImageFormatResponse } from "./image";
 import { applyConverterPresetFields } from "./presets";
+import type { ConverterRequest } from "./types";
 
 export async function createConverterResponse(
 	type: string,
@@ -20,6 +20,7 @@ export async function createConverterResponse(
 	applicationId?: string,
 ) {
 	const tool = findConverterTool(type);
+
 	if (!tool) {
 		return json({ error: "Converter not found." }, 404);
 	}
@@ -35,25 +36,28 @@ export async function createConverterResponse(
 
 	if (env && params) {
 		const converterPresetResponse = await createConverterPresetResponse(tool.id, params, env);
+
 		if (converterPresetResponse) {
 			return converterPresetResponse;
 		}
 	}
 
-	if (env && (
-		tool.id === "audio-format" ||
-		tool.id === "document-format" ||
-		tool.id === "image-format" ||
-		tool.id === "slack-hdr-emoji" ||
-		tool.id === "slackmoji" ||
-		tool.id === "video-format"
-	)) {
+	if (
+		env &&
+		(tool.id === "audio-format" ||
+			tool.id === "document-format" ||
+			tool.id === "image-format" ||
+			tool.id === "slack-hdr-emoji" ||
+			tool.id === "slackmoji" ||
+			tool.id === "video-format")
+	) {
 		const queuedResponse = await createQueuedConversionLookupResponse(
 			tool.id,
 			requestWithPresets.fields,
 			env,
 			applicationId ?? "",
 		);
+
 		if (queuedResponse) {
 			return queuedResponse;
 		}
@@ -76,6 +80,7 @@ export async function createConverterResponse(
 	}
 
 	const handler = converterHandlers[tool.id];
+
 	if (!handler) {
 		return json({ error: "Converter handler is not configured." }, 501);
 	}
@@ -86,6 +91,7 @@ export async function createConverterResponse(
 		if (error instanceof ConverterRequestError) {
 			return json({ error: error.message }, error.status);
 		}
+
 		throw error;
 	}
 }
@@ -104,11 +110,13 @@ async function createConverterPresetResponse(
 	}
 
 	const preset = params.get("preset");
+
 	if (!preset) {
 		return undefined;
 	}
 
 	const source = await readSlackmojiPresetSource(env, preset);
+
 	if (!source) {
 		return json({ error: "Preset not found." }, 404);
 	}
@@ -117,5 +125,6 @@ async function createConverterPresetResponse(
 		"Cache-Control": "public, max-age=3600",
 		"Content-Type": source.contentType,
 	});
+
 	return new Response(source.body, { headers });
 }

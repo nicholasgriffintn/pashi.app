@@ -1,14 +1,7 @@
-import {
-	type FormEvent,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { generateThing } from "./generate-api";
 import { useApiKey } from "./api-key-context";
+import { generateThing } from "./generate-api";
 import { fetchGeneratorInfo, type GeneratorInfoTool } from "./generator-info";
 import {
 	createImageResult,
@@ -23,11 +16,7 @@ import {
 import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
 import type { ResultStageValue } from "./result-types";
 
-function createInitialResult(
-	tool: GeneratorInfoTool,
-	values: GeneratorValues,
-	generateId: number,
-) {
+function createInitialResult(tool: GeneratorInfoTool, values: GeneratorValues, generateId: number) {
 	return tool.result.kind === "image"
 		? createImageResult(tool, values.input, values.fields, generateId)
 		: undefined;
@@ -62,18 +51,15 @@ export function useGeneratorConsole() {
 		notificationTimer.current = window.setTimeout(() => setNotification(""), 2400);
 	}, []);
 
-	const applyToolValues = useCallback(
-		(nextTool: GeneratorInfoTool, values: GeneratorValues) => {
-			setActiveToolId(nextTool.id);
-			setInput(values.input);
-			setFieldValues(values.fields);
-			setError("");
-			setResultMode("standard");
-			setIsLoading(false);
-			setResult(createInitialResult(nextTool, values, 0));
-		},
-		[],
-	);
+	const applyToolValues = useCallback((nextTool: GeneratorInfoTool, values: GeneratorValues) => {
+		setActiveToolId(nextTool.id);
+		setInput(values.input);
+		setFieldValues(values.fields);
+		setError("");
+		setResultMode("standard");
+		setIsLoading(false);
+		setResult(createInitialResult(nextTool, values, 0));
+	}, []);
 
 	const clearToolValues = useCallback(() => {
 		setActiveToolId("");
@@ -99,6 +85,7 @@ export function useGeneratorConsole() {
 				}
 
 				const nextTool = findToolByRoute(info.tools, getRouteToolId());
+
 				setTools(info.tools);
 				setExportFormats(info.exportFormats);
 				if (nextTool) {
@@ -106,6 +93,7 @@ export function useGeneratorConsole() {
 				} else {
 					clearToolValues();
 				}
+
 				notify("Generators ready");
 			})
 			.catch((caught) => {
@@ -131,8 +119,10 @@ export function useGeneratorConsole() {
 
 		function handlePopState() {
 			const nextTool = findToolByRoute(tools, getRouteToolId());
+
 			if (nextTool) {
 				applyToolValues(nextTool, getInitialValues(nextTool));
+
 				return;
 			}
 
@@ -140,6 +130,7 @@ export function useGeneratorConsole() {
 		}
 
 		window.addEventListener("popstate", handlePopState);
+
 		return () => window.removeEventListener("popstate", handlePopState);
 	}, [applyToolValues, clearToolValues, tools]);
 
@@ -150,21 +141,26 @@ export function useGeneratorConsole() {
 		if (!activeTool) {
 			setError("Generators are still loading.");
 			setIsLoading(false);
+
 			return;
 		}
 
 		if (activeTool.result.kind === "image") {
 			const hasFields = Boolean(activeTool.input.fields?.length);
+
 			if (!hasFields && !input.trim()) {
 				setError("Give Pashi something to generate.");
 				setIsLoading(false);
+
 				return;
 			}
 
 			const nextGenerateId = generateId + 1;
+
 			setGenerateId(nextGenerateId);
 			setResultMode("standard");
 			setResult(createImageResult(activeTool, input, fieldValues, nextGenerateId));
+
 			return;
 		}
 
@@ -175,6 +171,7 @@ export function useGeneratorConsole() {
 				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
 				apiKey,
 			);
+
 			setResultHistory((current) => appendResultHistory(current, result));
 			setResult(nextResult);
 			setResultMode(aiMode ? "ai" : "standard");
@@ -192,6 +189,7 @@ export function useGeneratorConsole() {
 
 	function handleToolChange(nextToolId: string) {
 		const nextTool = tools.find((tool) => tool.id === nextToolId);
+
 		if (!nextTool) {
 			return;
 		}

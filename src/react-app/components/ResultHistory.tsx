@@ -27,14 +27,19 @@ export function ResultHistory({
 	if (history.length === 0) {
 		return null;
 	}
-	const describe = describeResult ?? ((result: TextResultStageValue) => describeGenericResult(result, generatedAtLabel));
+
+	const describe =
+		describeResult ??
+		((result: TextResultStageValue) => describeGenericResult(result, generatedAtLabel));
 
 	return (
 		<aside className="result-history" aria-label={title}>
 			<header className="result-history-header">
 				<div>
 					<span>{title}</span>
-					<strong>{history.length} previous generation{history.length === 1 ? "" : "s"}</strong>
+					<strong>
+						{history.length} previous generation{history.length === 1 ? "" : "s"}
+					</strong>
 				</div>
 				{onClear ? (
 					<button onClick={onClear} type="button">
@@ -50,7 +55,9 @@ export function ResultHistory({
 					return (
 						<button
 							className="result-history-item"
-							key={result.generatedAt ?? `${result.type}-${description.heading}-${description.meta}`}
+							key={
+								result.generatedAt ?? `${result.type}-${description.heading}-${description.meta}`
+							}
 							onClick={() => onRestore?.(result)}
 							type="button"
 						>

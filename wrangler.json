@@ -5,9 +5,7 @@
 	"compatibility_date": "2025-10-08",
 	"workers_dev": false,
 	"preview_urls": false,
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
+	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
 		"ENABLE_AI": "false",
 		"ENABLE_CONVERSIONS": "true"
@@ -42,9 +40,7 @@
 	},
 	"migrations": [
 		{
-			"new_sqlite_classes": [
-				"ConversionContainer"
-			],
+			"new_sqlite_classes": ["ConversionContainer"],
 			"tag": "v1"
 		}
 	],
@@ -76,10 +72,6 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application",
-		"run_worker_first": [
-			"/api/*",
-			"/sitemap.xml",
-			"/export/*"
-		]
+		"run_worker_first": ["/api/*", "/sitemap.xml", "/export/*"]
 	}
 }

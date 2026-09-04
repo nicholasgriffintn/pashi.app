@@ -27,8 +27,10 @@ function applyExample(
 	onFieldChange: (fieldId: string, value: string) => void,
 ) {
 	const firstField = tool.input.fields?.[0];
+
 	if (!firstField) {
 		onInputChange(example);
+
 		return;
 	}
 
@@ -45,6 +47,7 @@ function shouldShowField(toolId: string, fieldId: string, fieldValues: Record<st
 	}
 
 	const format = fieldValues.format || "v4";
+
 	return format === "v3" || format === "v5";
 }
 
@@ -64,9 +67,10 @@ export function GeneratorForm({
 }: GeneratorFormProps) {
 	const hasFields = Boolean(activeTool.input.fields?.length);
 	const hasPrimaryInput = !hasFields && activeTool.input.mode !== "none";
-	const visibleExamples =
-		activeTool.input.mode === "none" ? [] : activeTool.display.examples;
-	const visibleFields = activeTool.input.fields?.filter((field) => shouldShowField(activeTool.id, field.id, fieldValues));
+	const visibleExamples = activeTool.input.mode === "none" ? [] : activeTool.display.examples;
+	const visibleFields = activeTool.input.fields?.filter((field) =>
+		shouldShowField(activeTool.id, field.id, fieldValues),
+	);
 	const supportsAiMode = activeTool.modes?.includes("ai") ?? false;
 
 	return (
@@ -131,15 +135,9 @@ export function GeneratorForm({
 			<div className="generate-actions">
 				{error ? <p className="error">{error}</p> : null}
 				{supportsAiMode ? (
-					<GenerationModeToggle
-						mode={generationMode}
-						onChange={onGenerationModeChange}
-					/>
+					<GenerationModeToggle mode={generationMode} onChange={onGenerationModeChange} />
 				) : null}
-				<GenerateButton
-					activeTool={activeTool}
-					isLoading={isLoading}
-				/>
+				<GenerateButton activeTool={activeTool} isLoading={isLoading} />
 			</div>
 		</form>
 	);
@@ -177,11 +175,7 @@ function GenerationModeToggle({
 				>
 					Standard
 				</button>
-				<button
-					aria-pressed={mode === "ai"}
-					onClick={() => onChange("ai")}
-					type="button"
-				>
+				<button aria-pressed={mode === "ai"} onClick={() => onChange("ai")} type="button">
 					AI
 				</button>
 			</div>

@@ -1,5 +1,11 @@
+import {
+	parseBoolean,
+	parseChoice,
+	parseInteger,
+	randomIntegerInRange,
+	singleOrList,
+} from "../../../utils/generation";
 import type { GeneratorRequest } from "../request";
-import { parseBoolean, parseChoice, parseInteger, randomIntegerInRange, singleOrList } from "../../../utils/generation";
 
 interface DiceNotation {
 	dice: number;
@@ -16,7 +22,10 @@ const DICE_EXPRESSION_PATTERN = /^(.+?)\s*(>=|<=|>|<|=)\s*(-?\d+)\s*$/;
 export function rollDice(request: GeneratorRequest) {
 	const notation = parseDiceRequest(request);
 	const rollCount = parseInteger(request.fields.count ?? request.fields.rolls ?? "", 1, 1, 25);
-	const showIndividual = parseBoolean(request.fields.showIndividual ?? request.fields.show_individual, true);
+	const showIndividual = parseBoolean(
+		request.fields.showIndividual ?? request.fields.show_individual,
+		true,
+	);
 	const rollSets = Array.from({ length: rollCount }, (_, index) =>
 		formatRollRecord(rollDiceSet(notation), notation, index + 1, showIndividual),
 	);
@@ -29,7 +38,12 @@ export function calculateDiceProbability(request: GeneratorRequest) {
 	const notation = parseDiceRequest(request);
 	const target = expression
 		? expression.target
-		: parseInteger(request.fields.target ?? "", notation.dice + notation.modifier, -100_000, 100_000);
+		: parseInteger(
+				request.fields.target ?? "",
+				notation.dice + notation.modifier,
+				-100_000,
+				100_000,
+			);
 	const comparison = expression?.comparison ?? normaliseComparison(request.fields.comparison);
 	const distribution = createDiceDistribution(notation);
 	const totalOutcomes = sumBigInts([...distribution.values()]);
@@ -53,10 +67,14 @@ export function calculateDiceProbability(request: GeneratorRequest) {
 
 function parseDiceNotation(value: string): DiceNotation {
 	const normalised = value.trim().toLowerCase();
-	const match = normalised.match(/^(\d*)d(\d+)([+-]\d+)?(?:\s+(drop|keep)\s+(lowest|highest)(?:\s+(\d+))?)?$/);
+	const match = normalised.match(
+		/^(\d*)d(\d+)([+-]\d+)?(?:\s+(drop|keep)\s+(lowest|highest)(?:\s+(\d+))?)?$/,
+	);
+
 	if (!match) {
 		return { dice: 1, dropHighest: 0, dropLowest: 0, keepHighest: 0, modifier: 0, sides: 6 };
 	}
+
 	const dice = parseInteger(match[1] || "1", 1, 1, 100);
 	const mechanicCount = parseInteger(match[6] ?? "", 1, 1, dice);
 	const mechanic = normaliseDiceMechanic(match[4], match[5], mechanicCount);
@@ -72,11 +90,18 @@ function parseDiceNotation(value: string): DiceNotation {
 }
 
 function parseDiceRequest(request: GeneratorRequest): DiceNotation {
-	if (request.fields.dice_type || request.fields.diceType || request.fields.num_dice || request.fields.numDice) {
+	if (
+		request.fields.dice_type ||
+		request.fields.diceType ||
+		request.fields.num_dice ||
+		request.fields.numDice
+	) {
 		return parseDiceFields(request);
 	}
 
-	return parseDiceNotation(parseDiceExpression(diceNotationInput(request))?.notation ?? diceNotationInput(request));
+	return parseDiceNotation(
+		parseDiceExpression(diceNotationInput(request))?.notation ?? diceNotationInput(request),
+	);
 }
 
 function diceNotationInput(request: GeneratorRequest) {
@@ -85,6 +110,7 @@ function diceNotationInput(request: GeneratorRequest) {
 
 function parseDiceExpression(value: string) {
 	const match = value.trim().match(DICE_EXPRESSION_PATTERN);
+
 	if (!match) {
 		return undefined;
 	}
@@ -97,10 +123,15 @@ function parseDiceExpression(value: string) {
 }
 
 function parseDiceFields(request: GeneratorRequest): DiceNotation {
-	const diceType = parseChoice(request.fields.dice_type ?? request.fields.diceType, DICE_TYPES, "d6");
-	const sides = diceType === "custom"
-		? parseInteger(request.fields.dice_sides ?? request.fields.diceSides ?? "", 6, 2, 1000)
-		: Number.parseInt(diceType.slice(1), 10);
+	const diceType = parseChoice(
+		request.fields.dice_type ?? request.fields.diceType,
+		DICE_TYPES,
+		"d6",
+	);
+	const sides =
+		diceType === "custom"
+			? parseInteger(request.fields.dice_sides ?? request.fields.diceSides ?? "", 6, 2, 1000)
+			: Number.parseInt(diceType.slice(1), 10);
 	const dice = parseInteger(request.fields.num_dice ?? request.fields.numDice ?? "", 1, 1, 100);
 	const mechanic = normaliseFieldMechanics(request, dice);
 
@@ -127,17 +158,37 @@ function normaliseDiceMechanic(
 }
 
 function normaliseFieldMechanics(request: GeneratorRequest, dice: number) {
-	const dropLowest = parseInteger(request.fields.drop_lowest ?? request.fields.dropLowest ?? "", 0, 0, Math.min(10, dice - 1));
-	const dropHighest = dropLowest > 0 ? 0 : parseInteger(request.fields.drop_highest ?? request.fields.dropHighest ?? "", 0, 0, Math.min(10, dice - 1));
-	const keepHighest = dropLowest > 0 || dropHighest > 0 ? 0 : parseInteger(request.fields.keep_highest ?? request.fields.keepHighest ?? "", 0, 0, dice);
+	const dropLowest = parseInteger(
+		request.fields.drop_lowest ?? request.fields.dropLowest ?? "",
+		0,
+		0,
+		Math.min(10, dice - 1),
+	);
+	const dropHighest =
+		dropLowest > 0
+			? 0
+			: parseInteger(
+					request.fields.drop_highest ?? request.fields.dropHighest ?? "",
+					0,
+					0,
+					Math.min(10, dice - 1),
+				);
+	const keepHighest =
+		dropLowest > 0 || dropHighest > 0
+			? 0
+			: parseInteger(request.fields.keep_highest ?? request.fields.keepHighest ?? "", 0, 0, dice);
 
 	return { dropHighest, dropLowest, keepHighest };
 }
 
 function rollDiceSet(notation: DiceNotation) {
-	const rolls = Array.from({ length: notation.dice }, () => 1 + randomIntegerInRange(notation.sides));
+	const rolls = Array.from(
+		{ length: notation.dice },
+		() => 1 + randomIntegerInRange(notation.sides),
+	);
 	const { dropped, kept } = applyDiceMechanic(rolls, notation);
 	const subtotal = kept.reduce((sum, roll) => sum + roll, 0);
+
 	return {
 		dropped,
 		kept,
@@ -168,15 +219,39 @@ function formatRollRecord(
 
 function applyDiceMechanic(rolls: number[], notation: DiceNotation) {
 	const sorted = rolls.map((value, index) => ({ index, value }));
+
 	if (notation.dropLowest > 0) {
-		return splitRolls(rolls, sorted.toSorted((left, right) => left.value - right.value).slice(0, notation.dropLowest).map((roll) => roll.index));
+		return splitRolls(
+			rolls,
+			sorted
+				.toSorted((left, right) => left.value - right.value)
+				.slice(0, notation.dropLowest)
+				.map((roll) => roll.index),
+		);
 	}
+
 	if (notation.dropHighest > 0) {
-		return splitRolls(rolls, sorted.toSorted((left, right) => right.value - left.value).slice(0, notation.dropHighest).map((roll) => roll.index));
+		return splitRolls(
+			rolls,
+			sorted
+				.toSorted((left, right) => right.value - left.value)
+				.slice(0, notation.dropHighest)
+				.map((roll) => roll.index),
+		);
 	}
+
 	if (notation.keepHighest > 0) {
-		const keptIndexes = new Set(sorted.toSorted((left, right) => right.value - left.value).slice(0, notation.keepHighest).map((roll) => roll.index));
-		return splitRolls(rolls, rolls.map((_, index) => index).filter((index) => !keptIndexes.has(index)));
+		const keptIndexes = new Set(
+			sorted
+				.toSorted((left, right) => right.value - left.value)
+				.slice(0, notation.keepHighest)
+				.map((roll) => roll.index),
+		);
+
+		return splitRolls(
+			rolls,
+			rolls.map((_, index) => index).filter((index) => !keptIndexes.has(index)),
+		);
 	}
 
 	return { dropped: [], kept: rolls };
@@ -184,6 +259,7 @@ function applyDiceMechanic(rolls: number[], notation: DiceNotation) {
 
 function splitRolls(rolls: number[], droppedIndexes: number[]) {
 	const droppedSet = new Set(droppedIndexes);
+
 	return {
 		dropped: rolls.filter((_, index) => droppedSet.has(index)),
 		kept: rolls.filter((_, index) => !droppedSet.has(index)),
@@ -198,10 +274,14 @@ function formatDiceNotation(notation: DiceNotation) {
 				? `+${notation.modifier}`
 				: `${notation.modifier}`;
 	const mechanic =
-		notation.dropLowest > 0 ? ` drop ${notation.dropLowest} lowest`
-		: notation.dropHighest > 0 ? ` drop ${notation.dropHighest} highest`
-		: notation.keepHighest > 0 ? ` keep highest ${notation.keepHighest}`
-		: "";
+		notation.dropLowest > 0
+			? ` drop ${notation.dropLowest} lowest`
+			: notation.dropHighest > 0
+				? ` drop ${notation.dropHighest} highest`
+				: notation.keepHighest > 0
+					? ` keep highest ${notation.keepHighest}`
+					: "";
+
 	return `${notation.dice}d${notation.sides}${modifier}${mechanic}`;
 }
 
@@ -211,17 +291,22 @@ function createDiceDistribution(notation: DiceNotation) {
 	}
 
 	if (notation.dice > 50 || notation.sides > 200 || notation.dice * notation.sides > 5000) {
-		throw new Error("Exact dice probability supports up to 50 dice, 200 sides, or 5000 dice-side combinations.");
+		throw new Error(
+			"Exact dice probability supports up to 50 dice, 200 sides, or 5000 dice-side combinations.",
+		);
 	}
 
 	let distribution = new Map<number, bigint>([[0, 1n]]);
+
 	for (let die = 0; die < notation.dice; die += 1) {
 		const next = new Map<number, bigint>();
+
 		for (const [sum, count] of distribution) {
 			for (let face = 1; face <= notation.sides; face += 1) {
 				addOutcome(next, sum + face, count);
 			}
 		}
+
 		distribution = next;
 	}
 
@@ -239,7 +324,9 @@ function createMechanicDistribution(notation: DiceNotation) {
 	function visit() {
 		if (rolls.length === notation.dice) {
 			const subtotal = applyDiceMechanic(rolls, notation).kept.reduce((sum, roll) => sum + roll, 0);
+
 			addOutcome(distribution, subtotal + notation.modifier, 1n);
+
 			return;
 		}
 
@@ -251,6 +338,7 @@ function createMechanicDistribution(notation: DiceNotation) {
 	}
 
 	visit();
+
 	return distribution;
 }
 

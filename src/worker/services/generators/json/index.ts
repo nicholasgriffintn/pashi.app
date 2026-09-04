@@ -1,11 +1,12 @@
-import type { GeneratorTool, JsonResult } from "../types";
 import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
+import { createAiResult } from "./ai";
+import { createChartResult } from "./charts";
+import { createCssResult } from "./css";
 import { createDateResult } from "./dates";
 import { createDesignResult } from "./design";
 import { createDeveloperResult } from "./developer";
 import { createEngineeringResult } from "./engineering";
-import { createCssResult } from "./css";
-import { createChartResult } from "./charts";
 import { createGamingResult } from "./gaming";
 import { createIdentifierResult } from "./identifiers";
 import { createNumberResult } from "./numbers";
@@ -14,7 +15,6 @@ import { createProductResult } from "./product";
 import { createSecurityResult } from "./security";
 import { createStringResult } from "./strings";
 import { createToolsResult } from "./tools";
-import { createAiResult } from "./ai";
 
 export async function createJsonResult(
 	generator: GeneratorTool,
@@ -22,16 +22,19 @@ export async function createJsonResult(
 	env?: Pick<Env, "AI">,
 ): Promise<JsonResult> {
 	const aiResult = await createAiResult(generator, request, env?.AI);
+
 	if (aiResult) {
 		return aiResult;
 	}
 
 	const engineeringResult = await createEngineeringResult(generator, request);
+
 	if (engineeringResult) {
 		return engineeringResult;
 	}
 
 	const securityResult = await createSecurityResult(generator, request);
+
 	if (securityResult) {
 		return securityResult;
 	}

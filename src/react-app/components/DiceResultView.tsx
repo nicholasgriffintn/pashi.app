@@ -114,11 +114,9 @@ function DiceFace({ diceType, value }: { diceType: string; value: string }) {
 
 	return (
 		<span className="dice-face" data-show-pips={Boolean(pipPositions)}>
-			{pipPositions ? (
-				pipPositions.map((position) => <span data-position={position} key={position} />)
-			) : (
-				value
-			)}
+			{pipPositions
+				? pipPositions.map((position) => <span data-position={position} key={position} />)
+				: value}
 		</span>
 	);
 }

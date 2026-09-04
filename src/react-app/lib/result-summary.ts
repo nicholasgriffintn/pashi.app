@@ -16,7 +16,10 @@ export interface ResultSummary {
 	title: string;
 }
 
-export function createResultSummary(result: ResultStageValue, generatedAtLabel: string): ResultSummary {
+export function createResultSummary(
+	result: ResultStageValue,
+	generatedAtLabel: string,
+): ResultSummary {
 	if (result.kind === "image") {
 		return createImageSummary(result, generatedAtLabel);
 	}
@@ -28,11 +31,16 @@ export function createResultSummary(result: ResultStageValue, generatedAtLabel: 
 	return createTextSummary(result, generatedAtLabel);
 }
 
-function createImageSummary(result: Extract<ResultStageValue, { kind: "image" }>, generatedAtLabel: string): ResultSummary {
+function createImageSummary(
+	result: Extract<ResultStageValue, { kind: "image" }>,
+	generatedAtLabel: string,
+): ResultSummary {
 	const details: ResultDetail[] = [
 		{ label: "Kind", value: "Image" },
 		...(result.downloadName ? [{ label: "Filename", value: result.downloadName }] : []),
-		...(result.sourceUrl ? [{ href: result.sourceUrl, label: "Source URL", value: result.sourceUrl }] : []),
+		...(result.sourceUrl
+			? [{ href: result.sourceUrl, label: "Source URL", value: result.sourceUrl }]
+			: []),
 		{ href: result.src, label: "Preview URL", value: result.src },
 		...createdAtDetail(result.generatedAt, generatedAtLabel),
 	];
@@ -45,7 +53,11 @@ function createImageSummary(result: Extract<ResultStageValue, { kind: "image" }>
 	};
 }
 
-function createSlackmojiSummary(items: SlackmojiBatchResult[], generatedAtLabel: string, generatedAt?: string): ResultSummary {
+function createSlackmojiSummary(
+	items: SlackmojiBatchResult[],
+	generatedAtLabel: string,
+	generatedAt?: string,
+): ResultSummary {
 	const complete = items.filter((item) => item.status === "complete").length;
 	const failed = items.filter((item) => item.status === "failed").length;
 	const ready = items.filter((item) => item.downloadUrl).length;
@@ -109,21 +121,29 @@ function resultMetrics(result: TextResultStageValue): ResultDetail[] {
 }
 
 function downloadDetails(result: TextResultStageValue): ResultDetail[] {
-	if (result.kind !== "fields" || typeof result.result === "string" || Array.isArray(result.result)) {
+	if (
+		result.kind !== "fields" ||
+		typeof result.result === "string" ||
+		Array.isArray(result.result)
+	) {
 		return [];
 	}
 
 	const details: ResultDetail[] = [];
 	const { downloadUrl, jobId, statusUrl } = result.result;
+
 	if (jobId) {
 		details.push({ label: "Job ID", value: jobId });
 	}
+
 	if ("downloadName" in result && result.downloadName) {
 		details.push({ label: "Filename", value: result.downloadName });
 	}
+
 	if (downloadUrl) {
 		details.push({ href: downloadUrl, label: "Download URL", value: downloadUrl });
 	}
+
 	if (statusUrl) {
 		details.push({ href: statusUrl, label: "Status URL", value: statusUrl });
 	}
@@ -133,6 +153,7 @@ function downloadDetails(result: TextResultStageValue): ResultDetail[] {
 
 function createdAtDetail(value: string | undefined, label: string): ResultDetail[] {
 	const formatted = formatGeneratedAt(value);
+
 	return formatted ? [{ label, value: formatted }] : [];
 }
 
@@ -153,5 +174,6 @@ function sourceSummary(input: string) {
 	}
 
 	const length = input.length;
+
 	return `Source input: ${length} character${length === 1 ? "" : "s"}`;
 }

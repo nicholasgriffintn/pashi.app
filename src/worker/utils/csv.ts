@@ -5,7 +5,7 @@ export function csvRow(values: readonly string[]) {
 }
 
 export function csvValue(value: string) {
-	return `"${value.replace(/"/g, "\"\"")}"`;
+	return `"${value.replace(/"/g, '""')}"`;
 }
 
 export function recordsToCsv(records: readonly StringRecord[]) {
@@ -14,6 +14,7 @@ export function recordsToCsv(records: readonly StringRecord[]) {
 	}
 
 	const columns = [...new Set(records.flatMap((record) => Object.keys(record)))];
+
 	return [
 		csvRow(columns),
 		...records.map((record) => csvRow(columns.map((column) => record[column] ?? ""))),
@@ -22,18 +23,19 @@ export function recordsToCsv(records: readonly StringRecord[]) {
 
 export function parseCsv(value: string): StringRecord[] {
 	const rows = parseCsvRows(value);
+
 	return recordsFromRows(rows);
 }
 
 export function parseTsv(value: string): StringRecord[] {
-	const rows = value
-		.split(/\r?\n/)
-		.map((row) => row.split("\t"));
+	const rows = value.split(/\r?\n/).map((row) => row.split("\t"));
+
 	return recordsFromRows(rows);
 }
 
 function recordsFromRows(rows: string[][]): StringRecord[] {
 	const [headers, ...body] = rows;
+
 	if (!headers?.length) {
 		return [];
 	}
@@ -41,7 +43,9 @@ function recordsFromRows(rows: string[][]): StringRecord[] {
 	return body
 		.filter((row) => row.some((cell) => cell.trim()))
 		.map((row) =>
-			Object.fromEntries(headers.map((header, index) => [header || `column_${index + 1}`, row[index] ?? ""])),
+			Object.fromEntries(
+				headers.map((header, index) => [header || `column_${index + 1}`, row[index] ?? ""]),
+			),
 		);
 }
 
@@ -55,13 +59,13 @@ function parseCsvRows(value: string) {
 		const char = value[index];
 		const nextChar = value[index + 1];
 
-		if (char === "\"" && inQuotes && nextChar === "\"") {
-			cell += "\"";
+		if (char === '"' && inQuotes && nextChar === '"') {
+			cell += '"';
 			index += 1;
 			continue;
 		}
 
-		if (char === "\"") {
+		if (char === '"') {
 			inQuotes = !inQuotes;
 			continue;
 		}
@@ -76,6 +80,7 @@ function parseCsvRows(value: string) {
 			if (char === "\r" && nextChar === "\n") {
 				index += 1;
 			}
+
 			row.push(cell);
 			rows.push(row);
 			row = [];
@@ -88,5 +93,6 @@ function parseCsvRows(value: string) {
 
 	row.push(cell);
 	rows.push(row);
+
 	return rows;
 }

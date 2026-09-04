@@ -1,5 +1,5 @@
-import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./pashi-info.ts";
 import { apiFetch } from "./api-request.ts";
+import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./pashi-info.ts";
 
 export type ConverterStatus = "available";
 export type ConverterRuntime = "container" | "worker";
@@ -108,7 +108,11 @@ export interface ConvertResult {
 }
 
 export function conversionJobStatus(result: ConvertResult) {
-	if (result.kind !== "fields" || typeof result.result === "string" || Array.isArray(result.result)) {
+	if (
+		result.kind !== "fields" ||
+		typeof result.result === "string" ||
+		Array.isArray(result.result)
+	) {
 		return undefined;
 	}
 
@@ -116,7 +120,11 @@ export function conversionJobStatus(result: ConvertResult) {
 }
 
 export function conversionJobStatusUrl(result: ConvertResult) {
-	if (result.kind !== "fields" || typeof result.result === "string" || Array.isArray(result.result)) {
+	if (
+		result.kind !== "fields" ||
+		typeof result.result === "string" ||
+		Array.isArray(result.result)
+	) {
 		return undefined;
 	}
 
@@ -127,11 +135,13 @@ export function conversionJobStatusUrl(result: ConvertResult) {
 
 export function isPendingConversionJob(result: ConvertResult) {
 	const status = conversionJobStatus(result);
+
 	return status === "processing" || status === "queued";
 }
 
 export async function fetchConverterInfo(): Promise<ConverterInfo> {
 	const body = await fetchPashiInfo<ApiInfoTool>();
+
 	if (!("tools" in body)) {
 		throw new Error("Could not load converters.");
 	}
@@ -145,6 +155,7 @@ export async function fetchConverterInfo(): Promise<ConverterInfo> {
 export async function fetchConversionJob(statusUrl: string, apiKey = ""): Promise<ConvertResult> {
 	const response = await apiFetch(statusUrl, apiKey);
 	const body = (await response.json()) as ConvertResult | { error?: string };
+
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Could not load conversion job.");
 	}
@@ -165,6 +176,7 @@ export async function convertThing(
 	});
 
 	const body = (await response.json()) as ConvertResult | { error?: string };
+
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Conversion failed.");
 	}
@@ -179,6 +191,7 @@ export async function convertFileThing(
 	apiKey = "",
 ): Promise<ConvertResult> {
 	const formData = new FormData();
+
 	formData.set("file", file);
 	for (const [key, value] of Object.entries(fields)) {
 		if (value) {
@@ -192,6 +205,7 @@ export async function convertFileThing(
 	});
 
 	const body = (await response.json()) as ConvertResult | { error?: string };
+
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Conversion failed.");
 	}
@@ -206,9 +220,11 @@ export async function convertQueuedThing(
 	apiKey = "",
 ): Promise<ConvertResult> {
 	const formData = new FormData();
+
 	if (file) {
 		formData.set("file", file);
 	}
+
 	for (const [key, value] of Object.entries(fields)) {
 		if (value) {
 			formData.set(key, value);
@@ -221,6 +237,7 @@ export async function convertQueuedThing(
 	});
 
 	const body = (await response.json()) as ConvertResult | { error?: string };
+
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Conversion failed.");
 	}
@@ -231,6 +248,7 @@ export async function convertQueuedThing(
 export async function fetchSlackmojiPresets(apiKey = ""): Promise<SlackmojiPreset[]> {
 	const response = await apiFetch("/api/slackmoji?presets=1", apiKey);
 	const body = (await response.json()) as SlackmojiPreset[] | { error?: string };
+
 	if (!response.ok) {
 		throw new Error("error" in body && body.error ? body.error : "Could not load presets.");
 	}
@@ -252,6 +270,7 @@ export async function convertImageThing(
 
 	if (!response.ok) {
 		const body = (await response.json().catch(() => ({}))) as { error?: string };
+
 		throw new Error(body.error || "Image conversion failed.");
 	}
 

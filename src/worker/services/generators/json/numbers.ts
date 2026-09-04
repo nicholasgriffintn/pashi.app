@@ -1,5 +1,3 @@
-import type { GeneratorRequest } from "../request";
-import type { GeneratorTool, JsonResult } from "../types";
 import {
 	parseBoolean,
 	parseCount,
@@ -11,9 +9,19 @@ import {
 	randomUnitInterval,
 	singleOrList,
 } from "../../../utils/generation";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { fieldsResult, textResult } from "./result";
 
-const NUMBER_TYPES = ["integer", "decimal", "prime", "percentage", "even", "odd", "negative"] as const;
+const NUMBER_TYPES = [
+	"integer",
+	"decimal",
+	"prime",
+	"percentage",
+	"even",
+	"odd",
+	"negative",
+] as const;
 
 export function createNumberResult(
 	generator: GeneratorTool,
@@ -39,6 +47,7 @@ function createNumbers(request: GeneratorRequest) {
 	const type = parseChoice(request.fields.type ?? request.fields.mode, NUMBER_TYPES, "integer");
 	const count = parseInteger(request.fields.count ?? "", 10, 1, 1000);
 	const values = Array.from({ length: count }, () => createNumberValue(request, type));
+
 	return singleOrList(values);
 }
 
@@ -64,6 +73,7 @@ function createNumberValue(request: GeneratorRequest, type: (typeof NUMBER_TYPES
 function createBinaryValues(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 10, 1000);
 	const bits = parseInteger(request.fields.bits ?? "", 8, 1, 64);
+
 	return Array.from({ length: count }, () => randomCharacters("01", bits));
 }
 
@@ -76,6 +86,7 @@ function createInteger(request: GeneratorRequest) {
 	const max = parseInteger(request.fields.max ?? "", 100, -1_000_000, 1_000_000);
 	const lower = Math.min(min, max);
 	const upper = Math.max(min, max);
+
 	return lower + randomIntegerInRange(upper - lower + 1);
 }
 
@@ -85,11 +96,13 @@ function createDecimal(request: GeneratorRequest) {
 	const decimals = parseInteger(request.fields.decimals ?? "", 2, 1, 10);
 	const lower = Math.min(min, max);
 	const upper = Math.max(min, max);
+
 	return (lower + randomUnitInterval() * (upper - lower)).toFixed(decimals);
 }
 
 function createPercentage(request: GeneratorRequest) {
 	const decimals = parseInteger(request.fields.decimals ?? "", 2, 0, 10);
+
 	return (randomUnitInterval() * 100).toFixed(decimals);
 }
 
@@ -98,6 +111,7 @@ function createNegativeInteger(request: GeneratorRequest) {
 	const max = parseInteger(request.fields.max ?? "", -1, -1_000_000, -1);
 	const lower = Math.min(min, max);
 	const upper = Math.max(min, max);
+
 	return lower + randomIntegerInRange(upper - lower + 1);
 }
 
@@ -119,6 +133,7 @@ function createParityInteger(request: GeneratorRequest, parity: 0 | 1) {
 
 function firstWithParity(value: number, parity: 0 | 1) {
 	const remainder = Math.abs(value % 2);
+
 	return remainder === parity ? value : value + 1;
 }
 
@@ -128,6 +143,7 @@ function createPrime(request: GeneratorRequest) {
 	const lower = Math.max(2, Math.min(min, max));
 	const upper = Math.max(2, Math.max(min, max));
 	const primes = primesInRange(lower, upper);
+
 	if (primes.length === 0) {
 		throw new Error("No prime number exists in the selected range.");
 	}
@@ -137,6 +153,7 @@ function createPrime(request: GeneratorRequest) {
 
 function primesInRange(min: number, max: number) {
 	const primes: number[] = [];
+
 	for (let value = min; value <= max; value += 1) {
 		if (isPrime(value)) {
 			primes.push(value);
@@ -150,12 +167,15 @@ function isPrime(value: number) {
 	if (value < 2) {
 		return false;
 	}
+
 	if (value === 2) {
 		return true;
 	}
+
 	if (value % 2 === 0) {
 		return false;
 	}
+
 	for (let divisor = 3; divisor * divisor <= value; divisor += 2) {
 		if (value % divisor === 0) {
 			return false;
@@ -172,10 +192,12 @@ function createBaseNumber(request: GeneratorRequest, base: 8 | 16) {
 	const uppercase = base === 16 ? parseBoolean(request.fields.uppercase, true) : false;
 	const unique = parseBoolean(request.fields.unique, false);
 	const digits = base === 16 ? "0123456789abcdef" : "01234567";
-	const prefix = includePrefix ? base === 16 ? "0x" : "0o" : "";
+	const prefix = includePrefix ? (base === 16 ? "0x" : "0o") : "";
 	const values = unique
 		? createUniqueBaseNumbers({ count, digits, length, prefix, uppercase })
-		: Array.from({ length: count }, () => createBaseNumberValue({ digits, length, prefix, uppercase }));
+		: Array.from({ length: count }, () =>
+				createBaseNumberValue({ digits, length, prefix, uppercase }),
+			);
 
 	return singleOrList(values);
 }
@@ -216,12 +238,14 @@ function createBaseNumberValue({
 	uppercase: boolean;
 }) {
 	const value = randomCharacters(digits, length);
+
 	return `${prefix}${uppercase ? value.toUpperCase() : value}`;
 }
 
 function createFraction(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 100);
 	const values = Array.from({ length: count }, () => createFractionRecord(request));
+
 	return singleOrList(values);
 }
 
@@ -256,6 +280,7 @@ function parseFractionType(value: string | undefined): FractionType {
 function createRawFraction(type: FractionType, maxNumerator: number, maxDenominator: number) {
 	if (type === "proper") {
 		const denominator = randomIntegerInRange(maxDenominator - 1) + 2;
+
 		return {
 			denominator,
 			numerator: randomIntegerInRange(Math.min(maxNumerator, denominator - 1)) + 1,
@@ -266,6 +291,7 @@ function createRawFraction(type: FractionType, maxNumerator: number, maxDenomina
 		const denominator = randomIntegerInRange(maxDenominator - 1) + 2;
 		const whole = randomIntegerInRange(maxNumerator) + 1;
 		const numerator = randomIntegerInRange(denominator - 1) + 1;
+
 		return {
 			denominator,
 			numerator: whole * denominator + numerator,
@@ -275,11 +301,13 @@ function createRawFraction(type: FractionType, maxNumerator: number, maxDenomina
 	const denominator = randomIntegerInRange(maxDenominator - 1) + 2;
 	const numeratorMax = Math.max(maxNumerator, denominator);
 	const numerator = denominator + randomIntegerInRange(numeratorMax - denominator + 1);
+
 	return { denominator, numerator };
 }
 
 function simplifyFraction(numerator: number, denominator: number) {
 	const divisor = greatestCommonDivisor(numerator, denominator);
+
 	return {
 		denominator: denominator / divisor,
 		numerator: numerator / divisor,
@@ -309,9 +337,11 @@ function formatMixedNumber(value: { denominator: number; numerator: number; whol
 function greatestCommonDivisor(left: number, right: number): number {
 	let a = Math.abs(left);
 	let b = Math.abs(right);
+
 	while (b !== 0) {
 		[a, b] = [b, a % b];
 	}
+
 	return a || 1;
 }
 

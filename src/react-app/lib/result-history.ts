@@ -3,8 +3,12 @@ import type { ResultStageValue, TextResultStageValue } from "./result-types";
 const RESULT_HISTORY_TOOL_LIMIT = 5;
 const RESULT_HISTORY_TOTAL_LIMIT = 40;
 
-export function isHistoryResult(result: ResultStageValue | undefined): result is TextResultStageValue {
-	return Boolean(result && (result.kind === "fields" || result.kind === "palette" || result.kind === "text"));
+export function isHistoryResult(
+	result: ResultStageValue | undefined,
+): result is TextResultStageValue {
+	return Boolean(
+		result && (result.kind === "fields" || result.kind === "palette" || result.kind === "text"),
+	);
 }
 
 export function appendResultHistory(
@@ -28,6 +32,7 @@ export function appendResultHistory(
 			}
 
 			toolCount += 1;
+
 			return toolCount <= RESULT_HISTORY_TOOL_LIMIT;
 		})
 		.slice(0, RESULT_HISTORY_TOTAL_LIMIT);
@@ -41,9 +46,7 @@ export function resultHistoryForResult(
 		return [];
 	}
 
-	return history
-		.filter(isHistoryResult)
-		.filter((item) => item.type === result.type);
+	return history.filter(isHistoryResult).filter((item) => item.type === result.type);
 }
 
 export function clearResultHistoryForResult(

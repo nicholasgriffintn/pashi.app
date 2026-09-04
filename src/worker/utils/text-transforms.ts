@@ -126,7 +126,11 @@ export function isTextTransformFormat(value: string): value is TextTransformForm
 	return TEXT_TRANSFORM_FORMATS.some((format) => format === value);
 }
 
-export function transformText(input: string, format: TextTransformFormat, fields: Record<string, string> = {}) {
+export function transformText(
+	input: string,
+	format: TextTransformFormat,
+	fields: Record<string, string> = {},
+) {
 	switch (format) {
 		case "ascii-decimal":
 			return codePoints(input, 10);
@@ -135,9 +139,13 @@ export function transformText(input: string, format: TextTransformFormat, fields
 		case "ascii-octal":
 			return codePoints(input, 8);
 		case "binary":
-			return bytes(input).map((byte) => byte.toString(2).padStart(8, "0")).join(" ");
+			return bytes(input)
+				.map((byte) => byte.toString(2).padStart(8, "0"))
+				.join(" ");
 		case "camel":
-			return words(input).map((word, index) => index === 0 ? word.toLowerCase() : capitalise(word.toLowerCase())).join("");
+			return words(input)
+				.map((word, index) => (index === 0 ? word.toLowerCase() : capitalise(word.toLowerCase())))
+				.join("");
 		case "character-count":
 			return String([...input].length);
 		case "dedupe-words":
@@ -147,15 +155,25 @@ export function transformText(input: string, format: TextTransformFormat, fields
 		case "from-hex":
 			return decodeBytes(input, 16);
 		case "hashtags":
-			return words(input).map((word) => `#${word}`).join(" ");
+			return words(input)
+				.map((word) => `#${word}`)
+				.join(" ");
 		case "hex":
-			return bytes(input).map((byte) => byte.toString(16).padStart(2, "0")).join(" ");
+			return bytes(input)
+				.map((byte) => byte.toString(16).padStart(2, "0"))
+				.join(" ");
 		case "kebab":
-			return words(input).map((word) => word.toLowerCase()).join("-");
+			return words(input)
+				.map((word) => word.toLowerCase())
+				.join("-");
 		case "leet":
 			return input.replace(/[aeilost]/gi, (char) => LEET_REPLACEMENTS[char.toLowerCase()] ?? char);
 		case "list":
-			return input.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean).join("\n");
+			return input
+				.split(/\r?\n|,/)
+				.map((item) => item.trim())
+				.filter(Boolean)
+				.join("\n");
 		case "lowercase":
 			return input.toLowerCase();
 		case "normalize-nfc":
@@ -175,15 +193,24 @@ export function transformText(input: string, format: TextTransformFormat, fields
 		case "sentence-count":
 			return String(sentences(input).length);
 		case "snake":
-			return words(input).map((word) => word.toLowerCase()).join("_");
+			return words(input)
+				.map((word) => word.toLowerCase())
+				.join("_");
 		case "sort-lines":
-			return input.split(/\r?\n/).sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" })).join("\n");
+			return input
+				.split(/\r?\n/)
+				.sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" }))
+				.join("\n");
 		case "title":
-			return words(input).map((word) => capitalise(word.toLowerCase())).join(" ");
+			return words(input)
+				.map((word) => capitalise(word.toLowerCase()))
+				.join(" ");
 		case "text-size": {
 			const byteCount = bytes(input).length;
+
 			return `${byteCount} ${byteCount === 1 ? "byte" : "bytes"}`;
 		}
+
 		case "unicode-escape":
 			return unicodeEscape(input);
 		case "unicode-unescape":
@@ -193,7 +220,10 @@ export function transformText(input: string, format: TextTransformFormat, fields
 		case "uppercase":
 			return input.toUpperCase();
 		case "upside-down":
-			return [...input.toLowerCase()].reverse().map((char) => UPSIDE_DOWN_REPLACEMENTS[char] ?? char).join("");
+			return [...input.toLowerCase()]
+				.reverse()
+				.map((char) => UPSIDE_DOWN_REPLACEMENTS[char] ?? char)
+				.join("");
 		case "url-decode":
 			return decodeUrlComponent(input);
 		case "url-encode":
@@ -218,8 +248,10 @@ function sentences(input: string) {
 function uniqueBy(values: string[], keyFor: (value: string) => string) {
 	const seen = new Set<string>();
 	const output: string[] = [];
+
 	for (const value of values) {
 		const key = keyFor(value);
+
 		if (seen.has(key)) {
 			continue;
 		}
@@ -233,6 +265,7 @@ function uniqueBy(values: string[], keyFor: (value: string) => string) {
 
 function repeatInput(input: string, countValue: string | undefined) {
 	const count = parseInteger(countValue ?? "", 2, 1, 100);
+
 	return Array.from({ length: count }, () => input).join("\n");
 }
 
@@ -242,12 +275,16 @@ function replaceText(input: string, search: string | undefined, replacement: str
 
 function wordFrequency(input: string) {
 	const counts = new Map<string, number>();
+
 	for (const word of words(input).map((value) => value.toLowerCase())) {
 		counts.set(word, (counts.get(word) ?? 0) + 1);
 	}
 
 	return [...counts.entries()]
-		.sort(([leftWord, leftCount], [rightWord, rightCount]) => rightCount - leftCount || leftWord.localeCompare(rightWord))
+		.sort(
+			([leftWord, leftCount], [rightWord, rightCount]) =>
+				rightCount - leftCount || leftWord.localeCompare(rightWord),
+		)
 		.map(([word, count]) => `${word}: ${count}`)
 		.join("\n");
 }
@@ -266,6 +303,7 @@ function decodeBytes(input: string, radix: number) {
 		.split(/[\s,]+/)
 		.filter(Boolean)
 		.map((value) => parseByteToken(value, radix));
+
 	if (values.some((value) => !Number.isInteger(value) || value < 0 || value > 255)) {
 		throw new TextTransformError("Encoded text contains an invalid byte.");
 	}
@@ -305,15 +343,19 @@ function codePoints(input: string, radix: number) {
 }
 
 function unicodeEscape(input: string) {
-	return [...input].map((char) => {
-		const codePoint = char.codePointAt(0) ?? 0;
-		if (codePoint <= 0xffff) {
-			return escapeCodeUnit(codePoint);
-		}
+	return [...input]
+		.map((char) => {
+			const codePoint = char.codePointAt(0) ?? 0;
 
-		const value = codePoint - 0x10000;
-		return `${escapeCodeUnit((value >> 10) + 0xd800)}${escapeCodeUnit((value & 0x3ff) + 0xdc00)}`;
-	}).join("");
+			if (codePoint <= 0xffff) {
+				return escapeCodeUnit(codePoint);
+			}
+
+			const value = codePoint - 0x10000;
+
+			return `${escapeCodeUnit((value >> 10) + 0xd800)}${escapeCodeUnit((value & 0x3ff) + 0xdc00)}`;
+		})
+		.join("");
 }
 
 function unicodeUnescape(input: string) {

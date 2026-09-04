@@ -11,6 +11,7 @@ export function hasQueuedConversionServices(env: FeatureEnv | undefined) {
 	}
 
 	const services = createServiceStatus(env);
+
 	return (
 		services.conversionBucket.available &&
 		services.conversionContainer.available &&

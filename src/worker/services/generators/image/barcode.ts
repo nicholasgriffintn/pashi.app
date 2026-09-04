@@ -1,7 +1,7 @@
-import type { GeneratorRequest } from "../request";
-import { escapeXml } from "../../../utils/text";
 import { parseInteger } from "../../../utils/generation";
 import { json } from "../../../utils/http";
+import { escapeXml } from "../../../utils/text";
+import type { GeneratorRequest } from "../request";
 
 const CODE_128_PATTERNS = [
 	"212222",
@@ -115,6 +115,7 @@ const CODE_128_PATTERNS = [
 
 export function createBarcodeResponse(request: GeneratorRequest) {
 	const value = request.fields.value?.trim() || request.input || "PASHI";
+
 	if (!isCode128BValue(value)) {
 		return json({ error: "Barcode supports ASCII characters from space to tilde." }, 400);
 	}
@@ -127,7 +128,14 @@ export function createBarcodeResponse(request: GeneratorRequest) {
 	const barHeight = showText ? height - 34 : height - 18;
 	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="Barcode for ${escapeXml(value)}">
 <rect width="100%" height="100%" fill="#fff7d7"/>
-${modules.split("").map((bit, index) => bit === "1" ? `<rect x="${16 + index * scale}" y="12" width="${scale}" height="${barHeight}" fill="#0d1024"/>` : "").join("")}
+${modules
+	.split("")
+	.map((bit, index) =>
+		bit === "1"
+			? `<rect x="${16 + index * scale}" y="12" width="${scale}" height="${barHeight}" fill="#0d1024"/>`
+			: "",
+	)
+	.join("")}
 ${showText ? `<text x="${width / 2}" y="${height - 12}" text-anchor="middle" font-family="monospace" font-size="16" fill="#0d1024">${escapeXml(value)}</text>` : ""}
 </svg>`;
 
@@ -142,15 +150,16 @@ ${showText ? `<text x="${width / 2}" y="${height - 12}" text-anchor="middle" fon
 
 function createCode128Modules(value: string) {
 	const codes = [104, ...Array.from(value, (character) => character.charCodeAt(0) - 32)];
-	const checksum = codes.reduce(
-		(sum, code, index) => sum + (index === 0 ? code : code * index),
-		0,
-	) % 103;
+	const checksum =
+		codes.reduce((sum, code, index) => sum + (index === 0 ? code : code * index), 0) % 103;
+
 	return [...codes, checksum, 106]
 		.map((code) => CODE_128_PATTERNS[code])
 		.join("")
 		.split("")
-		.flatMap((width, index) => Array.from({ length: Number.parseInt(width, 10) }, () => index % 2 === 0 ? "1" : "0"))
+		.flatMap((width, index) =>
+			Array.from({ length: Number.parseInt(width, 10) }, () => (index % 2 === 0 ? "1" : "0")),
+		)
 		.join("");
 }
 

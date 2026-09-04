@@ -21,12 +21,18 @@ function normaliseEffectToken(value: string) {
 	return value.trim().toLowerCase().replace(/^:+/, "").replace(/:+$/, "");
 }
 
-export type ConversionOperationFields = Partial<Record<(typeof CONVERSION_OPERATION_FIELD_IDS)[number], string>>;
+export type ConversionOperationFields = Partial<
+	Record<(typeof CONVERSION_OPERATION_FIELD_IDS)[number], string>
+>;
 
-export function createConversionOperationFields(fields: Record<string, string>): ConversionOperationFields {
+export function createConversionOperationFields(
+	fields: Record<string, string>,
+): ConversionOperationFields {
 	const operationFields: ConversionOperationFields = {};
+
 	for (const key of CONVERSION_OPERATION_FIELD_IDS) {
 		const value = fields[key]?.trim();
+
 		if (!value) {
 			continue;
 		}
@@ -37,9 +43,11 @@ export function createConversionOperationFields(fields: Record<string, string>):
 				.map((effect) => normaliseEffectToken(effect))
 				.filter(Boolean);
 			const selectedEffect = effects.find((effect) => effect !== "none") ?? effects[0];
+
 			if (selectedEffect && SAFE_CONVERSION_FIELD_PATTERN.test(selectedEffect)) {
 				operationFields.effect = selectedEffect;
 			}
+
 			continue;
 		}
 

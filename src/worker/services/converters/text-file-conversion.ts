@@ -1,4 +1,10 @@
-import { isStringArray, isStringRecord, isStringRecordArray, type StringRecord, uniqueKeys } from "../../../shared/records.ts";
+import {
+	isStringArray,
+	isStringRecord,
+	isStringRecordArray,
+	type StringRecord,
+	uniqueKeys,
+} from "../../../shared/records.ts";
 import { csvRow, parseCsv, parseTsv, recordsToCsv } from "../../utils/csv.ts";
 import {
 	parseKeyValueText,
@@ -16,9 +22,38 @@ import {
 } from "../../utils/structured-data.ts";
 import { escapeXml } from "../../utils/text.ts";
 
-export type TextFileFormat = "csv" | "env" | "html" | "ini" | "json" | "md" | "properties" | "sql" | "toml" | "tsv" | "txt" | "xls" | "xml" | "yaml";
+export type TextFileFormat =
+	| "csv"
+	| "env"
+	| "html"
+	| "ini"
+	| "json"
+	| "md"
+	| "properties"
+	| "sql"
+	| "toml"
+	| "tsv"
+	| "txt"
+	| "xls"
+	| "xml"
+	| "yaml";
 
-export const TEXT_FILE_FORMATS: readonly TextFileFormat[] = ["txt", "md", "json", "csv", "tsv", "html", "xls", "yaml", "toml", "xml", "ini", "properties", "env", "sql"];
+export const TEXT_FILE_FORMATS: readonly TextFileFormat[] = [
+	"txt",
+	"md",
+	"json",
+	"csv",
+	"tsv",
+	"html",
+	"xls",
+	"yaml",
+	"toml",
+	"xml",
+	"ini",
+	"properties",
+	"env",
+	"sql",
+];
 
 export function isTextFileFormat(value: string): value is TextFileFormat {
 	return TEXT_FILE_FORMATS.some((format) => format === value);
@@ -63,11 +98,7 @@ export function convertTextFileContent(
 	};
 }
 
-function createConvertedContent(
-	input: string,
-	outputFormat: TextFileFormat,
-	sourceName: string,
-) {
+function createConvertedContent(input: string, outputFormat: TextFileFormat, sourceName: string) {
 	const source = readSourceContent(input, sourceName);
 
 	switch (outputFormat) {
@@ -111,6 +142,7 @@ interface SourceContent {
 
 function readSourceContent(input: string, sourceName = "file"): SourceContent {
 	const parsedJson = parseJson(input);
+
 	if (isStringRecordArray(parsedJson)) {
 		return {
 			records: parsedJson,
@@ -137,6 +169,7 @@ function readSourceContent(input: string, sourceName = "file"): SourceContent {
 	}
 
 	const xmlRecords = shouldPreferXmlSource(sourceName, input) ? parseXmlRecords(input) : [];
+
 	if (xmlRecords.length > 0) {
 		return {
 			records: xmlRecords,
@@ -146,6 +179,7 @@ function readSourceContent(input: string, sourceName = "file"): SourceContent {
 	}
 
 	const keyValues = parseKeyValueText(input);
+
 	if (keyValues && shouldPreferKeyValueSource(sourceName, input)) {
 		return {
 			keyValues,
@@ -156,6 +190,7 @@ function readSourceContent(input: string, sourceName = "file"): SourceContent {
 	}
 
 	const tsvRecords = shouldPreferTsvSource(sourceName, input) ? parseTsv(input) : [];
+
 	if (tsvRecords.length > 0) {
 		return {
 			records: tsvRecords,
@@ -165,6 +200,7 @@ function readSourceContent(input: string, sourceName = "file"): SourceContent {
 	}
 
 	const csvRecords = parseCsv(input);
+
 	if (csvRecords.length > 0) {
 		return {
 			records: csvRecords,
@@ -225,10 +261,14 @@ function convertToJson(source: SourceContent, sourceName: string) {
 		return JSON.stringify(source.values, null, 2);
 	}
 
-	return JSON.stringify({
-		content: source.text,
-		name: sourceName,
-	}, null, 2);
+	return JSON.stringify(
+		{
+			content: source.text,
+			name: sourceName,
+		},
+		null,
+		2,
+	);
 }
 
 function convertToMarkdown(source: SourceContent, sourceName: string) {
@@ -251,15 +291,15 @@ function createHtmlDocument(source: SourceContent, sourceName: string) {
 	const body = source.keyValues
 		? recordsToHtmlTable([source.keyValues])
 		: source.records.length > 0
-		? recordsToHtmlTable(source.records)
-		: `<pre>${escapeXml(source.text)}</pre>`;
+			? recordsToHtmlTable(source.records)
+			: `<pre>${escapeXml(source.text)}</pre>`;
 
 	return [
 		"<!doctype html>",
 		"<html>",
 		"<head>",
 		`\t<title>${escapeXml(sourceName)}</title>`,
-		"\t<meta charset=\"utf-8\">",
+		'\t<meta charset="utf-8">',
 		"</head>",
 		"<body>",
 		`\t${body}`,
@@ -272,8 +312,8 @@ function createExcelHtmlDocument(source: SourceContent, sourceName: string) {
 	const body = source.keyValues
 		? recordsToHtmlTable([source.keyValues])
 		: source.records.length > 0
-		? recordsToHtmlTable(source.records)
-		: recordsToHtmlTable([{ content: source.text }]);
+			? recordsToHtmlTable(source.records)
+			: recordsToHtmlTable([{ content: source.text }]);
 
 	return [
 		"<html>",
@@ -326,6 +366,7 @@ function convertToXml(source: SourceContent) {
 
 function convertToKeyValue(source: SourceContent, outputFormat: "env" | "ini" | "properties") {
 	const record = source.keyValues ?? source.records[0] ?? { content: source.text };
+
 	if (outputFormat === "env") {
 		return recordToEnv(record);
 	}
@@ -338,11 +379,15 @@ function convertToSql(source: SourceContent, sourceName: string) {
 		return recordsToSqlInserts(source.records, sourceNameStem(sourceName));
 	}
 
-	return recordsToSqlInserts([source.keyValues ?? { content: source.text }], sourceNameStem(sourceName));
+	return recordsToSqlInserts(
+		[source.keyValues ?? { content: source.text }],
+		sourceNameStem(sourceName),
+	);
 }
 
 function recordsToMarkdownTable(records: readonly StringRecord[]) {
 	const columns = uniqueKeys(records);
+
 	if (columns.length === 0) {
 		return "";
 	}
@@ -350,12 +395,16 @@ function recordsToMarkdownTable(records: readonly StringRecord[]) {
 	return [
 		`| ${columns.map(markdownTableCell).join(" | ")} |`,
 		`| ${columns.map(() => "---").join(" | ")} |`,
-		...records.map((record) => `| ${columns.map((column) => markdownTableCell(record[column] ?? "")).join(" | ")} |`),
+		...records.map(
+			(record) =>
+				`| ${columns.map((column) => markdownTableCell(record[column] ?? "")).join(" | ")} |`,
+		),
 	].join("\n");
 }
 
 function recordsToTsv(records: readonly StringRecord[]) {
 	const columns = uniqueKeys(records);
+
 	if (columns.length === 0) {
 		return "";
 	}
@@ -376,6 +425,7 @@ function markdownTableCell(value: string) {
 
 function recordsToHtmlTable(records: readonly StringRecord[]) {
 	const columns = uniqueKeys(records);
+
 	if (columns.length === 0) {
 		return "";
 	}
@@ -386,7 +436,10 @@ function recordsToHtmlTable(records: readonly StringRecord[]) {
 		`\t\t<tr>${columns.map((column) => `<th>${escapeXml(column)}</th>`).join("")}</tr>`,
 		"\t</thead>",
 		"\t<tbody>",
-		...records.map((record) => `\t\t<tr>${columns.map((column) => `<td>${escapeXml(record[column] ?? "")}</td>`).join("")}</tr>`),
+		...records.map(
+			(record) =>
+				`\t\t<tr>${columns.map((column) => `<td>${escapeXml(record[column] ?? "")}</td>`).join("")}</tr>`,
+		),
 		"\t</tbody>",
 		"</table>",
 	].join("\n");
@@ -403,7 +456,7 @@ function stripHtml(input: string) {
 		.replace(/&amp;/g, "&")
 		.replace(/&lt;/g, "<")
 		.replace(/&gt;/g, ">")
-		.replace(/&quot;/g, "\"")
+		.replace(/&quot;/g, '"')
 		.replace(/&#39;|&apos;/g, "'")
 		.trim();
 }
@@ -418,21 +471,40 @@ function parseJson(input: string) {
 
 function shouldPreferKeyValueSource(sourceName: string, input: string) {
 	const extension = sourceName.toLowerCase().split(".").pop();
-	if (extension === "env" || extension === "ini" || extension === "properties" || extension === "toml") {
+
+	if (
+		extension === "env" ||
+		extension === "ini" ||
+		extension === "properties" ||
+		extension === "toml"
+	) {
 		return true;
 	}
 
-	const nonEmptyLines = input.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-	return nonEmptyLines.length > 0 && nonEmptyLines.every((line) => /^(?:export\s+)?[A-Za-z_][\w.-]*\s*[=:]/.test(line));
+	const nonEmptyLines = input
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+
+	return (
+		nonEmptyLines.length > 0 &&
+		nonEmptyLines.every((line) => /^(?:export\s+)?[A-Za-z_][\w.-]*\s*[=:]/.test(line))
+	);
 }
 
 function shouldPreferXmlSource(sourceName: string, input: string) {
 	const extension = sourceName.toLowerCase().split(".").pop();
+
 	return extension === "xml" || /^\s*<\?xml\b/i.test(input);
 }
 
 function shouldPreferTsvSource(sourceName: string, input: string) {
 	const extension = sourceName.toLowerCase().split(".").pop();
 	const firstLine = input.split(/\r?\n/, 1)[0] ?? "";
-	return extension === "tsv" || extension === "tab" || (firstLine.includes("\t") && !firstLine.includes(","));
+
+	return (
+		extension === "tsv" ||
+		extension === "tab" ||
+		(firstLine.includes("\t") && !firstLine.includes(","))
+	);
 }

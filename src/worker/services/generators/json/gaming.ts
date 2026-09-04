@@ -1,7 +1,7 @@
+import { parseInteger, randomIntegerInRange, shuffle } from "../../../utils/generation";
+import { KANTO_POKEMON, POKEMON_TYPES, type Pokemon } from "../data/pokemon";
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
-import { KANTO_POKEMON, POKEMON_TYPES, type Pokemon } from "../data/pokemon";
-import { parseInteger, randomIntegerInRange, shuffle } from "../../../utils/generation";
 import { calculateDiceProbability, rollDice } from "./dice";
 import { fieldsResult, textResult } from "./result";
 
@@ -29,7 +29,8 @@ export function createGamingResult(
 
 function createCoinFlips(request: GeneratorRequest) {
 	const count = parseInteger(request.fields.count ?? request.input, 1, 1, 100);
-	return Array.from({ length: count }, () => randomIntegerInRange(2) === 1 ? "HEADS" : "TAILS");
+
+	return Array.from({ length: count }, () => (randomIntegerInRange(2) === 1 ? "HEADS" : "TAILS"));
 }
 
 function createLottery(request: GeneratorRequest) {
@@ -55,21 +56,27 @@ function createMinecraftSeed() {
 	const low = BigInt(randomIntegerInRange(0x1_0000_0000));
 	const unsigned = (high << 32n) | low;
 	const signed = unsigned > 0x7fff_ffff_ffff_ffffn ? unsigned - 0x1_0000_0000_0000_0000n : unsigned;
+
 	return `${signed}`;
 }
 
 function createPokemon(request: GeneratorRequest) {
 	const type = normalisePokemonType(request.fields.type);
-	const pool = type === "any" ? KANTO_POKEMON : KANTO_POKEMON.filter((pokemon) => pokemon.types.includes(type));
+	const pool =
+		type === "any"
+			? KANTO_POKEMON
+			: KANTO_POKEMON.filter((pokemon) => pokemon.types.includes(type));
 	const count = parseInteger(request.fields.count ?? "", 1, 1, Math.min(100, pool.length));
 	const entries = shuffle(pool).slice(0, count).map(formatPokemon);
+
 	return entries.length === 1 ? entries[0] : entries;
 }
 
 function normalisePokemonType(value: string | undefined) {
 	const type = value?.trim().toLowerCase();
+
 	return POKEMON_TYPES.includes(type as (typeof POKEMON_TYPES)[number])
-		? type as (typeof POKEMON_TYPES)[number]
+		? (type as (typeof POKEMON_TYPES)[number])
 		: "any";
 }
 

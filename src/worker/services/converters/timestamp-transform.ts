@@ -51,8 +51,13 @@ export function isTimestampTransformFormat(value: string): value is TimestampTra
 	return TIMESTAMP_TRANSFORM_FORMATS.some((format) => format === value);
 }
 
-export function transformTimestamp(input: string, format: TimestampTransformFormat, fields: Record<string, string>) {
+export function transformTimestamp(
+	input: string,
+	format: TimestampTransformFormat,
+	fields: Record<string, string>,
+) {
 	const date = parseTimestamp(input);
+
 	switch (format) {
 		case "add":
 			return addTime(date, fields, 1).toISOString();
@@ -77,6 +82,7 @@ export function transformTimestamp(input: string, format: TimestampTransformForm
 
 function parseTimestamp(input: string) {
 	const value = input.trim();
+
 	if (!value) {
 		throw new TimestampTransformError("Enter a timestamp or date.");
 	}
@@ -84,6 +90,7 @@ function parseTimestamp(input: string) {
 	if (/^-?\d+$/.test(value)) {
 		const numeric = Number(value);
 		const milliseconds = Math.abs(numeric) < 10_000_000_000 ? numeric * 1000 : numeric;
+
 		return validDate(new Date(milliseconds));
 	}
 
@@ -101,6 +108,7 @@ function validDate(date: Date) {
 function addTime(date: Date, fields: Record<string, string>, direction: 1 | -1) {
 	const amount = Number.parseFloat(fields.amount ?? "1");
 	const unit = UNIT_MILLISECONDS[(fields.unit ?? "days").trim().toLowerCase()];
+
 	if (!Number.isFinite(amount) || !unit) {
 		throw new TimestampTransformError("Enter a numeric amount and supported unit.");
 	}
@@ -111,17 +119,23 @@ function addTime(date: Date, fields: Record<string, string>, direction: 1 | -1) 
 function timestampDifference(start: Date, end: Date) {
 	const milliseconds = Math.abs(end.getTime() - start.getTime());
 	const seconds = Math.floor(milliseconds / 1000);
-	return JSON.stringify({
-		days: Math.floor(seconds / 86_400),
-		hours: Math.floor(seconds / 3600),
-		milliseconds,
-		minutes: Math.floor(seconds / 60),
-		seconds,
-	}, null, 2);
+
+	return JSON.stringify(
+		{
+			days: Math.floor(seconds / 86_400),
+			hours: Math.floor(seconds / 3600),
+			milliseconds,
+			minutes: Math.floor(seconds / 60),
+			seconds,
+		},
+		null,
+		2,
+	);
 }
 
 function discordTimestamp(date: Date, styleInput: string | undefined) {
 	const style = DISCORD_STYLES[(styleInput ?? "full").trim().toLowerCase()] ?? "F";
+
 	return `<t:${Math.floor(date.getTime() / 1000)}:${style}>`;
 }
 

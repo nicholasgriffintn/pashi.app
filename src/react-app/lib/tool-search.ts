@@ -11,12 +11,14 @@ export interface SearchableTool {
 
 export function searchTools<Tool extends SearchableTool>(tools: Tool[], query: string) {
 	const tokens = normaliseSearchText(query).split(" ").filter(Boolean);
+
 	if (tokens.length === 0) {
 		return tools;
 	}
 
 	return tools.filter((tool) => {
 		const haystack = normaliseSearchText(buildToolSearchText(tool));
+
 		return tokens.every((token: string) => haystack.includes(token));
 	});
 }

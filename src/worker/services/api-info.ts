@@ -1,5 +1,5 @@
-import { listConverterTools } from "./converters/catalogue.ts";
 import { isConverterAvailable } from "./converters/availability.ts";
+import { listConverterTools } from "./converters/catalogue.ts";
 import { listExportFormats } from "./export-formats.ts";
 import type { FeatureEnv } from "./features.ts";
 import { createFeatureStatus, createServiceStatus } from "./features.ts";
@@ -10,9 +10,7 @@ export function createApiIndexResponse(env: FeatureEnv) {
 	const services = createServiceStatus(env);
 	const generators = listGeneratorTools().map((tool) => ({
 		...tool,
-		apiKeyRequiredModes: features.ai.available && tool.modes?.includes("ai")
-			? ["ai" as const]
-			: [],
+		apiKeyRequiredModes: features.ai.available && tool.modes?.includes("ai") ? ["ai" as const] : [],
 		modes: features.ai.available ? tool.modes : tool.modes?.filter((mode) => mode !== "ai"),
 		toolType: "generator" as const,
 	}));
@@ -30,7 +28,7 @@ export function createApiIndexResponse(env: FeatureEnv) {
 			headers: ["Authorization: Bearer <api-key>", "X-API-Key: <api-key>"],
 			requiredFor: ["Workers AI mode", "container converters"],
 		},
-		endpoints: tools.flatMap((tool) => tool.endpoint ? [tool.endpoint] : []),
+		endpoints: tools.flatMap((tool) => (tool.endpoint ? [tool.endpoint] : [])),
 		exportFormats: listExportFormats(),
 		features,
 		name: "Pashi",

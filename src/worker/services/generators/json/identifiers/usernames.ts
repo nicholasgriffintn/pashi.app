@@ -1,4 +1,3 @@
-import type { GeneratorRequest } from "../../request";
 import {
 	parseBoolean,
 	parseChoice,
@@ -9,24 +8,115 @@ import {
 	singleOrList,
 	slugify,
 } from "../../../../utils/generation";
+import type { GeneratorRequest } from "../../request";
 
 const USERNAME_STYLES = ["professional", "gamer", "quirky", "simple", "cool", "mixed"] as const;
 const ACTIVE_USERNAME_STYLES = ["professional", "gamer", "quirky", "simple", "cool"] as const;
-const FIRST_NAMES = ["alex", "sam", "jordan", "casey", "taylor", "morgan", "riley", "jamie", "avery", "quinn"] as const;
-const LAST_NAMES = ["smith", "wilson", "parker", "stone", "reed", "carter", "blake", "foster", "grant", "hale"] as const;
-const GAMER_PREFIXES = ["Shadow", "Dragon", "Neon", "Nova", "Cyber", "Pixel", "Storm", "Blaze", "Ghost", "Vortex"] as const;
-const GAMER_NOUNS = ["Hunter", "Slayer", "Ranger", "Knight", "Pilot", "Runner", "Striker", "Mage", "Ninja", "Rider"] as const;
-const QUIRKY_WORDS = ["Pizza", "Coffee", "Waffle", "Banana", "Otter", "Moon", "Bubble", "Toast", "Mango", "Comet"] as const;
-const COOL_PREFIXES = ["neon", "pixel", "lunar", "signal", "vector", "rapid", "cosmic", "solar", "quiet", "sharp"] as const;
-const COOL_NOUNS = ["wave", "vibe", "orbit", "relay", "snap", "cipher", "zone", "bolt", "arcade", "signal"] as const;
+const FIRST_NAMES = [
+	"alex",
+	"sam",
+	"jordan",
+	"casey",
+	"taylor",
+	"morgan",
+	"riley",
+	"jamie",
+	"avery",
+	"quinn",
+] as const;
+const LAST_NAMES = [
+	"smith",
+	"wilson",
+	"parker",
+	"stone",
+	"reed",
+	"carter",
+	"blake",
+	"foster",
+	"grant",
+	"hale",
+] as const;
+const GAMER_PREFIXES = [
+	"Shadow",
+	"Dragon",
+	"Neon",
+	"Nova",
+	"Cyber",
+	"Pixel",
+	"Storm",
+	"Blaze",
+	"Ghost",
+	"Vortex",
+] as const;
+const GAMER_NOUNS = [
+	"Hunter",
+	"Slayer",
+	"Ranger",
+	"Knight",
+	"Pilot",
+	"Runner",
+	"Striker",
+	"Mage",
+	"Ninja",
+	"Rider",
+] as const;
+const QUIRKY_WORDS = [
+	"Pizza",
+	"Coffee",
+	"Waffle",
+	"Banana",
+	"Otter",
+	"Moon",
+	"Bubble",
+	"Toast",
+	"Mango",
+	"Comet",
+] as const;
+const COOL_PREFIXES = [
+	"neon",
+	"pixel",
+	"lunar",
+	"signal",
+	"vector",
+	"rapid",
+	"cosmic",
+	"solar",
+	"quiet",
+	"sharp",
+] as const;
+const COOL_NOUNS = [
+	"wave",
+	"vibe",
+	"orbit",
+	"relay",
+	"snap",
+	"cipher",
+	"zone",
+	"bolt",
+	"arcade",
+	"signal",
+] as const;
 const DIGITS = "0123456789";
 
 export function createUsernames(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 10, 100);
 	const style = parseChoice(request.fields.style, USERNAME_STYLES, "mixed");
-	const minLength = parseInteger(request.fields.minLength ?? request.fields.min_length ?? "", 6, 3, 20);
-	const maxLength = parseInteger(request.fields.maxLength ?? request.fields.max_length ?? "", 15, 3, 20);
-	const includeNumbers = parseBoolean(request.fields.includeNumbers ?? request.fields.include_numbers, true);
+	const minLength = parseInteger(
+		request.fields.minLength ?? request.fields.min_length ?? "",
+		6,
+		3,
+		20,
+	);
+	const maxLength = parseInteger(
+		request.fields.maxLength ?? request.fields.max_length ?? "",
+		15,
+		3,
+		20,
+	);
+	const includeNumbers = parseBoolean(
+		request.fields.includeNumbers ?? request.fields.include_numbers,
+		true,
+	);
 	const unique = parseBoolean(request.fields.unique, true);
 	const lengthRange = {
 		max: Math.max(minLength, maxLength),
@@ -34,7 +124,9 @@ export function createUsernames(request: GeneratorRequest) {
 	};
 
 	if (!unique) {
-		return singleOrList(Array.from({ length: count }, () => createUsername(style, lengthRange, includeNumbers)));
+		return singleOrList(
+			Array.from({ length: count }, () => createUsername(style, lengthRange, includeNumbers)),
+		);
 	}
 
 	const usernames = new Set<string>();
@@ -56,6 +148,7 @@ function createUsername(
 	const selectedStyle = style === "mixed" ? randomChoice(ACTIVE_USERNAME_STYLES) : style;
 	const base = usernameBase(selectedStyle);
 	const suffix = includeNumbers ? randomCharacters(DIGITS, randomChoice([2, 3, 4])) : "";
+
 	return fitUsername(`${base}${suffix}`, lengthRange, includeNumbers);
 }
 
@@ -74,7 +167,11 @@ function usernameBase(style: (typeof ACTIVE_USERNAME_STYLES)[number]) {
 	}
 }
 
-function fitUsername(value: string, lengthRange: { max: number; min: number }, includeNumbers: boolean) {
+function fitUsername(
+	value: string,
+	lengthRange: { max: number; min: number },
+	includeNumbers: boolean,
+) {
 	let username = slugify(value).replaceAll("-", "_");
 
 	if (username.length > lengthRange.max) {

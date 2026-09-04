@@ -17,8 +17,10 @@ export function ConverterEffectPresetControl({
 
 	function updateEffect(effect: string) {
 		const next = new Set(normalizedSelectedValues);
+
 		if (effect === "none") {
 			onChange("none");
+
 			return;
 		}
 
@@ -28,6 +30,7 @@ export function ConverterEffectPresetControl({
 		} else {
 			next.add(effect);
 		}
+
 		if (next.size === 0) {
 			next.add("none");
 		}
@@ -41,6 +44,7 @@ export function ConverterEffectPresetControl({
 			<div className="slackmoji-effect-grid" role="listbox" aria-label="Animation presets">
 				{options.map((option) => {
 					const isSelected = normalizedSelectedValues.includes(option);
+
 					return (
 						<button
 							aria-pressed={isSelected}

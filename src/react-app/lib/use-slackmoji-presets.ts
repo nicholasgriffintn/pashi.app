@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 
-import { fetchSlackmojiPresets, type SlackmojiPreset } from "./converter-api";
 import { useApiKey } from "./api-key-context";
+import { fetchSlackmojiPresets } from "./converter-api";
+import type { SlackmojiPreset } from "./converter-api";
 
 interface SlackmojiPresetsState {
 	error: string;
@@ -9,49 +10,35 @@ interface SlackmojiPresetsState {
 	presets: SlackmojiPreset[];
 }
 
-export function useSlackmojiPresets(enabled: boolean): SlackmojiPresetsState {
+const INITIAL_STATE: SlackmojiPresetsState = { error: "", isLoading: true, presets: [] };
+
+export function useSlackmojiPresets(): SlackmojiPresetsState {
 	const { apiKey } = useApiKey();
-	const [error, setError] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
-	const [presets, setPresets] = useState<SlackmojiPreset[]>([]);
+	const [state, setState] = useState<SlackmojiPresetsState>(INITIAL_STATE);
 
 	useEffect(() => {
-		if (!enabled) {
-			setError("");
-			setIsLoading(false);
-			setPresets([]);
-			return;
-		}
-
 		let ignore = false;
-		setError("");
-		setIsLoading(true);
 
-		void (async () => {
-			try {
-				const next = await fetchSlackmojiPresets(apiKey);
+		fetchSlackmojiPresets(apiKey)
+			.then((presets) => {
 				if (!ignore) {
-					setPresets(next);
+					setState({ error: "", isLoading: false, presets });
 				}
-			} catch (caught) {
+			})
+			.catch((caught: unknown) => {
 				if (!ignore) {
-					setError(caught instanceof Error ? caught.message : "Could not load presets.");
+					setState({
+						error: caught instanceof Error ? caught.message : "Could not load presets.",
+						isLoading: false,
+						presets: [],
+					});
 				}
-			} finally {
-				if (!ignore) {
-					setIsLoading(false);
-				}
-			}
-		})();
+			});
 
 		return () => {
 			ignore = true;
 		};
-	}, [apiKey, enabled]);
+	}, [apiKey]);
 
-	return {
-		error,
-		isLoading,
-		presets,
-	};
+	return state;
 }

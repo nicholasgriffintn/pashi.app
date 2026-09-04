@@ -1,5 +1,3 @@
-import type { GeneratorTool, JsonResult } from "../types";
-import type { GeneratorRequest } from "../request";
 import {
 	base64Encode,
 	bytesToBase64,
@@ -12,14 +10,22 @@ import {
 	singleOrList,
 	slugify,
 } from "../../../utils/generation";
-	import { createUuid, formatUuidForOutput, type UuidFormat, type UuidOutputFormat } from "../../../utils/uuid";
-	import { fieldsResult, textResult } from "./result";
+import {
+	createUuid,
+	formatUuidForOutput,
+	type UuidFormat,
+	type UuidOutputFormat,
+} from "../../../utils/uuid";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
+import { fieldsResult, textResult } from "./result";
 
 export async function createEngineeringResult(
 	generator: GeneratorTool,
 	request: GeneratorRequest,
 ): Promise<JsonResult | undefined> {
 	const { input } = request;
+
 	switch (generator.id) {
 		case "base64":
 			return textResult(generator, input, base64Encode(requireInput(input)));
@@ -41,6 +47,7 @@ export async function createEngineeringResult(
 function createTokens(request: GeneratorRequest) {
 	const length = parseLength(request.fields.length ?? request.input, 32, 8, 96);
 	const count = parseCount(request.fields.count ?? "", 1, 1000);
+
 	return singleOrList(Array.from({ length: count }, () => createToken(length)));
 }
 
@@ -52,14 +59,22 @@ async function createUuids(request: GeneratorRequest) {
 	const outputFormat = parseChoice(request.fields.outputFormat, UUID_OUTPUT_FORMATS, "standard");
 	const uuids = Array.from({ length: count }, () => createUuid(format, name, namespace));
 	const values = await Promise.all(uuids);
+
 	return singleOrList(values.map((uuid) => formatUuidForOutput(uuid, outputFormat)));
 }
 
 const UUID_FORMATS: readonly UuidFormat[] = ["v1", "v3", "v4", "v5", "v7"];
-const UUID_OUTPUT_FORMATS: readonly UuidOutputFormat[] = ["standard", "uppercase", "no-hyphens", "braced", "urn"];
+const UUID_OUTPUT_FORMATS: readonly UuidOutputFormat[] = [
+	"standard",
+	"uppercase",
+	"no-hyphens",
+	"braced",
+	"urn",
+];
 
 function createTimestamps(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 1, 1000);
+
 	return singleOrList(Array.from({ length: count }, () => createTimestamp(request)));
 }
 
@@ -69,16 +84,21 @@ function createTimestamp(request: GeneratorRequest) {
 		request.fields.end || "2030-12-31T23:59:59.999Z",
 	);
 	const unit = request.fields.unit === "milliseconds" ? "milliseconds" : "seconds";
+
 	return {
 		epochMilliseconds: `${date.getTime()}`,
 		epochSeconds: `${Math.floor(date.getTime() / 1000)}`,
 		iso: date.toISOString(),
-		timestamp: unit === "milliseconds" ? `${date.getTime()}` : `${Math.floor(date.getTime() / 1000)}`,
+		timestamp:
+			unit === "milliseconds" ? `${date.getTime()}` : `${Math.floor(date.getTime() / 1000)}`,
 		unit,
 		utc: date.toUTCString(),
 	};
 }
 
 function createToken(length: number) {
-	return bytesToBase64(randomBytes(length)).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+	return bytesToBase64(randomBytes(length))
+		.replaceAll("+", "-")
+		.replaceAll("/", "_")
+		.replace(/=+$/, "");
 }

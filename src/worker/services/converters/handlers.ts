@@ -1,18 +1,67 @@
-import { isTextTransformFormat, TEXT_TRANSFORM_FORMATS, TextTransformError, transformText } from "../../utils/text-transforms.ts";
-import { convertUnitText, UNIT_OUTPUTS, UnitConversionError } from "../../utils/unit-conversion.ts";
+import {
+	isTextTransformFormat,
+	TEXT_TRANSFORM_FORMATS,
+	TextTransformError,
+	transformText,
+} from "../../utils/text-transforms.ts";
 import { safeFilename } from "../../utils/text.ts";
+import { convertUnitText, UNIT_OUTPUTS, UnitConversionError } from "../../utils/unit-conversion.ts";
 import { jiraToMarkdown, markdownToJira } from "./atlassian-markup.ts";
-import { convertTextFileContent, isTextFileFormat, TEXT_FILE_FORMATS, type TextFileFormat } from "./text-file-conversion.ts";
+import {
+	DATA_SHAPE_FORMATS,
+	DataShapeError,
+	inspectDataShape,
+	isDataShapeFormat,
+} from "./data-shape.ts";
+import {
+	DEVELOPER_INSPECT_FORMATS,
+	DeveloperInspectError,
+	inspectDeveloperText,
+	isDeveloperInspectFormat,
+} from "./developer-inspect.ts";
+import {
+	DEVELOPER_TEXT_FORMATS,
+	DeveloperTextError,
+	isDeveloperTextFormat,
+	transformDeveloperText,
+} from "./developer-text.ts";
 import { HTML_TRANSFORM_FORMATS, isHtmlTransformFormat, transformHtml } from "./html-transform.ts";
-import { isJsonTransformFormat, JSON_TRANSFORM_FORMATS, JsonTransformError, transformJson } from "./json-transform.ts";
-import { convertMarkdownTarget, isMarkdownTargetFormat, MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
+import {
+	isJsonTransformFormat,
+	JSON_TRANSFORM_FORMATS,
+	JsonTransformError,
+	transformJson,
+} from "./json-transform.ts";
+import {
+	convertMarkdownTarget,
+	isMarkdownTargetFormat,
+	MARKDOWN_TARGET_FORMATS,
+} from "./markdown-targets.ts";
+import {
+	isRequestTransformFormat,
+	REQUEST_TRANSFORM_FORMATS,
+	RequestTransformError,
+	transformRequestText,
+} from "./request-transform.ts";
+import {
+	convertTextFileContent,
+	isTextFileFormat,
+	TEXT_FILE_FORMATS,
+	type TextFileFormat,
+} from "./text-file-conversion.ts";
+import {
+	isTimestampTransformFormat,
+	TIMESTAMP_TRANSFORM_FORMATS,
+	TimestampTransformError,
+	transformTimestamp,
+} from "./timestamp-transform.ts";
 import type { ConverterHandler, ConverterResult } from "./types";
-import { isTimestampTransformFormat, TIMESTAMP_TRANSFORM_FORMATS, TimestampTransformError, transformTimestamp } from "./timestamp-transform.ts";
-import { isUrlTransformFormat, transformUrl, URL_TRANSFORM_FORMATS, UrlTransformError } from "./url-transform.ts";
-import { DATA_SHAPE_FORMATS, DataShapeError, inspectDataShape, isDataShapeFormat } from "./data-shape.ts";
-import { DEVELOPER_INSPECT_FORMATS, DeveloperInspectError, inspectDeveloperText, isDeveloperInspectFormat } from "./developer-inspect.ts";
-import { DEVELOPER_TEXT_FORMATS, DeveloperTextError, isDeveloperTextFormat, transformDeveloperText } from "./developer-text.ts";
-import { isRequestTransformFormat, REQUEST_TRANSFORM_FORMATS, RequestTransformError, transformRequestText } from "./request-transform.ts";
+import {
+	isUrlTransformFormat,
+	transformUrl,
+	URL_TRANSFORM_FORMATS,
+	UrlTransformError,
+} from "./url-transform.ts";
 
 export class ConverterRequestError extends Error {
 	status = 400;
@@ -52,16 +101,19 @@ function textFileFormat(value: string | undefined): TextFileFormat | undefined {
 
 function textTransformFormat(value: string | undefined) {
 	const format = value || "lowercase";
+
 	return isTextTransformFormat(format) ? format : undefined;
 }
 
 function markdownTargetFormat(value: string | undefined) {
 	const format = value || "slack";
+
 	return isMarkdownTargetFormat(format) ? format : undefined;
 }
 
 function jsonTransformFormat(value: string | undefined) {
 	const format = value || "format";
+
 	return isJsonTransformFormat(format) ? format : undefined;
 }
 
@@ -73,44 +125,54 @@ function jsonTransformMimeType(format: (typeof JSON_TRANSFORM_FORMATS)[number]) 
 
 function dataShapeFormat(value: string | undefined) {
 	const format = value || "json-shape";
+
 	return isDataShapeFormat(format) ? format : undefined;
 }
 
 function developerInspectFormat(value: string | undefined) {
 	const format = value || "jwt";
+
 	return isDeveloperInspectFormat(format) ? format : undefined;
 }
 
 function developerTextFormat(value: string | undefined) {
 	const format = value || "diff-lines";
+
 	return isDeveloperTextFormat(format) ? format : undefined;
 }
 
 function requestTransformFormat(value: string | undefined) {
 	const format = value || "curl-to-fetch";
+
 	return isRequestTransformFormat(format) ? format : undefined;
 }
 
 function htmlTransformFormat(value: string | undefined) {
 	const format = value || "strip-tags";
+
 	return isHtmlTransformFormat(format) ? format : undefined;
 }
 
 function timestampTransformFormat(value: string | undefined) {
 	const format = value || "readable";
+
 	return isTimestampTransformFormat(format) ? format : undefined;
 }
 
 function urlTransformFormat(value: string | undefined) {
 	const format = value || "parse";
+
 	return isUrlTransformFormat(format) ? format : undefined;
 }
 
 export const converterHandlers: Record<string, ConverterHandler> = {
 	"data-shape": ({ fields, input }) => {
 		const outputFormat = dataShapeFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported data shape inspection: ${DATA_SHAPE_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported data shape inspection: ${DATA_SHAPE_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -132,8 +194,11 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	},
 	"developer-inspect": ({ fields, input }) => {
 		const outputFormat = developerInspectFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported developer inspection: ${DEVELOPER_INSPECT_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported developer inspection: ${DEVELOPER_INSPECT_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -155,8 +220,11 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	},
 	"developer-text": ({ fields, input }) => {
 		const outputFormat = developerTextFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported developer text transform: ${DEVELOPER_TEXT_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported developer text transform: ${DEVELOPER_TEXT_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -166,7 +234,11 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				input,
 				transformDeveloperText(input, outputFormat, fields),
 				`Developer text transformed with ${outputFormat}.`,
-				{ mimeType: outputFormat.includes("json") ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" },
+				{
+					mimeType: outputFormat.includes("json")
+						? "application/json;charset=utf-8"
+						: "text/plain;charset=utf-8",
+				},
 			);
 		} catch (error) {
 			if (error instanceof DeveloperTextError) {
@@ -178,12 +250,16 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	},
 	"file-format": ({ fields, input }) => {
 		const outputFormat = textFileFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported text-file output format: ${TEXT_FILE_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported text-file output format: ${TEXT_FILE_FORMATS.join(", ")}.`,
+			);
 		}
 
 		const sourceName = fields.sourceName || fields.name || "file";
 		const converted = convertTextFileContent(input, outputFormat, sourceName);
+
 		return textResult(
 			"file-format",
 			`${converted.extension.toUpperCase()} file`,
@@ -197,11 +273,20 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 		);
 	},
 	"jira-to-markdown": ({ input }) =>
-		textResult("jira-to-markdown", "Markdown", input, jiraToMarkdown(input), "Jira wiki markup converted to Markdown"),
+		textResult(
+			"jira-to-markdown",
+			"Markdown",
+			input,
+			jiraToMarkdown(input),
+			"Jira wiki markup converted to Markdown",
+		),
 	"html-transform": ({ fields, input }) => {
 		const outputFormat = htmlTransformFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported HTML transform: ${HTML_TRANSFORM_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported HTML transform: ${HTML_TRANSFORM_FORMATS.join(", ")}.`,
+			);
 		}
 
 		return textResult(
@@ -210,13 +295,21 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			input,
 			transformHtml(input, outputFormat),
 			`HTML transformed with ${outputFormat}.`,
-			{ mimeType: outputFormat === "to-markdown" ? "text/markdown;charset=utf-8" : "text/plain;charset=utf-8" },
+			{
+				mimeType:
+					outputFormat === "to-markdown"
+						? "text/markdown;charset=utf-8"
+						: "text/plain;charset=utf-8",
+			},
 		);
 	},
 	"json-transform": ({ fields, input }) => {
 		const outputFormat = jsonTransformFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported JSON transform: ${JSON_TRANSFORM_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported JSON transform: ${JSON_TRANSFORM_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -237,11 +330,20 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 		}
 	},
 	"markdown-to-jira": ({ input }) =>
-		textResult("markdown-to-jira", "Jira markup", input, markdownToJira(input), "Markdown converted to Jira and Confluence wiki markup"),
+		textResult(
+			"markdown-to-jira",
+			"Jira markup",
+			input,
+			markdownToJira(input),
+			"Markdown converted to Jira and Confluence wiki markup",
+		),
 	"markdown-format": ({ fields, input }) => {
 		const outputFormat = markdownTargetFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported Markdown output target: ${MARKDOWN_TARGET_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported Markdown output target: ${MARKDOWN_TARGET_FORMATS.join(", ")}.`,
+			);
 		}
 
 		return textResult(
@@ -250,13 +352,21 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			input,
 			convertMarkdownTarget(input, outputFormat),
 			`Markdown converted to ${outputFormat}.`,
-			{ mimeType: outputFormat === "wordpress-html" ? "text/html;charset=utf-8" : "text/plain;charset=utf-8" },
+			{
+				mimeType:
+					outputFormat === "wordpress-html"
+						? "text/html;charset=utf-8"
+						: "text/plain;charset=utf-8",
+			},
 		);
 	},
 	"request-transform": ({ fields, input }) => {
 		const outputFormat = requestTransformFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported request transform: ${REQUEST_TRANSFORM_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported request transform: ${REQUEST_TRANSFORM_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -266,7 +376,12 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				input,
 				transformRequestText(input, outputFormat),
 				`Request transformed with ${outputFormat}.`,
-				{ mimeType: outputFormat === "curl-to-json" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" },
+				{
+					mimeType:
+						outputFormat === "curl-to-json"
+							? "application/json;charset=utf-8"
+							: "text/plain;charset=utf-8",
+				},
 			);
 		} catch (error) {
 			if (error instanceof RequestTransformError) {
@@ -278,8 +393,11 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	},
 	"text-transform": ({ fields, input }) => {
 		const outputFormat = textTransformFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported text transform: ${TEXT_TRANSFORM_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported text transform: ${TEXT_TRANSFORM_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -301,8 +419,11 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	},
 	"timestamp-transform": ({ fields, input }) => {
 		const outputFormat = timestampTransformFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported timestamp transform: ${TIMESTAMP_TRANSFORM_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported timestamp transform: ${TIMESTAMP_TRANSFORM_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -312,7 +433,12 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				input,
 				transformTimestamp(input, outputFormat, fields),
 				`Timestamp transformed with ${outputFormat}.`,
-				{ mimeType: outputFormat === "difference" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" },
+				{
+					mimeType:
+						outputFormat === "difference"
+							? "application/json;charset=utf-8"
+							: "text/plain;charset=utf-8",
+				},
 			);
 		} catch (error) {
 			if (error instanceof TimestampTransformError) {
@@ -324,8 +450,11 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	},
 	"url-transform": ({ fields, input }) => {
 		const outputFormat = urlTransformFormat(fields.outputFormat || fields.format);
+
 		if (!outputFormat) {
-			throw new ConverterRequestError(`Choose a supported URL transform: ${URL_TRANSFORM_FORMATS.join(", ")}.`);
+			throw new ConverterRequestError(
+				`Choose a supported URL transform: ${URL_TRANSFORM_FORMATS.join(", ")}.`,
+			);
 		}
 
 		try {
@@ -335,7 +464,12 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				input,
 				transformUrl(input, outputFormat),
 				`URL text transformed with ${outputFormat}.`,
-				{ mimeType: outputFormat === "parse" || outputFormat === "query" ? "application/json;charset=utf-8" : "text/plain;charset=utf-8" },
+				{
+					mimeType:
+						outputFormat === "parse" || outputFormat === "query"
+							? "application/json;charset=utf-8"
+							: "text/plain;charset=utf-8",
+				},
 			);
 		} catch (error) {
 			if (error instanceof UrlTransformError) {
@@ -348,6 +482,7 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	"unit-converter": ({ fields, input }) => {
 		try {
 			const outputFormat = fields.outputFormat || fields.toUnit || fields.to;
+
 			return textResult(
 				"unit-converter",
 				"Unit conversion",
@@ -358,7 +493,9 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			);
 		} catch (error) {
 			if (error instanceof UnitConversionError) {
-				throw new ConverterRequestError(`${error.message} Supported outputs: ${UNIT_OUTPUTS.join(", ")}.`);
+				throw new ConverterRequestError(
+					`${error.message} Supported outputs: ${UNIT_OUTPUTS.join(", ")}.`,
+				);
 			}
 
 			throw error;

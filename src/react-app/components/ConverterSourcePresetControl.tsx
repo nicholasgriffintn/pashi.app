@@ -15,7 +15,7 @@ export function ConverterSourcePresetControl({
 	onFileChange,
 	selectedSourceKey,
 }: ConverterSourcePresetControlProps) {
-	const { error, isLoading, presets } = useSlackmojiPresets(true);
+	const { error, isLoading, presets } = useSlackmojiPresets();
 	const selectedPreset = presets.find((preset) => preset.key === selectedSourceKey);
 
 	return (
@@ -37,6 +37,7 @@ export function ConverterSourcePresetControl({
 			<div className="slackmoji-preset-grid">
 				{presets.map((preset) => {
 					const isSelected = selectedSourceKey === preset.key;
+
 					return (
 						<button
 							aria-pressed={isSelected}
@@ -48,10 +49,7 @@ export function ConverterSourcePresetControl({
 							}}
 							type="button"
 						>
-							<AuthenticatedImage
-								alt={preset.name}
-								src={preset.url}
-							/>
+							<AuthenticatedImage alt={preset.name} src={preset.url} />
 							<span>{preset.name}</span>
 						</button>
 					);

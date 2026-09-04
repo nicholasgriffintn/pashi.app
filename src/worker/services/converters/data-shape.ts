@@ -3,10 +3,7 @@ import { parseCsv } from "../../utils/csv.ts";
 
 export type DataShapeFormat = "csv-shape" | "json-shape";
 
-export const DATA_SHAPE_FORMATS: readonly DataShapeFormat[] = [
-	"json-shape",
-	"csv-shape",
-];
+export const DATA_SHAPE_FORMATS: readonly DataShapeFormat[] = ["json-shape", "csv-shape"];
 
 export class DataShapeError extends Error {}
 
@@ -34,20 +31,26 @@ export function inspectDataShape(input: string, format: DataShapeFormat) {
 
 function inspectJsonShape(input: string) {
 	const value = parseJson(input);
+
 	return JSON.stringify(describeJsonValue(value), null, 2);
 }
 
 function inspectCsvShape(input: string) {
 	const records = parseCsv(input);
+
 	if (records.length === 0) {
 		throw new DataShapeError("Enter CSV with a header row and at least one data row.");
 	}
 
-	return JSON.stringify({
-		columns: columnStats(records),
-		columnCount: Object.keys(records[0] ?? {}).length,
-		rowCount: records.length,
-	}, null, 2);
+	return JSON.stringify(
+		{
+			columns: columnStats(records),
+			columnCount: Object.keys(records[0] ?? {}).length,
+			rowCount: records.length,
+		},
+		null,
+		2,
+	);
 }
 
 function parseJson(input: string): unknown {
@@ -61,6 +64,7 @@ function parseJson(input: string): unknown {
 function describeJsonValue(value: unknown): unknown {
 	if (Array.isArray(value)) {
 		const samples = value.slice(0, 25);
+
 		return {
 			kind: "array",
 			length: value.length,
@@ -90,7 +94,10 @@ function mergeJsonShapes(shapes: unknown[]): unknown {
 		return { kind: "unknown" };
 	}
 
-	const kinds = new Set(shapes.map((shape) => isRecord(shape) ? String(shape.kind ?? "unknown") : "unknown"));
+	const kinds = new Set(
+		shapes.map((shape) => (isRecord(shape) ? String(shape.kind ?? "unknown") : "unknown")),
+	);
+
 	if (kinds.size > 1) {
 		return {
 			kind: "union",
@@ -99,15 +106,18 @@ function mergeJsonShapes(shapes: unknown[]): unknown {
 	}
 
 	const [shape] = shapes;
+
 	if (!isRecord(shape) || shape.kind !== "object") {
 		return shape;
 	}
 
 	const propertyNames = new Set<string>();
+
 	for (const item of shapes) {
 		if (!isRecord(item) || !isRecord(item.properties)) {
 			continue;
 		}
+
 		for (const property of Object.keys(item.properties)) {
 			propertyNames.add(property);
 		}
@@ -118,8 +128,11 @@ function mergeJsonShapes(shapes: unknown[]): unknown {
 		properties: Object.fromEntries(
 			[...propertyNames].sort().map((property): [string, unknown] => {
 				const propertyShapes = shapes
-					.map((item) => isRecord(item) && isRecord(item.properties) ? item.properties[property] : undefined)
+					.map((item) =>
+						isRecord(item) && isRecord(item.properties) ? item.properties[property] : undefined,
+					)
 					.filter((item) => item !== undefined);
+
 				return [property, mergeJsonShapes(propertyShapes)];
 			}),
 		),
@@ -144,6 +157,7 @@ function primitiveKind(value: unknown): PrimitiveKind {
 
 function columnStats(records: readonly StringRecord[]) {
 	const stats = new Map<string, ColumnStats>();
+
 	for (const record of records) {
 		for (const key of Object.keys(record)) {
 			if (!stats.has(key)) {
@@ -151,17 +165,20 @@ function columnStats(records: readonly StringRecord[]) {
 			}
 
 			const column = stats.get(key);
+
 			if (!column) {
 				continue;
 			}
 
 			const value = record[key] ?? "";
 			const trimmed = value.trim();
+
 			if (!trimmed) {
 				column.empty += 1;
 			}
 
 			const type = inferScalarType(trimmed);
+
 			column.types[type] = (column.types[type] ?? 0) + 1;
 			if (trimmed && !column.examples.includes(trimmed) && column.examples.length < 3) {
 				column.examples.push(trimmed);

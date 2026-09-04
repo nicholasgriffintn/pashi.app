@@ -1,0 +1,13 @@
+{
+	"name": "Pashi",
+	"short_name": "Pashi",
+	"description": "Pashi is the home for Nicholas Griffin's side projects: generators, converters and AI experiments.",
+	"start_url": "/",
+	"display": "standalone",
+	"background_color": "#0d1024",
+	"theme_color": "#0d1024",
+	"icons": [
+		{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+		{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+	]
+}

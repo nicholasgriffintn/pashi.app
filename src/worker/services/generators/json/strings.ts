@@ -1,5 +1,3 @@
-import type { GeneratorRequest } from "../request";
-import type { GeneratorTool, JsonResult } from "../types";
 import {
 	bytesToBase64,
 	parseBoolean,
@@ -14,6 +12,8 @@ import {
 	singleOrList,
 } from "../../../utils/generation";
 import { LOREM_WORDS, TEXT_WORDS } from "../data/words";
+import type { GeneratorRequest } from "../request";
+import type { GeneratorTool, JsonResult } from "../types";
 import { textResult } from "./result";
 
 type LetterCase = "lower" | "mixed" | "upper";
@@ -86,25 +86,43 @@ export function createStringResult(
 function createStrings(request: GeneratorRequest) {
 	const type = parseChoice(request.fields.type, STRING_TYPES, "alphanumeric");
 	const count = parseCount(request.fields.count ?? "", 1, 100);
+
 	return singleOrList(Array.from({ length: count }, () => createStringValue(type, request)));
 }
 
 function createStringValue(type: StringType, request: GeneratorRequest) {
 	switch (type) {
 		case "alphanumeric":
-			return randomCharacters(alphanumericAlphabet(request), parseInteger(request.fields.length ?? request.input, 32, 1, 1000));
+			return randomCharacters(
+				alphanumericAlphabet(request),
+				parseInteger(request.fields.length ?? request.input, 32, 1, 1000),
+			);
 		case "base64":
 			return bytesToBase64(randomBytes(parseInteger(request.fields.byteCount ?? "", 32, 1, 256)));
 		case "binary":
-			return randomCharacters(ALPHABETS.binary, parseInteger(request.fields.length ?? request.input, 32, 1, 1000));
+			return randomCharacters(
+				ALPHABETS.binary,
+				parseInteger(request.fields.length ?? request.input, 32, 1, 1000),
+			);
 		case "hex":
 			return randomHex(parseInteger(request.fields.length ?? request.input, 32, 1, 1000));
 		case "letters":
-			return randomCharacters(letterAlphabet(parseChoice(request.fields.case, LETTER_CASES, "mixed")), parseInteger(request.fields.length ?? request.input, 32, 1, 1000));
+			return randomCharacters(
+				letterAlphabet(parseChoice(request.fields.case, LETTER_CASES, "mixed")),
+				parseInteger(request.fields.length ?? request.input, 32, 1, 1000),
+			);
 		case "lorem":
-			return createParagraphs(LOREM_WORDS, parseInteger(request.fields.paragraphCount ?? "", 2, 1, 10), parseInteger(request.fields.sentenceCount ?? "", 3, 1, 20));
+			return createParagraphs(
+				LOREM_WORDS,
+				parseInteger(request.fields.paragraphCount ?? "", 2, 1, 10),
+				parseInteger(request.fields.sentenceCount ?? "", 3, 1, 20),
+			);
 		case "paragraphs":
-			return createParagraphs(TEXT_WORDS, parseInteger(request.fields.paragraphCount ?? "", 2, 1, 10), parseInteger(request.fields.sentenceCount ?? "", 3, 1, 20));
+			return createParagraphs(
+				TEXT_WORDS,
+				parseInteger(request.fields.paragraphCount ?? "", 2, 1, 10),
+				parseInteger(request.fields.sentenceCount ?? "", 3, 1, 20),
+			);
 		case "sentences":
 			return Array.from(
 				{ length: parseInteger(request.fields.sentenceCount ?? "", 3, 1, 20) },
@@ -121,6 +139,7 @@ function createStringValue(type: StringType, request: GeneratorRequest) {
 function createEmojis(request: GeneratorRequest) {
 	const count = parseInteger(request.fields.count ?? request.input, 6, 1, 100);
 	const separator = request.fields.separator ?? "";
+
 	return Array.from({ length: count }, () => randomChoice(EMOJIS)).join(separator);
 }
 
@@ -157,5 +176,6 @@ function createParagraphs(words: readonly string[], paragraphs: number, sentence
 function createSentence(words: readonly string[]) {
 	const wordCount = randomIntegerBetween(8, 16);
 	const sentence = Array.from({ length: wordCount }, () => randomChoice(words)).join(" ");
+
 	return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
 }

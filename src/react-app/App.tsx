@@ -5,6 +5,7 @@ import { ConverterConsole } from "./components/ConverterConsole";
 import { GeneratorConsole } from "./components/GeneratorConsole";
 import { pushAppPath, replaceAppPath } from "./lib/navigation";
 import { fetchPashiInfo, type FeatureStatusMap } from "./lib/pashi-info";
+
 import "./App.css";
 
 function getInitialMode(): AppMode {
@@ -23,6 +24,7 @@ function App() {
 		}
 
 		window.addEventListener("popstate", handlePopState);
+
 		return () => window.removeEventListener("popstate", handlePopState);
 	}, []);
 
@@ -59,15 +61,17 @@ function App() {
 			return;
 		}
 
-		const nextPath =
-			nextMode === "convert" ? "/convert/markdown-to-jira" : "/";
+		const nextPath = nextMode === "convert" ? "/convert/markdown-to-jira" : "/";
+
 		pushAppPath(nextPath);
 		setMode(nextMode);
 	}
 
 	const controls = (
 		<AppModeTabs
-			disabledModes={conversionsUnavailable ? { convert: "Conversions are not available." } : undefined}
+			disabledModes={
+				conversionsUnavailable ? { convert: "Conversions are not available." } : undefined
+			}
 			mode={effectiveMode}
 			onChange={handleModeChange}
 		/>
@@ -76,6 +80,7 @@ function App() {
 	if (effectiveMode === "convert") {
 		return <ConverterConsole controls={controls} />;
 	}
+
 	return <GeneratorConsole controls={controls} />;
 }
 

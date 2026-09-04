@@ -29,6 +29,7 @@ export async function authenticateApplication(
 	env: Partial<ApiKeyEnv>,
 ): Promise<ApplicationAuthentication> {
 	const credential = readApiKey(request.headers);
+
 	if (credential.status !== "present") {
 		return { status: credential.status };
 	}
@@ -39,13 +40,13 @@ export async function authenticateApplication(
 
 	const digest = await sha256(credential.value);
 	const apiKeyValue = await readKvValue(env.APPLICATIONS, `${API_KEY_PREFIX}${digest}`);
+
 	if (apiKeyValue.status !== "found") {
-		return apiKeyValue.status === "unavailable"
-			? { status: "unavailable" }
-			: { status: "invalid" };
+		return apiKeyValue.status === "unavailable" ? { status: "unavailable" } : { status: "invalid" };
 	}
 
 	const apiKey = parseApiKeyRecord(apiKeyValue.value);
+
 	if (!apiKey?.enabled) {
 		return { status: "invalid" };
 	}
@@ -54,6 +55,7 @@ export async function authenticateApplication(
 		env.APPLICATIONS,
 		`${APPLICATION_KEY_PREFIX}${apiKey.applicationId}`,
 	);
+
 	if (applicationValue.status !== "found") {
 		return applicationValue.status === "unavailable"
 			? { status: "unavailable" }
@@ -61,6 +63,7 @@ export async function authenticateApplication(
 	}
 
 	const application = parseApplication(applicationValue.value);
+
 	if (!application?.enabled || application.id !== apiKey.applicationId) {
 		return { status: "invalid" };
 	}
@@ -68,15 +71,16 @@ export async function authenticateApplication(
 	return { application, status: "authenticated" };
 }
 
-function readApiKey(headers: Headers):
-	| { status: "absent" | "invalid" }
-	| { status: "present"; value: string } {
+function readApiKey(
+	headers: Headers,
+): { status: "absent" | "invalid" } | { status: "present"; value: string } {
 	const authorization = headers.get("authorization");
 	const headerKey = headers.get("x-api-key")?.trim();
 	let bearerKey: string | undefined;
 
 	if (authorization) {
 		const match = authorization.match(/^\s*Bearer\s+(\S+)\s*$/i);
+
 		if (match) {
 			bearerKey = match[1];
 		} else if (/^\s*Bearer\b/i.test(authorization)) {
@@ -89,21 +93,19 @@ function readApiKey(headers: Headers):
 	}
 
 	const value = bearerKey ?? headerKey;
+
 	if (!value) {
 		return { status: "absent" };
 	}
 
-	return API_KEY_PATTERN.test(value)
-		? { status: "present", value }
-		: { status: "invalid" };
+	return API_KEY_PATTERN.test(value) ? { status: "present", value } : { status: "invalid" };
 }
 
 async function readKvValue(namespace: KVNamespace, key: string) {
 	try {
 		const value = await namespace.get(key);
-		return value === null
-			? { status: "missing" as const }
-			: { status: "found" as const, value };
+
+		return value === null ? { status: "missing" as const } : { status: "found" as const, value };
 	} catch {
 		return { status: "unavailable" as const };
 	}
@@ -111,6 +113,7 @@ async function readKvValue(namespace: KVNamespace, key: string) {
 
 function parseApiKeyRecord(value: string): ApiKeyRecord | undefined {
 	const record = parseJsonRecord(value);
+
 	if (
 		!record ||
 		typeof record.applicationId !== "string" ||
@@ -128,6 +131,7 @@ function parseApiKeyRecord(value: string): ApiKeyRecord | undefined {
 
 function parseApplication(value: string): Application | undefined {
 	const record = parseJsonRecord(value);
+
 	if (
 		!record ||
 		typeof record.id !== "string" ||
@@ -150,8 +154,9 @@ function parseApplication(value: string): Application | undefined {
 function parseJsonRecord(value: string): Record<string, unknown> | undefined {
 	try {
 		const parsed: unknown = JSON.parse(value);
+
 		return typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-			? parsed as Record<string, unknown>
+			? (parsed as Record<string, unknown>)
 			: undefined;
 	} catch {
 		return undefined;

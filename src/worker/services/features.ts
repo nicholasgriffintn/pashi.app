@@ -1,4 +1,3 @@
-import type { ConversionEnv } from "./converters/conversion-pipeline";
 import {
 	FEATURE_REQUIRED_SERVICES,
 	SERVICE_LABELS,
@@ -8,6 +7,7 @@ import {
 	type ServiceStatus,
 	type ServiceStatusMap,
 } from "../../shared/features.ts";
+import type { ConversionEnv } from "./converters/conversion-pipeline";
 
 export type FeatureEnv = Partial<ConversionEnv> & {
 	ENABLE_AI?: string;
@@ -31,10 +31,7 @@ function serviceStatus(
 	};
 }
 
-function unavailableServices(
-	services: ServiceStatusMap,
-	requiredServices: readonly ServiceKey[],
-) {
+function unavailableServices(services: ServiceStatusMap, requiredServices: readonly ServiceKey[]) {
 	return requiredServices.filter((service) => !services[service].available);
 }
 

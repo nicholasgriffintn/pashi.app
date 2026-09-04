@@ -15,6 +15,7 @@ const MAC_FORMATS = ["colon", "hyphen", "dot", "cisco", "plain"] as const;
 
 export function createIpAddresses(request: GeneratorRequest) {
 	const version = parseChoice(request.fields.version, IP_VERSIONS, "ipv4");
+
 	return createIpAddressList(request, () => {
 		if (version === "both") {
 			return randomChoice([createIpv4Address, createIpv6Address])(request);
@@ -35,12 +36,17 @@ export function createIpv6Addresses(request: GeneratorRequest) {
 export function createMacAddresses(request: GeneratorRequest) {
 	const count = parseCount(request.fields.count ?? "", 10, 100);
 	const unique = parseBoolean(request.fields.unique, false);
+
 	return createTextList(count, unique, () => createMacAddress(request));
 }
 
-function createIpAddressList(request: GeneratorRequest, createValue: (request: GeneratorRequest) => string) {
+function createIpAddressList(
+	request: GeneratorRequest,
+	createValue: (request: GeneratorRequest) => string,
+) {
 	const count = parseCount(request.fields.count ?? "", 10, 100);
 	const unique = parseBoolean(request.fields.unique, false);
+
 	return createTextList(count, unique, () => createValue(request));
 }
 
@@ -53,6 +59,7 @@ function createTextList(count: number, unique: boolean, createValue: () => strin
 	while (values.length < count && attempts < maxAttempts) {
 		attempts += 1;
 		const value = createValue();
+
 		if (unique && seen.has(value)) {
 			continue;
 		}
@@ -67,37 +74,52 @@ function createTextList(count: number, unique: boolean, createValue: () => strin
 function createIpv4Address(request: GeneratorRequest) {
 	const includePrivate = parseBoolean(request.fields.includePrivate, true);
 	const includeLocalhost = parseBoolean(request.fields.includeLocalhost, false);
-	return createConstrainedValue(() => createIpv4Candidate(), (octets) => {
-		if (isReservedIpv4(octets)) {
-			return false;
-		}
-		if (!includePrivate && isPrivateIpv4(octets)) {
-			return false;
-		}
-		if (!includeLocalhost && octets[0] === 127) {
-			return false;
-		}
 
-		return true;
-	}).join(".");
+	return createConstrainedValue(
+		() => createIpv4Candidate(),
+		(octets) => {
+			if (isReservedIpv4(octets)) {
+				return false;
+			}
+
+			if (!includePrivate && isPrivateIpv4(octets)) {
+				return false;
+			}
+
+			if (!includeLocalhost && octets[0] === 127) {
+				return false;
+			}
+
+			return true;
+		},
+	).join(".");
 }
 
 function createIpv6Address(request: GeneratorRequest) {
 	const includePrivate = parseBoolean(request.fields.includePrivate, true);
 	const includeLocalhost = parseBoolean(request.fields.includeLocalhost, false);
-	const groups = createConstrainedValue(() => createIpv6Candidate(), (candidate) => {
-		if (candidate.every((group) => group === "0000")) {
-			return false;
-		}
-		if (!includeLocalhost && candidate.slice(0, 7).every((group) => group === "0000") && candidate[7] === "0001") {
-			return false;
-		}
-		if (!includePrivate && isUniqueLocalIpv6(candidate[0])) {
-			return false;
-		}
+	const groups = createConstrainedValue(
+		() => createIpv6Candidate(),
+		(candidate) => {
+			if (candidate.every((group) => group === "0000")) {
+				return false;
+			}
 
-		return true;
-	});
+			if (
+				!includeLocalhost &&
+				candidate.slice(0, 7).every((group) => group === "0000") &&
+				candidate[7] === "0001"
+			) {
+				return false;
+			}
+
+			if (!includePrivate && isUniqueLocalIpv6(candidate[0])) {
+				return false;
+			}
+
+			return true;
+		},
+	);
 
 	return groups.join(":");
 }
@@ -114,12 +136,14 @@ function createMacAddress(request: GeneratorRequest) {
 
 	const octets = bytes.map((byte) => byte.toString(16).padStart(2, "0"));
 	const value = formatMacAddress(octets, format);
+
 	return uppercase ? value.toUpperCase() : value;
 }
 
 function createConstrainedValue<T>(createValue: () => T, isValid: (value: T) => boolean) {
 	for (let attempt = 0; attempt < 100; attempt += 1) {
 		const value = createValue();
+
 		if (isValid(value)) {
 			return value;
 		}
@@ -140,7 +164,7 @@ function isReservedIpv4([first, second, third, fourth]: readonly number[]) {
 	return (
 		first === 0 ||
 		first >= 224 ||
-		(first === 127) ||
+		first === 127 ||
 		(first === 169 && second === 254) ||
 		(first === 192 && second === 0 && third === 2) ||
 		(first === 198 && second === 51 && third === 100) ||
@@ -150,11 +174,16 @@ function isReservedIpv4([first, second, third, fourth]: readonly number[]) {
 }
 
 function isPrivateIpv4([first, second]: readonly number[]) {
-	return first === 10 || (first === 172 && second >= 16 && second <= 31) || (first === 192 && second === 168);
+	return (
+		first === 10 ||
+		(first === 172 && second >= 16 && second <= 31) ||
+		(first === 192 && second === 168)
+	);
 }
 
 function isUniqueLocalIpv6(firstGroup: string) {
 	const firstByte = Number.parseInt(firstGroup.slice(0, 2), 16);
+
 	return (firstByte & 0xfe) === 0xfc;
 }
 

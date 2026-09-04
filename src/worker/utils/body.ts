@@ -1,4 +1,4 @@
-import { type Context } from "hono";
+import type { Context } from "hono";
 
 const BODY_INPUT_FIELD_IDS = new Set(["data", "file", "input"]);
 
@@ -9,6 +9,7 @@ export interface ToolBody {
 
 export async function readInputBody(c: Context) {
 	let body: unknown;
+
 	try {
 		body = await c.req.json();
 	} catch {
@@ -20,6 +21,7 @@ export async function readInputBody(c: Context) {
 
 export async function readGeneratorBody(c: Context): Promise<ToolBody> {
 	let body: unknown;
+
 	try {
 		body = await c.req.json();
 	} catch {
@@ -40,6 +42,7 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 
 	if (contentType.includes("application/json")) {
 		let body: unknown;
+
 		try {
 			body = await c.req.json();
 		} catch {
@@ -65,6 +68,7 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 
 	if (contentType.includes("application/x-www-form-urlencoded")) {
 		const bodyParams = new URLSearchParams(await c.req.text());
+
 		return {
 			fields: {
 				...queryFields,
@@ -75,6 +79,7 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 	}
 
 	const input = await c.req.text();
+
 	return {
 		fields: queryFields,
 		input: input || queryInput,
@@ -130,6 +135,7 @@ export async function bodyFromFormData(
 		...fieldsFromFormData(formData),
 	};
 	const file = formData.get("file");
+
 	if (file instanceof File) {
 		if (!fields.sourceName && file.name) {
 			fields.sourceName = file.name;
@@ -149,6 +155,7 @@ export async function bodyFromFormData(
 
 export function fieldsFromFormData(formData: FormData) {
 	const fields: Record<string, string> = {};
+
 	for (const [key, value] of formData.entries()) {
 		if (BODY_INPUT_FIELD_IDS.has(key) || typeof value !== "string") {
 			continue;
@@ -162,6 +169,7 @@ export function fieldsFromFormData(formData: FormData) {
 
 function stringFormField(formData: FormData, key: string) {
 	const value = formData.get(key);
+
 	return typeof value === "string" ? value : "";
 }
 

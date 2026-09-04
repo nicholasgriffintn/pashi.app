@@ -41,6 +41,7 @@ export function transformRequestText(input: string, format: RequestTransformForm
 
 function parseCurl(input: string): HttpRequestShape {
 	const tokens = shellTokens(input);
+
 	if (tokens[0] !== "curl") {
 		throw new RequestTransformError("Enter a curl command that starts with curl.");
 	}
@@ -54,6 +55,7 @@ function parseCurl(input: string): HttpRequestShape {
 	for (let index = 1; index < tokens.length; index += 1) {
 		const token = tokens[index];
 		const next = tokens[index + 1];
+
 		if (!token) {
 			continue;
 		}
@@ -66,18 +68,27 @@ function parseCurl(input: string): HttpRequestShape {
 
 		if ((token === "-H" || token === "--header") && next) {
 			const header = parseHeader(next);
+
 			if (header) {
 				request.headers[header.name] = header.value;
 			}
+
 			index += 1;
 			continue;
 		}
 
-		if ((token === "-d" || token === "--data" || token === "--data-raw" || token === "--data-binary") && next) {
+		if (
+			(token === "-d" ||
+				token === "--data" ||
+				token === "--data-raw" ||
+				token === "--data-binary") &&
+			next
+		) {
 			request.body = next;
 			if (request.method === "GET") {
 				request.method = "POST";
 			}
+
 			index += 1;
 			continue;
 		}
@@ -102,26 +113,32 @@ function parseCurl(input: string): HttpRequestShape {
 
 function parseHar(input: string): HttpRequestShape {
 	const value = parseJson(input);
-	const entry = isRecord(value) && isRecord(value.log) && Array.isArray(value.log.entries)
-		? value.log.entries[0]
-		: value;
+	const entry =
+		isRecord(value) && isRecord(value.log) && Array.isArray(value.log.entries)
+			? value.log.entries[0]
+			: value;
 	const request = isRecord(entry) && isRecord(entry.request) ? entry.request : entry;
+
 	if (!isRecord(request)) {
-		throw new RequestTransformError("Enter a HAR request object or HAR log with at least one entry.");
+		throw new RequestTransformError(
+			"Enter a HAR request object or HAR log with at least one entry.",
+		);
 	}
 
 	const headers = Array.isArray(request.headers)
 		? Object.fromEntries(
-			request.headers
-				.filter((header): header is Record<string, unknown> => isRecord(header))
-				.map((header) => [String(header.name ?? ""), String(header.value ?? "")])
-				.filter(([name]) => name),
-		)
+				request.headers
+					.filter((header): header is Record<string, unknown> => isRecord(header))
+					.map((header) => [String(header.name ?? ""), String(header.value ?? "")])
+					.filter(([name]) => name),
+			)
 		: {};
-	const postData = isRecord(request.postData) && typeof request.postData.text === "string"
-		? request.postData.text
-		: undefined;
+	const postData =
+		isRecord(request.postData) && typeof request.postData.text === "string"
+			? request.postData.text
+			: undefined;
 	const url = typeof request.url === "string" ? request.url : "";
+
 	if (!url) {
 		throw new RequestTransformError("Enter a HAR request with a URL.");
 	}
@@ -136,6 +153,7 @@ function parseHar(input: string): HttpRequestShape {
 
 function parseRequestText(input: string): HttpRequestShape {
 	const asJson = maybeParseRequestJson(input);
+
 	if (asJson) {
 		return asJson;
 	}
@@ -144,6 +162,7 @@ function parseRequestText(input: string): HttpRequestShape {
 	const lines = head.split(/\r?\n/).filter(Boolean);
 	const [requestLine, ...headerLines] = lines;
 	const requestMatch = /^([A-Z]+)\s+(\S+)(?:\s+HTTP\/\d(?:\.\d)?)?$/i.exec(requestLine ?? "");
+
 	if (!requestMatch) {
 		throw new RequestTransformError("Enter raw HTTP request text or a JSON request object.");
 	}
@@ -160,6 +179,7 @@ function parseRequestText(input: string): HttpRequestShape {
 		? target
 		: `https://${host || "example.com"}${target.startsWith("/") ? target : `/${target}`}`;
 	const body = bodyParts.join("\n\n");
+
 	return {
 		body: body || undefined,
 		headers,
@@ -170,6 +190,7 @@ function parseRequestText(input: string): HttpRequestShape {
 
 function maybeParseRequestJson(input: string): HttpRequestShape | undefined {
 	let value: unknown;
+
 	try {
 		value = JSON.parse(input);
 	} catch {
@@ -183,6 +204,7 @@ function maybeParseRequestJson(input: string): HttpRequestShape | undefined {
 	const headers = isRecord(value.headers)
 		? Object.fromEntries(Object.entries(value.headers).map(([key, item]) => [key, String(item)]))
 		: {};
+
 	return {
 		body: typeof value.body === "string" ? value.body : undefined,
 		headers,
@@ -195,10 +217,13 @@ function requestToCurl(request: HttpRequestShape) {
 	const lines = [
 		"curl",
 		`  -X ${shellQuote(request.method)}`,
-		...Object.entries(request.headers).map(([name, value]) => `  -H ${shellQuote(`${name}: ${value}`)}`),
+		...Object.entries(request.headers).map(
+			([name, value]) => `  -H ${shellQuote(`${name}: ${value}`)}`,
+		),
 		request.body ? `  --data-raw ${shellQuote(request.body)}` : "",
 		`  ${shellQuote(request.url)}`,
 	].filter(Boolean);
+
 	return lines.join(" \\\n");
 }
 
@@ -206,9 +231,11 @@ function requestToFetch(request: HttpRequestShape) {
 	const init: Record<string, unknown> = {
 		method: request.method,
 	};
+
 	if (Object.keys(request.headers).length > 0) {
 		init.headers = request.headers;
 	}
+
 	if (request.body) {
 		init.body = request.body;
 	}
@@ -218,6 +245,7 @@ function requestToFetch(request: HttpRequestShape) {
 
 function parseHeader(value: string | undefined) {
 	const match = /^([^:]+):\s*([\s\S]*)$/.exec(value ?? "");
+
 	if (!match) {
 		return undefined;
 	}
@@ -239,7 +267,7 @@ function parseJson(input: string): unknown {
 function shellTokens(input: string) {
 	const tokens: string[] = [];
 	let current = "";
-	let quote: "\"" | "'" | undefined;
+	let quote: '"' | "'" | undefined;
 	let escaping = false;
 
 	for (const char of input) {
@@ -260,10 +288,11 @@ function shellTokens(input: string) {
 			} else {
 				current += char;
 			}
+
 			continue;
 		}
 
-		if (char === "\"" || char === "'") {
+		if (char === '"' || char === "'") {
 			quote = char;
 			continue;
 		}
@@ -273,6 +302,7 @@ function shellTokens(input: string) {
 				tokens.push(current);
 				current = "";
 			}
+
 			continue;
 		}
 
