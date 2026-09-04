@@ -1,8 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { PaletteButton } from "../components/PaletteButton";
 import { PashiLogoButton } from "../components/PashiLogoButton";
-import { ThemeToggle } from "../components/ThemeToggle";
 import { PROJECTS, STATUS_LABELS, type Project } from "../lib/projects";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
@@ -26,7 +24,9 @@ function ProjectCard({ project }: { project: Project }) {
 		return (
 			<a className="project-card" href={project.url} rel="noreferrer" target="_blank">
 				{body}
-				<span className="project-card-go">Open site</span>
+				<span className="card-action">
+					Open site <span aria-hidden="true">↗</span>
+				</span>
 			</a>
 		);
 	}
@@ -34,7 +34,9 @@ function ProjectCard({ project }: { project: Project }) {
 	return (
 		<Link className="project-card" to={project.url}>
 			{body}
-			<span className="project-card-go">Open</span>
+			<span className="card-action">
+				Open <span aria-hidden="true">→</span>
+			</span>
 		</Link>
 	);
 }
@@ -50,7 +52,6 @@ export function HubPage() {
 					<p className="intro">
 						The home for things I build. Small tools, running experiments, and the odd whole app.
 					</p>
-					<PaletteButton label="Search everything" />
 				</div>
 				<PashiLogoButton className="hub-logo-button" imageClassName="hub-logo" />
 			</header>
@@ -65,15 +66,6 @@ export function HubPage() {
 					))}
 				</div>
 			</section>
-
-			<footer className="hub-footer">
-				<ThemeToggle />
-				<Link to="/api">API</Link>
-				<Link to="/about">About</Link>
-				<a href="https://github.com/nicholasgriffintn/pashi.app" rel="noreferrer" target="_blank">
-					Source
-				</a>
-			</footer>
 		</main>
 	);
 }

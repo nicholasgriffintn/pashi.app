@@ -169,7 +169,6 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	const slackmojiBatchResultsRef = useRef<SlackmojiBatchResult[]>([]);
 	const slackmojiPendingResults = useRef(0);
 	const routeToolIdRef = useRef(routeToolId);
-	const hasRequestedInfoRef = useRef(false);
 	const convertAbortRef = useRef<AbortController | undefined>(undefined);
 	const [resultHistory, setResultHistory] = useState<ResultStageValue[]>([]);
 	const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
@@ -281,12 +280,6 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	}, [apiKey, stopPolling]);
 
 	useEffect(() => {
-		if (hasRequestedInfoRef.current) {
-			return;
-		}
-
-		hasRequestedInfoRef.current = true;
-
 		let ignore = false;
 
 		fetchConverterInfo()

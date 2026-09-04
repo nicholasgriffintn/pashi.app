@@ -1,8 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { lastToolPath, rememberLastToolPath } from "../lib/last-tool";
-import { PaletteButton } from "./PaletteButton";
-import { ThemeToggle } from "./ThemeToggle";
 
 interface ToolModeTabsProps {
 	mode: "convert" | "generate";
@@ -22,9 +20,6 @@ export function ToolModeTabs({ mode }: ToolModeTabsProps) {
 
 	return (
 		<div className="tool-controls">
-			<Link className="tool-home-link" to="/">
-				Pashi
-			</Link>
 			<nav aria-label="Tool mode" className="app-mode-tabs">
 				<button
 					aria-pressed={mode === "generate"}
@@ -41,8 +36,6 @@ export function ToolModeTabs({ mode }: ToolModeTabsProps) {
 					Convert
 				</button>
 			</nav>
-			<PaletteButton />
-			<ThemeToggle />
 		</div>
 	);
 }

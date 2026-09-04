@@ -5,6 +5,7 @@ import { GeneratorForm } from "./GeneratorForm";
 import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
 import { ToolPicker } from "./ToolPicker";
+import { ToolSkeleton } from "./ToolSkeleton";
 
 interface GeneratorConsoleProps extends ToolConsoleRoute {
 	controls: React.ReactNode;
@@ -14,7 +15,6 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 	const consoleState = useGeneratorConsole({ navigateToTool, routeToolId });
 	const {
 		activeTool,
-		activeToolId,
 		clearResult,
 		clearResultHistory,
 		error,
@@ -75,12 +75,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 			statusMessage="Loading generators"
 		>
 			{!activeTool && isInfoLoading ? (
-				<div aria-busy="true" className="generator generator-loading">
-					<label>Generator</label>
-					<p className="tool-description">
-						{isInfoLoading ? `Loading ${activeToolId || "generators"}` : "No generators available"}
-					</p>
-				</div>
+				<ToolSkeleton label="Generator" />
 			) : !activeTool ? (
 				<div className="generator generator-empty">
 					<div className="generator-content">

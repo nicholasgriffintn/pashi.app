@@ -41,6 +41,10 @@
 	--space-5: 1.5rem;
 	--space-6: 2rem;
 	--space-7: 3rem;
+	--header-height: 3.5rem;
+	--page-max: 80rem;
+	--page-pad: clamp(1rem, 3vw, 2.5rem);
+	--footer-height: 4.5rem;
 
 	--radius-none: 0;
 	--duration: 160ms;

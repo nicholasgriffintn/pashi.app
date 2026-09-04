@@ -5,6 +5,7 @@ import type { ToolConsoleRoute } from "../lib/use-generator-console";
 import { ConverterForm } from "./ConverterForm";
 import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
+import { ToolSkeleton } from "./ToolSkeleton";
 
 interface ConverterConsoleProps extends ToolConsoleRoute {
 	controls: React.ReactNode;
@@ -14,7 +15,6 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 	const consoleState = useConverterConsole({ navigateToTool, routeToolId });
 	const {
 		activeTool,
-		activeToolId,
 		clearResult,
 		clearResultHistory,
 		convertActiveTool,
@@ -74,12 +74,14 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 			resultHistory={resultHistory}
 			statusMessage="Loading converters"
 		>
-			{!activeTool ? (
-				<div aria-busy="true" className="generator generator-loading">
-					<label>Converter</label>
-					<p className="tool-description">
-						{isInfoLoading ? `Loading ${activeToolId || "converters"}` : "No converters available"}
-					</p>
+			{!activeTool && isInfoLoading ? (
+				<ToolSkeleton label="Converter" />
+			) : !activeTool ? (
+				<div className="generator generator-empty">
+					<div className="generator-content">
+						<span className="tool-skeleton-label">Converter</span>
+						<p className="tool-description">No converters available.</p>
+					</div>
 				</div>
 			) : (
 				<ConverterForm

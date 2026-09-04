@@ -7,9 +7,6 @@ export function AboutPage() {
 
 	return (
 		<main className="page">
-			<Link className="page-back" to="/">
-				Pashi
-			</Link>
 			<h1>About</h1>
 			<p className="page-lede">
 				Pashi takes its name from the manga SFX <em>pashi</em>: a crisp smack or click of impact.

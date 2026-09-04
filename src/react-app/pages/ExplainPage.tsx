@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 
+import { ApiKeyControl } from "../components/ApiKeyControl";
 import { useApiKey } from "../lib/api-key-context";
 import { fetchJson } from "../lib/query-client";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
@@ -64,9 +64,6 @@ export function ExplainPage() {
 
 	return (
 		<main className="page">
-			<Link className="page-back" to="/labs">
-				Labs
-			</Link>
 			<h1>Explainers</h1>
 			<p className="page-lede">
 				Paste something dense and get it back in plain words, broken into its pieces.
@@ -97,6 +94,7 @@ export function ExplainPage() {
 					rows={4}
 					value={input}
 				/>
+				<ApiKeyControl hint="Explainers run on Workers AI, so they need a key." />
 				<button disabled={isPending || !input.trim()} type="submit">
 					{isPending ? "Reading" : "Explain"}
 				</button>

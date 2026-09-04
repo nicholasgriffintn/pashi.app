@@ -87,7 +87,10 @@ test("the explainers page offers every subject", async ({ page }) => {
 test("the command palette searches tools, pages and actions", async ({ page }) => {
 	await page.goto("/");
 
-	await page.getByRole("button", { name: /Search everything/ }).click();
+	await page
+		.getByRole("button", { name: /^Search/ })
+		.first()
+		.click();
 
 	const search = page.getByPlaceholder("Search tools, pages and actions");
 

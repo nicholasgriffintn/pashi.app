@@ -44,9 +44,6 @@ export function LabsPage() {
 
 	return (
 		<main className="page">
-			<Link className="page-back" to="/">
-				Pashi
-			</Link>
 			<h1>Labs</h1>
 			<p className="page-lede">
 				Experiments that are not finished enough to be tools yet. Expect these to change or
@@ -63,8 +60,8 @@ export function LabsPage() {
 						</div>
 						<p>{experiment.blurb}</p>
 						{experiment.path ? (
-							<Link className="lab-open" to={experiment.path}>
-								Open
+							<Link className="card-action" to={experiment.path}>
+								Open <span aria-hidden="true">→</span>
 							</Link>
 						) : null}
 					</li>

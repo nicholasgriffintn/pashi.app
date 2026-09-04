@@ -48,7 +48,6 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	const routeToolIdRef = useRef(routeToolId);
 	const generateAbortRef = useRef<AbortController | undefined>(undefined);
 	const { notification, notify } = useNotification();
-	const hasRequestedInfoRef = useRef(false);
 
 	useEffect(() => {
 		routeToolIdRef.current = routeToolId;
@@ -80,12 +79,6 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	}, []);
 
 	useEffect(() => {
-		if (hasRequestedInfoRef.current) {
-			return;
-		}
-
-		hasRequestedInfoRef.current = true;
-
 		let ignore = false;
 
 		fetchGeneratorInfo()

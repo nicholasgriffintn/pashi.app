@@ -4,6 +4,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { CommandPalette } from "./components/CommandPalette";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { SiteFooter } from "./components/SiteFooter";
+import { SiteHeader } from "./components/SiteHeader";
 import { queryClient } from "./lib/query-client";
 import { HubPage } from "./pages/HubPage";
 import { ToolsPage } from "./pages/ToolsPage";
@@ -40,6 +42,7 @@ function App() {
 			<BrowserRouter>
 				<ErrorBoundary label="Pashi">
 					<CommandPalette />
+					<SiteHeader />
 					<Suspense fallback={<RouteFallback />}>
 						<Routes>
 							<Route element={<HubPage />} path="/" />
@@ -54,6 +57,7 @@ function App() {
 							<Route element={<Navigate replace to="/" />} path="*" />
 						</Routes>
 					</Suspense>
+					<SiteFooter />
 				</ErrorBoundary>
 			</BrowserRouter>
 		</QueryClientProvider>

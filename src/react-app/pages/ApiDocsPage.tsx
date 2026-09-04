@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 
 import { jsonQueryOptions } from "../lib/query-client";
 import { searchTools, type SearchableTool } from "../lib/tool-search";
@@ -45,9 +44,6 @@ export function ApiDocsPage() {
 
 	return (
 		<main className="page">
-			<Link className="page-back" to="/">
-				Pashi
-			</Link>
 			<h1>API</h1>
 			<p className="page-lede">
 				Every tool is a URL. Send a GET with query parameters or a POST with a JSON body, and get
