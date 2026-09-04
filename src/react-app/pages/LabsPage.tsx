@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 interface Experiment {
 	blurb: string;
 	id: string;
+	path?: string;
 	state: "building" | "live";
 	title: string;
 }
@@ -12,7 +13,8 @@ const EXPERIMENTS: readonly Experiment[] = [
 		blurb:
 			"Describe what you need in plain words. Pashi picks the tool, fills the form and runs it for you.",
 		id: "ask",
-		state: "building",
+		path: "/labs/ask",
+		state: "live",
 		title: "Ask Pashi",
 	},
 	{
@@ -52,6 +54,11 @@ export function LabsPage() {
 							</span>
 						</div>
 						<p>{experiment.blurb}</p>
+						{experiment.path ? (
+							<Link className="lab-open" to={experiment.path}>
+								Open
+							</Link>
+						) : null}
 					</li>
 				))}
 			</ul>

@@ -16,6 +16,9 @@ const AboutPage = lazy(() =>
 const ApiDocsPage = lazy(() =>
 	import("./pages/ApiDocsPage").then((module) => ({ default: module.ApiDocsPage })),
 );
+const AskPage = lazy(() =>
+	import("./pages/AskPage").then((module) => ({ default: module.AskPage })),
+);
 const LabsPage = lazy(() =>
 	import("./pages/LabsPage").then((module) => ({ default: module.LabsPage })),
 );
@@ -39,7 +42,8 @@ function App() {
 							<Route element={<ToolsPage mode="generate" />} path="/tools" />
 							<Route element={<ToolsPage mode="convert" />} path="/tools/convert/:toolId" />
 							<Route element={<ToolsPage mode="generate" />} path="/tools/:toolId" />
-							<Route element={<LabsPage />} path="/labs/*" />
+							<Route element={<LabsPage />} path="/labs" />
+							<Route element={<AskPage />} path="/labs/ask" />
 							<Route element={<AboutPage />} path="/about" />
 							<Route element={<ApiDocsPage />} path="/api" />
 							<Route element={<LegacyToolRedirect prefix="convert" />} path="/convert/:toolId" />

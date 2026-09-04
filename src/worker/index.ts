@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 
+import { createMcpResponse } from "./mcp/protocol";
 import { requireApiKey, type ApiKeyVariables } from "./middleware/api-key-access";
 import { apiCors } from "./middleware/cors";
 import { enforceRateLimit } from "./security/guard";
@@ -17,12 +18,15 @@ import {
 } from "./services/converters/conversion-pipeline";
 import { isQueuedConversionUploadRequest } from "./services/converters/conversion-routing";
 import { createExportResponse } from "./services/export";
+import { createFeatureStatus } from "./services/features";
 import { createGeneratorResponse, findGenerator } from "./services/generators/index";
 import {
 	createGeneratorRequest,
 	createGeneratorRequestFromSearchParams,
 	usesAiMode,
 } from "./services/generators/request";
+import { routeRequestToTool } from "./services/labs/ask";
+import { explainInput, isExplainSubject } from "./services/labs/explain";
 import { createSitemapResponse } from "./services/sitemap";
 import { readConverterBody, readGeneratorBody } from "./utils/body";
 import { toErrorResponse } from "./utils/error-response";
@@ -67,6 +71,76 @@ async function guard(
 }
 
 app.get("/api/info", (c) => c.json(createApiIndexResponse(c.env)));
+
+function aiUnavailable(env: WorkerEnv) {
+	return !createFeatureStatus(env).ai.available;
+}
+
+app.post("/api/labs/ask", async (c) => {
+	if (aiUnavailable(c.env)) {
+		return errorJson("AI is not available.", 503, "unavailable");
+	}
+
+	const denied = await requireApiKey(c);
+
+	if (denied) {
+		return denied;
+	}
+
+	const limited = await guard(c, { isAiMode: true });
+
+	if (limited) {
+		return limited;
+	}
+
+	const body = await readGeneratorBody(c);
+
+	return c.json(await routeRequestToTool(c.env, body.input || body.fields.request || ""));
+});
+
+app.post("/api/labs/explain/:subject", async (c) => {
+	if (aiUnavailable(c.env)) {
+		return errorJson("AI is not available.", 503, "unavailable");
+	}
+
+	const subject = c.req.param("subject");
+
+	if (!isExplainSubject(subject)) {
+		return errorJson("Unknown explainer.", 404, "not_found");
+	}
+
+	const denied = await requireApiKey(c);
+
+	if (denied) {
+		return denied;
+	}
+
+	const limited = await guard(c, { isAiMode: true });
+
+	if (limited) {
+		return limited;
+	}
+
+	const body = await readGeneratorBody(c);
+
+	return c.json(await explainInput(c.env, subject, body.input));
+});
+
+app.all("/mcp", async (c) => {
+	const denied = await requireApiKey(c);
+
+	if (denied) {
+		return denied;
+	}
+
+	const limited = await guard(c, { isAiMode: true });
+
+	if (limited) {
+		return limited;
+	}
+
+	return createMcpResponse(c.req.raw, c.env);
+});
 
 app.get("/sitemap.xml", (c) => createSitemapResponse(new URL(c.req.url).origin));
 

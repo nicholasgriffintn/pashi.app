@@ -3234,3 +3234,123 @@ h1 {
 		grid-template-columns: 1fr;
 	}
 }
+
+.ask-form {
+	display: grid;
+	gap: var(--space-2);
+	margin: var(--space-5) 0 var(--space-4);
+	max-width: 34rem;
+}
+
+.ask-form label {
+	color: var(--cyan);
+	font-size: 0.68rem;
+	font-weight: 900;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+}
+
+.ask-form textarea {
+	background: var(--paper);
+	border: 2px solid var(--ink);
+	color: var(--ink);
+	font: inherit;
+	padding: var(--space-2);
+	resize: vertical;
+}
+
+.ask-form button,
+.ask-result button {
+	background: var(--cyan);
+	border: 2px solid var(--ink);
+	box-shadow: var(--shadow-hard);
+	color: var(--ink);
+	cursor: pointer;
+	font-weight: 900;
+	justify-self: start;
+	letter-spacing: 0.08em;
+	padding: 0.55rem 1rem;
+	text-transform: uppercase;
+}
+
+.ask-form button:disabled {
+	background: var(--paper-warm);
+	cursor: not-allowed;
+}
+
+.ask-examples {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	list-style: none;
+	margin: 0 0 var(--space-5);
+	padding: 0;
+}
+
+.ask-examples button {
+	background: transparent;
+	border: 1px solid rgb(var(--paper-rgb) / 0.3);
+	color: var(--paper-warm);
+	cursor: pointer;
+	font-size: 0.78rem;
+	padding: 0.25rem 0.55rem;
+}
+
+.ask-examples button:hover {
+	border-color: var(--cyan);
+	color: var(--cyan);
+}
+
+.ask-error {
+	border-left: 4px solid var(--magenta);
+	color: var(--paper) !important;
+	padding-left: var(--space-3);
+}
+
+.ask-result {
+	background: rgb(var(--ink-rgb) / 0.78);
+	border: 2px solid var(--cyan);
+	box-shadow: var(--shadow-hard);
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-4);
+}
+
+.ask-result h2 {
+	margin: 0;
+}
+
+.ask-fields {
+	display: grid;
+	gap: var(--space-1);
+	margin: 0;
+}
+
+.ask-fields div {
+	display: grid;
+	gap: var(--space-2);
+	grid-template-columns: minmax(5rem, auto) minmax(0, 1fr);
+}
+
+.ask-fields dt {
+	color: var(--yellow);
+	font-family: var(--font-mono);
+	font-size: 0.76rem;
+}
+
+.ask-fields dd {
+	color: var(--paper);
+	font-size: 0.85rem;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.lab-open {
+	color: var(--cyan);
+	font-size: 0.72rem;
+	font-weight: 900;
+	justify-self: start;
+	letter-spacing: 0.1em;
+	text-decoration: none;
+	text-transform: uppercase;
+}

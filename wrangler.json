@@ -7,7 +7,8 @@
 	"preview_urls": false,
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
-		"ENABLE_AI": "false",
+		"AI_GATEWAY_ID": "pashi",
+		"ENABLE_AI": "true",
 		"ENABLE_CONVERSIONS": "true"
 	},
 	"unsafe": {
@@ -105,6 +106,6 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application",
-		"run_worker_first": ["/api/*", "/sitemap.xml", "/export/*"]
+		"run_worker_first": ["/api/*", "/mcp", "/sitemap.xml", "/export/*"]
 	}
 }
