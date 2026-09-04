@@ -35,6 +35,18 @@ export function useDocumentMetadata(title: string, description = DEFAULT_DESCRIP
 		setMetaContent('meta[name="description"]', "name", "description", description);
 		setMetaContent('meta[property="og:title"]', "property", "og:title", fullTitle);
 		setMetaContent('meta[property="og:description"]', "property", "og:description", description);
+		setMetaContent(
+			'meta[property="og:image"]',
+			"property",
+			"og:image",
+			`${window.location.origin}/og?path=${encodeURIComponent(window.location.pathname)}`,
+		);
+		setMetaContent(
+			'meta[name="twitter:image"]',
+			"name",
+			"twitter:image",
+			`${window.location.origin}/og?path=${encodeURIComponent(window.location.pathname)}`,
+		);
 		setCanonical(`${window.location.origin}${window.location.pathname}`);
 	}, [description, title]);
 }

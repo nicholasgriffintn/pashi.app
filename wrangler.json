@@ -99,6 +99,12 @@
 			"bucket_name": "pashi-conversions"
 		}
 	],
+	"analytics_engine_datasets": [
+		{
+			"binding": "EVENTS",
+			"dataset": "pashi_events"
+		}
+	],
 	"observability": {
 		"enabled": true
 	},
@@ -106,6 +112,6 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application",
-		"run_worker_first": ["/api/*", "/mcp", "/sitemap.xml", "/export/*"]
+		"run_worker_first": ["/api/*", "/mcp", "/og", "/sitemap.xml", "/export/*"]
 	}
 }
