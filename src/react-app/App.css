@@ -3585,3 +3585,41 @@ h1 {
 .hub-header .palette-button {
 	margin-top: var(--space-3);
 }
+
+.mascot-button[data-state="ready"] img {
+	animation: mascot-nod 420ms var(--ease);
+}
+
+.mascot-button[data-state="error"] img {
+	animation: mascot-shake 320ms ease-in-out;
+	filter: saturate(0.7);
+}
+
+.mascot-button[data-state="empty"] img {
+	opacity: 0.9;
+}
+
+@keyframes mascot-nod {
+	0% {
+		transform: translateY(0) rotate(0deg);
+	}
+	40% {
+		transform: translateY(6px) rotate(-3deg);
+	}
+	100% {
+		transform: translateY(0) rotate(0deg);
+	}
+}
+
+@keyframes mascot-shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-5px);
+	}
+	75% {
+		transform: translateX(5px);
+	}
+}

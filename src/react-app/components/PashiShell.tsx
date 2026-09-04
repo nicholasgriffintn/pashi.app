@@ -2,7 +2,7 @@ import type React from "react";
 
 import type { ResultStageValue } from "../lib/result-types";
 import { ApiKeyControl } from "./ApiKeyControl";
-import { PashiLogoButton } from "./PashiLogoButton";
+import { PashiLogoButton, type MascotState } from "./PashiLogoButton";
 import { ResultStage } from "./ResultStage";
 
 interface PashiShellProps {
@@ -50,6 +50,12 @@ export function PashiShell({
 	resultHistory,
 	statusMessage,
 }: PashiShellProps) {
+	const mascotState: MascotState = notification.toLowerCase().includes("error")
+		? "error"
+		: result
+			? "ready"
+			: "empty";
+
 	return (
 		<main className="shell">
 			<section className="hero" aria-labelledby="pashi-title">
@@ -72,7 +78,8 @@ export function PashiShell({
 					<PashiLogoButton
 						className="mascot-button"
 						imageClassName="mascot"
-						isLoading={isInfoLoading}
+						isLoading={isInfoLoading || isLoading}
+						state={mascotState}
 					/>
 					<ScreenReaderStatus message={isInfoLoading ? statusMessage : ""} />
 					<ResultStage
