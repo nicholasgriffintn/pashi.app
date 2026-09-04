@@ -1,20 +1,32 @@
 # Pashi
 
-Tiny generators for quick output.
+The home for side projects. Named for the manga SFX `pashi`: a crisp smack or click of impact.
 
-## Functionality
+[https://pashi.app](https://pashi.app)
 
-Pashi takes its name from the manga SFX `pashi`: a crisp smack or click of impact.
+## What is here
 
-Go to [https://pashi.app/](https://pashi.app/) to see it in action. You can generate from a wide range of categories depending on your needs.
+Pashi has three layers on one domain.
 
-Pashi also features exports to various formats, including JSON, CSV, and TXT, making it easy to integrate generated data into your projects.
+- **Hub** at `/` lists every project, including the ones that live on their own subdomains.
+- **Tools** at `/tools` is the console: 79 generators and 18 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
+- **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool and fills its form.
 
-And if you'd like to use Pashi in your own projects, you can access the API at [https://pashi.app/api](https://pashi.app/api) to generate data programmatically. Go to [https://pashi.app/api/info](https://pashi.app/api/info) for more information on how to use the API.
+Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, or [/api/info](https://pashi.app/api/info) for the raw contract.
+
+## Agent access
+
+An MCP endpoint at `/mcp` exposes three meta tools rather than one per generator, so an agent can work without flooding its context.
+
+- `pashi_list_tools` finds a tool id, optionally filtered by search or kind.
+- `pashi_generate` runs a generator.
+- `pashi_convert` runs a text converter. Media and document conversion is not available over MCP.
+
+It needs an API key and speaks JSON-RPC over POST.
 
 ## API access
 
-Workers AI requests and container-backed converters require an application API key. A valid key also lets an identified bot pass the global bot blocker. Send the key in either `Authorization: Bearer <api-key>` or `X-API-Key`.
+Workers AI requests, the Labs endpoints and container-backed converters require an application API key. Send it in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
 
 Applications and key records live in the `APPLICATIONS` KV namespace, like this:
 
@@ -90,3 +102,31 @@ Monitor your workers:
 ```bash
 npx wrangler tail
 ```
+
+## Operations
+
+Conversion jobs and their uploads expire after 24 hours. Set the matching bucket lifecycle rule once:
+
+```bash
+pnpm exec wrangler r2 bucket lifecycle add pashi-conversions --prefix conversions/ --expire-days 1
+```
+
+Permanently failed conversions land in the `pashi-conversions-dlq` queue. Inspect it with:
+
+```bash
+pnpm exec wrangler queues list
+```
+
+Service health, including the feature flags and bindings, is at `/api/health`.
+
+## Checks
+
+```bash
+pnpm check        # typecheck the app and the worker
+pnpm lint         # oxlint
+pnpm format:check # oxfmt
+pnpm build        # tsc and vite build
+pnpm test:smoke   # playwright smoke suite against the built worker
+```
+
+There are no unit tests here, on purpose.

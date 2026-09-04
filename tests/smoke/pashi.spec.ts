@@ -20,10 +20,10 @@ test("legacy tool URLs redirect to the new route", async ({ page }) => {
 test("a generator runs and offers a share link", async ({ page }) => {
 	await page.goto("/tools/uuid");
 
-	await page
-		.getByRole("button", { name: /Generate/i })
-		.last()
-		.click();
+	const submit = page.getByRole("button", { name: "Generate UUID" });
+
+	await expect(submit).toBeVisible();
+	await submit.click();
 
 	await expect(page.getByRole("button", { name: /Copy a link/ })).toBeVisible();
 	await expect(page).toHaveURL(/\?/);
