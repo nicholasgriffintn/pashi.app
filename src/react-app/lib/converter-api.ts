@@ -175,11 +175,13 @@ export async function convertThing(
 	input: string,
 	fields: Record<string, string> = {},
 	apiKey = "",
+	signal?: AbortSignal,
 ): Promise<ConvertResult> {
 	const response = await apiFetch(endpoint, apiKey, {
 		body: JSON.stringify({ fields, input }),
 		headers: { "Content-Type": "application/json" },
 		method: "POST",
+		signal,
 	});
 
 	const body = (await response.json()) as ConvertResult | { error?: string };

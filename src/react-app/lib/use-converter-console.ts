@@ -18,6 +18,8 @@ import {
 	getDefaultConverterInput,
 	getInitialConverterValues,
 } from "./converter-state";
+import { clearHistory, readHistory, saveHistoryEntry } from "./history-store";
+import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
 import type { ResultStageValue } from "./result-types";
 import type { ToolConsoleRoute } from "./use-generator-console";
 import { useNotification } from "./use-notification";
@@ -168,6 +170,9 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	const slackmojiPendingResults = useRef(0);
 	const routeToolIdRef = useRef(routeToolId);
 	const hasRequestedInfoRef = useRef(false);
+	const convertAbortRef = useRef<AbortController | undefined>(undefined);
+	const [resultHistory, setResultHistory] = useState<ResultStageValue[]>([]);
+	const [isHistoryLoaded, setIsHistoryLoaded] = useState(false);
 	const { clearNotification, notification, notify } = useNotification();
 
 	useEffect(() => {
@@ -313,6 +318,31 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	}, [applyToolValues, notify]);
 
 	useEffect(() => {
+		if (!activeToolId || isHistoryLoaded) {
+			return;
+		}
+
+		let ignore = false;
+
+		readHistory(activeToolId)
+			.then((entries) => {
+				if (!ignore) {
+					setResultHistory(entries.map((entry) => entry.result));
+					setIsHistoryLoaded(true);
+				}
+			})
+			.catch(() => {
+				if (!ignore) {
+					setIsHistoryLoaded(true);
+				}
+			});
+
+		return () => {
+			ignore = true;
+		};
+	}, [activeToolId, isHistoryLoaded]);
+
+	useEffect(() => {
 		if (tools.length === 0) {
 			return;
 		}
@@ -323,6 +353,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 			return;
 		}
 
+		setIsHistoryLoaded(false);
 		applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
 
 		if (nextTool.id !== routeToolId) {
@@ -406,6 +437,11 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 
 	async function convertActiveTool() {
 		stopPolling();
+		convertAbortRef.current?.abort();
+
+		const controller = new AbortController();
+
+		convertAbortRef.current = controller;
 		setError("");
 		setIsLoading(true);
 
@@ -495,12 +531,22 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 						await selectedFile.text(),
 						fields,
 						apiKey,
+						controller.signal,
 					);
 
+					if (controller.signal.aborted) {
+						return;
+					}
+
+					rememberResult(activeTool.id, nextResult);
 					setResult(nextResult);
 					setIsLoading(false);
 				}
 			} catch (caught) {
+				if (controller.signal.aborted) {
+					return;
+				}
+
 				setError(caught instanceof Error ? caught.message : "Conversion failed.");
 				setIsLoading(false);
 			}
@@ -528,9 +574,26 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 				...(outputFormat ? { outputFormat } : {}),
 			};
 
-			setResult(await convertThing(activeTool.endpoint, input, fields, apiKey));
+			const nextResult = await convertThing(
+				activeTool.endpoint,
+				input,
+				fields,
+				apiKey,
+				controller.signal,
+			);
+
+			if (controller.signal.aborted) {
+				return;
+			}
+
+			rememberResult(activeTool.id, nextResult);
+			setResult(nextResult);
 			setIsLoading(false);
 		} catch (caught) {
+			if (controller.signal.aborted) {
+				return;
+			}
+
 			setError(caught instanceof Error ? caught.message : "Conversion failed.");
 			setIsLoading(false);
 		}
@@ -565,8 +628,27 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 		setIsLoading(false);
 	}
 
+	function rememberResult(toolId: string, nextResult: ResultStageValue) {
+		setResultHistory((current) => appendResultHistory(current, result));
+		void saveHistoryEntry(toolId, nextResult);
+	}
+
+	function clearResultHistory() {
+		setResultHistory((current) => clearResultHistoryForResult(current, result));
+		void clearHistory(activeToolId);
+	}
+
+	function restoreResult(restoredResult: ResultStageValue) {
+		setResultHistory((current) => appendResultHistory(current, result));
+		setResult(restoredResult);
+		notify("Result restored");
+	}
+
 	return {
 		activeTool,
+		clearResultHistory,
+		restoreResult,
+		resultHistory,
 		activeToolId,
 		clearResult,
 		convertActiveTool,

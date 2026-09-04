@@ -16,6 +16,7 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 		activeTool,
 		activeToolId,
 		clearResult,
+		clearResultHistory,
 		convertActiveTool,
 		error,
 		converterFields,
@@ -31,6 +32,8 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 		outputFormat,
 		setConverterField,
 		result,
+		restoreResult,
+		resultHistory,
 		selectedFile,
 		setOutputFormat,
 		setInput,
@@ -63,9 +66,12 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
 			notification={notification}
+			onClearResultHistory={clearResultHistory}
 			onImageError={handleImageError}
 			onImageLoad={handleImageLoad}
+			onRestoreResult={restoreResult}
 			result={result}
+			resultHistory={resultHistory}
 			statusMessage="Loading converters"
 		>
 			{!activeTool ? (
