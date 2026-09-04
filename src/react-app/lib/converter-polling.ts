@@ -12,6 +12,8 @@ interface ConversionJobPollerOptions {
 	fetchJob?: (statusUrl: string) => Promise<ConvertResult>;
 	initialDelayMs?: number;
 	intervalMs?: number;
+	maxAttempts?: number;
+	maxConsecutiveErrors?: number;
 	onError: (error: Error) => void;
 	onResult: (result: ConvertResult) => void;
 	onSettled: (status: string | undefined) => void;
@@ -31,10 +33,18 @@ const defaultScheduler = {
 	setTimeout: (callback: () => void, delayMs: number) => window.setTimeout(callback, delayMs),
 };
 
+const MAX_BACKOFF_MS = 8000;
+
+export function nextPollDelay(baseDelayMs: number, attempt: number) {
+	return Math.min(Math.round(baseDelayMs * 1.35 ** attempt), MAX_BACKOFF_MS);
+}
+
 export function createConversionJobPoller({
 	fetchJob = fetchConversionJob,
 	initialDelayMs = 0,
-	intervalMs = 1800,
+	intervalMs = 1500,
+	maxAttempts = 60,
+	maxConsecutiveErrors = 3,
 	onError,
 	onResult,
 	onSettled,
@@ -53,15 +63,9 @@ export function createConversionJobPoller({
 		stop();
 		onResult(initialResult);
 
-		if (!isPendingConversionJob(initialResult)) {
-			onSettled(conversionJobStatus(initialResult));
-
-			return;
-		}
-
 		const pollUrl = conversionJobStatusUrl(initialResult);
 
-		if (!pollUrl) {
+		if (!isPendingConversionJob(initialResult) || !pollUrl) {
 			onSettled(conversionJobStatus(initialResult));
 
 			return;
@@ -69,8 +73,18 @@ export function createConversionJobPoller({
 
 		const statusUrl = pollUrl;
 		const currentRunId = runId;
+		let attempts = 0;
+		let consecutiveErrors = 0;
+
+		function fail(message: string, status?: string) {
+			timerId = undefined;
+			onError(new Error(message));
+			onSettled(status);
+		}
 
 		async function poll() {
+			attempts += 1;
+
 			try {
 				const nextResult = await fetchJob(statusUrl);
 
@@ -78,22 +92,40 @@ export function createConversionJobPoller({
 					return;
 				}
 
+				consecutiveErrors = 0;
 				onResult(nextResult);
-				if (isPendingConversionJob(nextResult)) {
-					timerId = scheduler.setTimeout(poll, intervalMs);
+
+				if (!isPendingConversionJob(nextResult)) {
+					timerId = undefined;
+					onSettled(conversionJobStatus(nextResult));
 
 					return;
 				}
 
-				timerId = undefined;
-				onSettled(conversionJobStatus(nextResult));
+				if (attempts >= maxAttempts) {
+					fail("Conversion is taking too long. Try again.", conversionJobStatus(nextResult));
+
+					return;
+				}
+
+				timerId = scheduler.setTimeout(poll, nextPollDelay(intervalMs, attempts));
 			} catch (caught) {
 				if (runId !== currentRunId) {
 					return;
 				}
 
-				timerId = undefined;
-				onError(caught instanceof Error ? caught : new Error("Could not load conversion job."));
+				consecutiveErrors += 1;
+
+				if (consecutiveErrors >= maxConsecutiveErrors || attempts >= maxAttempts) {
+					fail(
+						caught instanceof Error ? caught.message : "Could not load conversion job.",
+						undefined,
+					);
+
+					return;
+				}
+
+				timerId = scheduler.setTimeout(poll, nextPollDelay(intervalMs, attempts));
 			}
 		}
 

@@ -62,7 +62,10 @@ export function PashiShell({
 					<h1 id="pashi-title">Pashi</h1>
 					<p className="intro">{intro}</p>
 					{controls}
-					<div className="tool-surface">{children}</div>
+					<div className="tool-surface">
+						{children}
+						<ApiKeyControl />
+					</div>
 				</div>
 
 				<div className="showcase">
@@ -71,7 +74,7 @@ export function PashiShell({
 						imageClassName="mascot"
 						isLoading={isInfoLoading}
 					/>
-					{isInfoLoading ? <ScreenReaderStatus message={statusMessage} /> : null}
+					<ScreenReaderStatus message={isInfoLoading ? statusMessage : ""} />
 					<ResultStage
 						actions={actions}
 						emptyMessage={emptyResultMessage}
@@ -86,12 +89,9 @@ export function PashiShell({
 					/>
 				</div>
 			</section>
-			<ApiKeyControl />
-			{notification ? (
-				<div className="pashi-toast" role="status">
-					{notification}
-				</div>
-			) : null}
+			<div className="pashi-toast" data-visible={notification ? "true" : undefined} role="status">
+				{notification}
+			</div>
 		</main>
 	);
 }

@@ -35,6 +35,7 @@ export function FileConverterControls({
 			<label className="field-control">
 				<span>{tool.input.label}</span>
 				<input
+					key={`${tool.id}-${selectedFile ? "chosen" : "empty"}`}
 					accept={tool.input.accept?.join(",")}
 					onChange={(event) => onFileChange(event.target.files?.[0])}
 					required={tool.input.required && !hasSourcePresetField}

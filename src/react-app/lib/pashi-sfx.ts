@@ -24,14 +24,29 @@ export function createPashiImpactSequence(): PashiImpactSequence {
 	};
 }
 
-export async function playPashiImpact() {
-	const AudioContext = window.AudioContext;
+let sharedAudio: AudioContext | undefined;
 
-	if (!AudioContext) {
+function impactAudioContext() {
+	if (!window.AudioContext) {
+		return undefined;
+	}
+
+	sharedAudio ??= new window.AudioContext();
+
+	return sharedAudio;
+}
+
+export async function playPashiImpact() {
+	const audio = impactAudioContext();
+
+	if (!audio) {
 		return;
 	}
 
-	const audio = new AudioContext();
+	if (audio.state === "suspended") {
+		await audio.resume();
+	}
+
 	const sequence = createPashiImpactSequence();
 	const startedAt = audio.currentTime;
 
@@ -43,7 +58,7 @@ export async function playPashiImpact() {
 		}
 	}
 
-	await closeAfter(audio, sequence.duration + 0.04);
+	await settleAfter(sequence.duration + 0.04);
 }
 
 function playNoiseHit(audio: AudioContext, hit: PashiImpactHit, startedAt: number) {
@@ -89,10 +104,8 @@ function playToneHit(audio: AudioContext, hit: PashiImpactHit, startedAt: number
 	oscillator.stop(endsAt);
 }
 
-function closeAfter(audio: AudioContext, seconds: number) {
+function settleAfter(seconds: number) {
 	return new Promise<void>((resolve) => {
-		window.setTimeout(() => {
-			void audio.close().finally(resolve);
-		}, seconds * 1000);
+		window.setTimeout(resolve, seconds * 1000);
 	});
 }

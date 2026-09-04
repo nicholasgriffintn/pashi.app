@@ -226,6 +226,7 @@ export function useGeneratorConsole() {
 	}
 
 	function restoreResult(restoredResult: ResultStageValue) {
+		setResultHistory((current) => appendResultHistory(current, result));
 		setResult(restoredResult);
 		notify("Result restored");
 	}

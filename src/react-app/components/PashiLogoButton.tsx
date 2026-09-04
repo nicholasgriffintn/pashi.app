@@ -24,7 +24,7 @@ export function PashiLogoButton({
 		window.clearTimeout(impactTimer.current);
 		setIsImpacting(true);
 		impactTimer.current = window.setTimeout(() => setIsImpacting(false), 220);
-		void playPashiImpact();
+		playPashiImpact().catch(() => undefined);
 	}
 
 	return (

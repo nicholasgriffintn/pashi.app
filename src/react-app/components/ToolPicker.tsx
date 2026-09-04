@@ -92,7 +92,12 @@ function groupTools(tools: ToolPickerTool[], recentToolIds: string[]) {
 }
 
 function isTypingTarget(target: EventTarget | null) {
-	return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+	return (
+		target instanceof HTMLInputElement ||
+		target instanceof HTMLTextAreaElement ||
+		target instanceof HTMLSelectElement ||
+		(target instanceof HTMLElement && target.isContentEditable)
+	);
 }
 
 function readRecentToolIds(recentKey: string) {
@@ -195,6 +200,7 @@ export function ToolPicker({
 
 	const closePicker = useCallback((restoreFocus = false) => {
 		setIsOpen(false);
+		setQuery("");
 
 		if (restoreFocus) {
 			triggerRef.current?.focus();
@@ -214,14 +220,24 @@ export function ToolPicker({
 			return;
 		}
 
+		let frame = 0;
+
 		function handleWindowChange() {
-			updatePlacement();
+			if (frame) {
+				return;
+			}
+
+			frame = window.requestAnimationFrame(() => {
+				frame = 0;
+				updatePlacement();
+			});
 		}
 
 		window.addEventListener("resize", handleWindowChange);
 		window.addEventListener("scroll", handleWindowChange, true);
 
 		return () => {
+			window.cancelAnimationFrame(frame);
 			window.removeEventListener("resize", handleWindowChange);
 			window.removeEventListener("scroll", handleWindowChange, true);
 		};
@@ -238,7 +254,7 @@ export function ToolPicker({
 			const target = event.target as Node;
 
 			if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) {
-				setIsOpen(false);
+				closePicker();
 			}
 		}
 
@@ -251,12 +267,15 @@ export function ToolPicker({
 
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 				event.preventDefault();
-				openPicker();
+
+				if (!isOpen) {
+					openPicker();
+				}
 
 				return;
 			}
 
-			if (event.key === "/" && !isTypingTarget(event.target)) {
+			if (event.key === "/" && !isOpen && !isTypingTarget(event.target)) {
 				event.preventDefault();
 				openPicker();
 			}
@@ -269,7 +288,7 @@ export function ToolPicker({
 			document.removeEventListener("mousedown", handlePointerDown);
 			document.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [closePicker, openPicker]);
+	}, [closePicker, isOpen, openPicker]);
 
 	function selectTool(toolId: string) {
 		const nextRecentToolIds = [toolId, ...recentToolIds.filter((id) => id !== toolId)].slice(0, 4);

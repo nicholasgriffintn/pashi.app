@@ -2,11 +2,12 @@ export type AppMode = "convert" | "generate";
 
 interface AppModeTabsProps {
 	disabledModes?: Partial<Record<AppMode, string>>;
+	hints?: Partial<Record<AppMode, string>>;
 	mode: AppMode;
 	onChange: (mode: AppMode) => void;
 }
 
-export function AppModeTabs({ disabledModes = {}, mode, onChange }: AppModeTabsProps) {
+export function AppModeTabs({ disabledModes = {}, hints = {}, mode, onChange }: AppModeTabsProps) {
 	function handleChange(nextMode: AppMode) {
 		if (disabledModes[nextMode]) {
 			return;
@@ -21,7 +22,7 @@ export function AppModeTabs({ disabledModes = {}, mode, onChange }: AppModeTabsP
 				aria-pressed={mode === "generate"}
 				disabled={Boolean(disabledModes.generate)}
 				onClick={() => handleChange("generate")}
-				title={disabledModes.generate}
+				title={disabledModes.generate ?? hints.generate}
 				type="button"
 			>
 				Generate
@@ -30,7 +31,7 @@ export function AppModeTabs({ disabledModes = {}, mode, onChange }: AppModeTabsP
 				aria-pressed={mode === "convert"}
 				disabled={Boolean(disabledModes.convert)}
 				onClick={() => handleChange("convert")}
-				title={disabledModes.convert}
+				title={disabledModes.convert ?? hints.convert}
 				type="button"
 			>
 				Convert
