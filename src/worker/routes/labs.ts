@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { runEvaluation } from "../ai/evaluation/runner";
 import { requireApiKey } from "../middleware/api-key-access";
 import { recordEvent } from "../services/events";
 import { createFeatureStatus } from "../services/features";
@@ -81,6 +82,28 @@ export function createLabsRoutes() {
 		});
 
 		return c.json(explanation);
+	});
+
+	routes.post("/evaluate", async (c) => {
+		if (aiUnavailable(c.env)) {
+			return errorJson("AI is not available.", 503, "unavailable");
+		}
+
+		const denied = await requireApiKey(c);
+
+		if (denied) {
+			return denied;
+		}
+
+		const limited = await guard(c, { isAiMode: true });
+
+		if (limited) {
+			return limited;
+		}
+
+		const report = await runEvaluation(c.env);
+
+		return c.json(report, report.failed === 0 ? 200 : 424);
 	});
 
 	return routes;

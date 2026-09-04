@@ -1,5 +1,6 @@
 import { Container, getContainer } from "@cloudflare/containers";
 
+import mimeTypesJson from "../../../../containers/converter/mime-types.json";
 import { UploadTooLargeError } from "../../utils/http";
 import { fileExtension, safeFilenameWithExtension } from "../../utils/text";
 import {
@@ -8,7 +9,11 @@ import {
 	type ConversionOperationFields,
 } from "./conversion-options";
 import { applyConverterPresetFields } from "./presets";
-import { QUEUED_CONVERTER_OUTPUTS } from "./queued-output-formats";
+import {
+	AUDIO_FORMAT_OUTPUTS,
+	DOCUMENT_FORMAT_OUTPUTS,
+	QUEUED_CONVERTER_OUTPUTS,
+} from "./queued-output-formats";
 import { isAllowedPresetKey, SLACKMOJI_PRESET_PREFIX } from "./slackmoji-presets";
 import type { ConverterResult } from "./types";
 
@@ -64,22 +69,8 @@ interface UploadedConversionSource {
 	name: string;
 }
 
+const MIME_TYPES: Record<string, string> = mimeTypesJson;
 const OUTPUT_FORMAT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/;
-const KNOWN_AUDIO_OUTPUT_FORMATS = new Set([
-	"aac",
-	"aiff",
-	"alac",
-	"flac",
-	"m4a",
-	"mka",
-	"mp3",
-	"oga",
-	"ogg",
-	"opus",
-	"wav",
-	"wma",
-]);
-const KNOWN_DOCUMENT_OUTPUT_FORMATS = new Set(["docx", "epub", "html", "md", "odt", "rtf", "txt"]);
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 const CONTAINER_PORT = 8080;
 const JOB_PREFIX = "conversions";
@@ -620,79 +611,29 @@ function extensionForFormat(format: string) {
 }
 
 function contentTypeForOutput(kind: QueuedConversionKind, outputFormat: string) {
-	switch (outputFormat) {
-		case "aac":
-			return "audio/aac";
-		case "aiff":
-			return "audio/aiff";
-		case "avif":
-			return "image/avif";
-		case "bmp":
-			return "image/bmp";
-		case "flac":
-			return "audio/flac";
-		case "docx":
-			return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-		case "epub":
-			return "application/epub+zip";
-		case "gif":
-			return "image/gif";
-		case "html":
-			return "text/html;charset=utf-8";
-		case "ico":
-			return "image/vnd.microsoft.icon";
-		case "jpeg":
-		case "mjpeg":
-			return "image/jpeg";
-		case "m4a":
-			return "audio/mp4";
-		case "mkv":
-		case "mka":
-			return "video/x-matroska";
-		case "mov":
-			return "video/quicktime";
-		case "mp3":
-			return "audio/mpeg";
-		case "mp4":
-		case "m4v":
-			return "video/mp4";
-		case "oga":
-		case "ogg":
-		case "opus":
-			return "audio/ogg";
-		case "odt":
-			return "application/vnd.oasis.opendocument.text";
-		case "png":
-			return "image/png";
-		case "rtf":
-			return "application/rtf";
-		case "tiff":
-			return "image/tiff";
-		case "txt":
-			return "text/plain;charset=utf-8";
-		case "wav":
-			return "audio/wav";
-		case "webm":
-			return kind === "audio" ? "audio/webm" : "video/webm";
-		case "webp":
-			return "image/webp";
-		case "wmv":
-			return "video/x-ms-wmv";
+	const known = MIME_TYPES[outputFormat];
+
+	if (known) {
+		return outputFormat === "webm" ? (kind === "audio" ? "audio/webm" : "video/webm") : known;
+	}
+
+	if (outputFormat === "webm") {
+		return kind === "audio" ? "audio/webm" : "video/webm";
 	}
 
 	if (kind === "image") {
-		return "image/" + outputFormat;
+		return `image/${outputFormat}`;
 	}
 
-	if (kind === "audio" || KNOWN_AUDIO_OUTPUT_FORMATS.has(outputFormat)) {
-		return "audio/" + outputFormat;
+	if (kind === "audio" || AUDIO_FORMAT_OUTPUTS.some((format) => format === outputFormat)) {
+		return `audio/${outputFormat}`;
 	}
 
-	if (kind === "document" || KNOWN_DOCUMENT_OUTPUT_FORMATS.has(outputFormat)) {
+	if (kind === "document" || DOCUMENT_FORMAT_OUTPUTS.some((format) => format === outputFormat)) {
 		return "application/octet-stream";
 	}
 
-	return "video/" + outputFormat;
+	return `video/${outputFormat}`;
 }
 
 async function createKnownLengthBody(

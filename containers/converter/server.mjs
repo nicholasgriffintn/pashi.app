@@ -3,11 +3,14 @@ import { randomUUID } from "node:crypto";
 import { createReadStream, createWriteStream } from "node:fs";
 import { stat, mkdir, rm } from "node:fs/promises";
 import { createServer } from "node:http";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { pathToFileURL } from "node:url";
+
+const MIME_TYPES = createRequire(import.meta.url)("./mime-types.json");
 
 const OUTPUT_FORMAT_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 const AUDIO_OUTPUT_FORMATS = new Set([
@@ -98,64 +101,14 @@ function extensionForFormat(format) {
 }
 
 function contentTypeFor(kind, format) {
-	switch (format) {
-		case "aac":
-			return "audio/aac";
-		case "aiff":
-			return "audio/aiff";
-		case "avif":
-			return "image/avif";
-		case "bmp":
-			return "image/bmp";
-		case "flac":
-			return "audio/flac";
-		case "docx":
-			return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-		case "epub":
-			return "application/epub+zip";
-		case "gif":
-			return "image/gif";
-		case "html":
-			return "text/html;charset=utf-8";
-		case "ico":
-			return "image/vnd.microsoft.icon";
-		case "jpeg":
-		case "mjpeg":
-			return "image/jpeg";
-		case "m4a":
-			return "audio/mp4";
-		case "mka":
-		case "mkv":
-			return "video/x-matroska";
-		case "mov":
-			return "video/quicktime";
-		case "mp3":
-			return "audio/mpeg";
-		case "mp4":
-		case "m4v":
-			return "video/mp4";
-		case "oga":
-		case "ogg":
-		case "opus":
-			return "audio/ogg";
-		case "odt":
-			return "application/vnd.oasis.opendocument.text";
-		case "png":
-			return "image/png";
-		case "rtf":
-			return "application/rtf";
-		case "tiff":
-			return "image/tiff";
-		case "txt":
-			return "text/plain;charset=utf-8";
-		case "wav":
-			return "audio/wav";
-		case "webm":
-			return kind === "audio" ? "audio/webm" : "video/webm";
-		case "webp":
-			return "image/webp";
-		case "wmv":
-			return "video/x-ms-wmv";
+	const known = MIME_TYPES[format];
+
+	if (known && format !== "webm") {
+		return known;
+	}
+
+	if (format === "webm") {
+		return kind === "audio" ? "audio/webm" : "video/webm";
 	}
 
 	if (kind === "image") {
