@@ -1,17 +1,17 @@
 import type React from "react";
 
-import { useGeneratorConsole } from "../lib/use-generator-console";
+import { useGeneratorConsole, type ToolConsoleRoute } from "../lib/use-generator-console";
 import { GeneratorForm } from "./GeneratorForm";
 import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
 import { ToolPicker } from "./ToolPicker";
 
-interface GeneratorConsoleProps {
+interface GeneratorConsoleProps extends ToolConsoleRoute {
 	controls: React.ReactNode;
 }
 
-export function GeneratorConsole({ controls }: GeneratorConsoleProps) {
-	const consoleState = useGeneratorConsole();
+export function GeneratorConsole({ controls, navigateToTool, routeToolId }: GeneratorConsoleProps) {
+	const consoleState = useGeneratorConsole({ navigateToTool, routeToolId });
 	const {
 		activeTool,
 		activeToolId,

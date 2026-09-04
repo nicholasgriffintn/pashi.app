@@ -1,106 +1,56 @@
-import { useEffect, useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { AppModeTabs, type AppMode } from "./components/AppModeTabs";
-import { ConverterConsole } from "./components/ConverterConsole";
-import { GeneratorConsole } from "./components/GeneratorConsole";
-import { lastToolPath, rememberLastToolPath } from "./lib/last-tool";
-import { pushAppPath, replaceAppPath } from "./lib/navigation";
-import { fetchPashiInfo, type FeatureStatusMap } from "./lib/pashi-info";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { queryClient } from "./lib/query-client";
+import { HubPage } from "./pages/HubPage";
+import { LegacyToolRedirect } from "./pages/LegacyToolRedirect";
+import { ToolsPage } from "./pages/ToolsPage";
 
 import "./App.css";
 
-type FeaturesState =
-	| { status: "error" }
-	| { status: "loading" }
-	| { features: FeatureStatusMap; status: "ready" };
+const AboutPage = lazy(() =>
+	import("./pages/AboutPage").then((module) => ({ default: module.AboutPage })),
+);
+const ApiDocsPage = lazy(() =>
+	import("./pages/ApiDocsPage").then((module) => ({ default: module.ApiDocsPage })),
+);
+const LabsPage = lazy(() =>
+	import("./pages/LabsPage").then((module) => ({ default: module.LabsPage })),
+);
 
-function getInitialMode(): AppMode {
-	return window.location.pathname.startsWith("/convert/") ? "convert" : "generate";
+function RouteFallback() {
+	return (
+		<p className="route-loading" role="status">
+			Loading
+		</p>
+	);
 }
 
 function App() {
-	const [mode, setMode] = useState<AppMode>(getInitialMode);
-	const [featuresState, setFeaturesState] = useState<FeaturesState>({ status: "loading" });
-	const [probeAttempt, setProbeAttempt] = useState(0);
-	const conversionsUnavailable =
-		featuresState.status === "error" ||
-		(featuresState.status === "ready" && !featuresState.features.conversions.available);
-	const effectiveMode = conversionsUnavailable && mode === "convert" ? "generate" : mode;
-
-	useEffect(() => {
-		function handlePopState() {
-			setMode(getInitialMode());
-		}
-
-		window.addEventListener("popstate", handlePopState);
-
-		return () => window.removeEventListener("popstate", handlePopState);
-	}, []);
-
-	useEffect(() => {
-		let ignore = false;
-
-		fetchPashiInfo()
-			.then((info) => {
-				if (!ignore) {
-					setFeaturesState({ features: info.features, status: "ready" });
-				}
-			})
-			.catch(() => {
-				if (!ignore) {
-					setFeaturesState({ status: "error" });
-				}
-			});
-
-		return () => {
-			ignore = true;
-		};
-	}, [probeAttempt]);
-
-	useEffect(() => {
-		if (!conversionsUnavailable || mode !== "convert") {
-			return;
-		}
-
-		replaceAppPath("/");
-	}, [conversionsUnavailable, mode]);
-
-	function handleModeChange(nextMode: AppMode) {
-		if (nextMode === "convert" && conversionsUnavailable) {
-			if (featuresState.status === "error") {
-				setFeaturesState({ status: "loading" });
-				setProbeAttempt((attempt) => attempt + 1);
-			}
-
-			return;
-		}
-
-		rememberLastToolPath(effectiveMode, window.location.pathname);
-		pushAppPath(lastToolPath(nextMode));
-		setMode(nextMode);
-	}
-
-	const isProbeError = featuresState.status === "error";
-	const controls = (
-		<AppModeTabs
-			disabledModes={
-				conversionsUnavailable && !isProbeError
-					? { convert: "Conversions are not available." }
-					: undefined
-			}
-			hints={
-				isProbeError ? { convert: "Could not reach Pashi. Select Convert to retry." } : undefined
-			}
-			mode={effectiveMode}
-			onChange={handleModeChange}
-		/>
+	return (
+		<QueryClientProvider client={queryClient}>
+			<BrowserRouter>
+				<ErrorBoundary label="Pashi">
+					<Suspense fallback={<RouteFallback />}>
+						<Routes>
+							<Route element={<HubPage />} path="/" />
+							<Route element={<ToolsPage mode="generate" />} path="/tools" />
+							<Route element={<ToolsPage mode="convert" />} path="/tools/convert/:toolId" />
+							<Route element={<ToolsPage mode="generate" />} path="/tools/:toolId" />
+							<Route element={<LabsPage />} path="/labs/*" />
+							<Route element={<AboutPage />} path="/about" />
+							<Route element={<ApiDocsPage />} path="/api" />
+							<Route element={<LegacyToolRedirect prefix="convert" />} path="/convert/:toolId" />
+							<Route element={<LegacyToolRedirect prefix="generate" />} path="/:toolId" />
+							<Route element={<Navigate replace to="/" />} path="*" />
+						</Routes>
+					</Suspense>
+				</ErrorBoundary>
+			</BrowserRouter>
+		</QueryClientProvider>
 	);
-
-	if (effectiveMode === "convert") {
-		return <ConverterConsole controls={controls} />;
-	}
-
-	return <GeneratorConsole controls={controls} />;
 }
 
 export default App;

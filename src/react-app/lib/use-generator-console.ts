@@ -9,8 +9,6 @@ import {
 	getDefaultFieldValues,
 	getDefaultInput,
 	getInitialValues,
-	getRouteToolId,
-	pushGeneratorRoute,
 	type GeneratorValues,
 } from "./generator-state";
 import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
@@ -22,9 +20,14 @@ function createInitialResult(tool: GeneratorInfoTool, values: GeneratorValues, g
 		: undefined;
 }
 
-export function useGeneratorConsole() {
+export interface ToolConsoleRoute {
+	navigateToTool: (toolId: string, options?: { replace?: boolean }) => void;
+	routeToolId?: string;
+}
+
+export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsoleRoute) {
 	const { apiKey } = useApiKey();
-	const initialRouteToolId = getRouteToolId();
+	const initialRouteToolId = routeToolId;
 	const [tools, setTools] = useState<GeneratorInfoTool[]>([]);
 	const [exportFormats, setExportFormats] = useState<string[]>([]);
 	const [activeToolId, setActiveToolId] = useState(initialRouteToolId ?? "");
@@ -39,6 +42,11 @@ export function useGeneratorConsole() {
 	const [result, setResult] = useState<ResultStageValue | undefined>();
 	const [resultHistory, setResultHistory] = useState<ResultStageValue[]>([]);
 	const notificationTimer = useRef<number | undefined>(undefined);
+	const routeToolIdRef = useRef(routeToolId);
+
+	useEffect(() => {
+		routeToolIdRef.current = routeToolId;
+	}, [routeToolId]);
 
 	const activeTool = useMemo(
 		() => tools.find((tool) => tool.id === activeToolId),
@@ -84,7 +92,7 @@ export function useGeneratorConsole() {
 					return;
 				}
 
-				const nextTool = findToolByRoute(info.tools, getRouteToolId());
+				const nextTool = findToolByRoute(info.tools, routeToolIdRef.current);
 
 				setTools(info.tools);
 				setExportFormats(info.exportFormats);
@@ -112,27 +120,19 @@ export function useGeneratorConsole() {
 		};
 	}, [applyToolValues, clearToolValues, notify]);
 
-	useEffect(() => {
-		if (tools.length === 0) {
-			return;
-		}
+	const [syncedRouteToolId, setSyncedRouteToolId] = useState(routeToolId);
 
-		function handlePopState() {
-			const nextTool = findToolByRoute(tools, getRouteToolId());
+	if (tools.length > 0 && routeToolId !== syncedRouteToolId) {
+		const nextTool = findToolByRoute(tools, routeToolId);
 
-			if (nextTool) {
-				applyToolValues(nextTool, getInitialValues(nextTool));
+		setSyncedRouteToolId(routeToolId);
 
-				return;
-			}
-
+		if (nextTool) {
+			applyToolValues(nextTool, getInitialValues(nextTool));
+		} else {
 			clearToolValues();
 		}
-
-		window.addEventListener("popstate", handlePopState);
-
-		return () => window.removeEventListener("popstate", handlePopState);
-	}, [applyToolValues, clearToolValues, tools]);
+	}
 
 	async function generateActiveTool(aiMode = resultMode === "ai") {
 		setError("");
@@ -198,7 +198,7 @@ export function useGeneratorConsole() {
 			fields: getDefaultFieldValues(nextTool),
 			input: getDefaultInput(nextTool),
 		});
-		pushGeneratorRoute(nextTool.id);
+		navigateToTool(nextTool.id);
 	}
 
 	function handleFieldChange(fieldId: string, value: string) {

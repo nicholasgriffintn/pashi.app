@@ -55,6 +55,7 @@
 		"react/self-closing-comp": "error",
 		"react/jsx-boolean-value": ["error", "never"],
 		"react/jsx-no-useless-fragment": "warn",
+		"react/set-state-in-effect": "warn",
 		"@stylistic/padding-line-between-statements": [
 			"error",
 			{ "blankLine": "always", "prev": ["const", "let", "var", "using"], "next": "*" },

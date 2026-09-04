@@ -1,16 +1,17 @@
 import type React from "react";
 
 import { useConverterConsole } from "../lib/use-converter-console";
+import type { ToolConsoleRoute } from "../lib/use-generator-console";
 import { ConverterForm } from "./ConverterForm";
 import { PashiShell } from "./PashiShell";
 import { ResultActions } from "./ResultActions";
 
-interface ConverterConsoleProps {
+interface ConverterConsoleProps extends ToolConsoleRoute {
 	controls: React.ReactNode;
 }
 
-export function ConverterConsole({ controls }: ConverterConsoleProps) {
-	const consoleState = useConverterConsole();
+export function ConverterConsole({ controls, navigateToTool, routeToolId }: ConverterConsoleProps) {
+	const consoleState = useConverterConsole({ navigateToTool, routeToolId });
 	const {
 		activeTool,
 		activeToolId,

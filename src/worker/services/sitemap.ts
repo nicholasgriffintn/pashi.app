@@ -14,8 +14,12 @@ export function createSitemapResponse(origin: string) {
 function createSitemapXml(origin: string) {
 	const urls = [
 		"/",
-		...listGeneratorTools().map((tool) => `/${tool.id}`),
-		...listConverterTools().map((tool) => `/convert/${tool.id}`),
+		"/tools",
+		"/labs",
+		"/about",
+		"/api",
+		...listGeneratorTools().map((tool) => `/tools/${tool.id}`),
+		...listConverterTools().map((tool) => `/tools/convert/${tool.id}`),
 	];
 	const entries = urls
 		.map(

@@ -17,10 +17,9 @@ import {
 	findConverterByRoute,
 	getDefaultConverterInput,
 	getInitialConverterValues,
-	getRouteConverterId,
-	pushConverterRoute,
 } from "./converter-state";
 import type { ResultStageValue } from "./result-types";
+import type { ToolConsoleRoute } from "./use-generator-console";
 
 function normaliseSlackmojiEffects(value: string | undefined) {
 	const values = (value ?? "")
@@ -140,17 +139,17 @@ function findSourcePresetField(tool: ConverterInfoTool) {
 	return tool.api?.fields.find((field) => field.display?.control === "source-presets");
 }
 
-function pickInitialConverter(tools: readonly ConverterInfoTool[]) {
+function pickInitialConverter(tools: readonly ConverterInfoTool[], routeToolId?: string) {
 	return (
-		findConverterByRoute(tools, getRouteConverterId()) ??
+		findConverterByRoute(tools, routeToolId) ??
 		tools.find((tool) => tool.status === "available") ??
 		tools[0]
 	);
 }
 
-export function useConverterConsole() {
+export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsoleRoute) {
 	const { apiKey } = useApiKey();
-	const initialRouteConverterId = getRouteConverterId();
+	const initialRouteConverterId = routeToolId;
 	const [tools, setTools] = useState<ConverterInfoTool[]>([]);
 	const [activeToolId, setActiveToolId] = useState(initialRouteConverterId ?? "");
 	const [input, setInput] = useState("");
@@ -168,6 +167,11 @@ export function useConverterConsole() {
 	const slackmojiPollersRef = useRef<ConversionJobPoller[]>([]);
 	const slackmojiBatchResultsRef = useRef<SlackmojiBatchResult[]>([]);
 	const slackmojiPendingResults = useRef(0);
+	const routeToolIdRef = useRef(routeToolId);
+
+	useEffect(() => {
+		routeToolIdRef.current = routeToolId;
+	}, [routeToolId]);
 
 	const activeTool = useMemo(
 		() => tools.find((tool) => tool.id === activeToolId),
@@ -284,7 +288,7 @@ export function useConverterConsole() {
 					return;
 				}
 
-				const nextTool = pickInitialConverter(info.tools);
+				const nextTool = pickInitialConverter(info.tools, routeToolIdRef.current);
 
 				setTools(info.tools);
 				applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
@@ -311,16 +315,18 @@ export function useConverterConsole() {
 			return;
 		}
 
-		function handlePopState() {
-			const nextTool = pickInitialConverter(tools);
+		const nextTool = pickInitialConverter(tools, routeToolId);
 
-			applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
+		if (!nextTool || nextTool.id === activeToolId) {
+			return;
 		}
 
-		window.addEventListener("popstate", handlePopState);
+		applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
 
-		return () => window.removeEventListener("popstate", handlePopState);
-	}, [applyToolValues, tools]);
+		if (nextTool.id !== routeToolId) {
+			navigateToTool(nextTool.id, { replace: true });
+		}
+	}, [activeToolId, applyToolValues, navigateToTool, routeToolId, tools]);
 
 	async function startSlackmojiBatchConversion(
 		endpoint: string,
@@ -540,7 +546,7 @@ export function useConverterConsole() {
 		}
 
 		applyToolValues(nextTool, getDefaultConverterInput(nextTool));
-		pushConverterRoute(nextTool.id);
+		navigateToTool(nextTool.id);
 	}
 
 	function clearResult() {
