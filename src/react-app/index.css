@@ -1,13 +1,66 @@
 :root {
-	font-family: "Trebuchet MS", "Gill Sans", "Avenir Next Condensed", system-ui, sans-serif;
+	--ink: #11142e;
+	--ink-deep: #0d1024;
+	--ink-void: #080b21;
+	--ink-plum: #151326;
+	--ink-ember: #250f18;
+	--paper: #fff7d7;
+	--paper-warm: #f0d9bb;
+	--paper-bright: #ffffff;
+	--cyan: #25ffe6;
+	--magenta: #ff2f78;
+	--yellow: #ffd14c;
+	--green: #2fff82;
+
+	--ink-rgb: 17 20 46;
+	--ink-deep-rgb: 13 16 36;
+	--ink-void-rgb: 7 10 28;
+	--paper-rgb: 255 247 215;
+	--paper-warm-rgb: 240 217 187;
+	--paper-bright-rgb: 255 255 255;
+	--cyan-rgb: 37 255 230;
+	--magenta-rgb: 255 47 120;
+	--yellow-rgb: 255 209 76;
+
+	--surface: var(--ink);
+	--surface-deep: var(--ink-deep);
+	--surface-paper: var(--paper);
+	--text: var(--paper);
+	--text-accent: var(--cyan);
+	--text-warn: var(--yellow);
+	--border-loud: 2px solid var(--ink);
+	--border-accent: 2px solid var(--cyan);
+	--shadow-hard: 4px 4px 0 var(--ink);
+	--shadow-hard-lg: 8px 8px 0 var(--ink);
+	--shadow-pop: 6px 6px 0 var(--magenta);
+
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-5: 1.5rem;
+	--space-6: 2rem;
+	--space-7: 3rem;
+
+	--radius-none: 0;
+	--duration: 160ms;
+	--ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+	--font-display: Impact, Haettenschweiler, "Arial Black", sans-serif;
+	--font-body: "Trebuchet MS", "Gill Sans", "Avenir Next Condensed", system-ui, sans-serif;
+	--font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+:root {
+	font-family: var(--font-body);
 	line-height: 1.5;
 	font-weight: 400;
-	color: #f8f2df;
+	color: var(--paper);
 	background:
-		linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-		linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-		radial-gradient(circle at 72% 18%, rgba(255, 43, 119, 0.24), transparent 25rem),
-		linear-gradient(135deg, #0d1024 0%, #151326 43%, #250f18 100%);
+		linear-gradient(90deg, rgb(var(--paper-bright-rgb) / 0.035) 1px, transparent 1px),
+		linear-gradient(rgb(var(--paper-bright-rgb) / 0.03) 1px, transparent 1px),
+		radial-gradient(circle at 72% 18%, rgb(var(--magenta-rgb) / 0.24), transparent 25rem),
+		linear-gradient(135deg, var(--ink-deep) 0%, var(--ink-plum) 43%, var(--ink-ember) 100%);
 	background-size:
 		42px 42px,
 		42px 42px,
@@ -25,8 +78,8 @@
 }
 
 ::selection {
-	background: #25ffe6;
-	color: #0d1024;
+	background: var(--cyan);
+	color: var(--ink-deep);
 }
 
 body {
@@ -34,7 +87,7 @@ body {
 	min-width: 320px;
 	min-height: 100vh;
 	overflow-x: hidden;
-	scrollbar-color: #25ffe6 #11142e;
+	scrollbar-color: var(--cyan) var(--ink);
 	scrollbar-width: thin;
 }
 
