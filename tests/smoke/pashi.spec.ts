@@ -79,6 +79,19 @@ test("the tool picker opens with a keyboard shortcut and filters", async ({ page
 	await expect(page.getByRole("option").first()).toContainText(/UUID/i);
 });
 
+test("the explainers page offers every subject", async ({ page }) => {
+	await page.goto("/labs/explain");
+
+	await expect(page.getByRole("button", { name: "Regex" })).toHaveAttribute(
+		"aria-pressed",
+		"true",
+	);
+
+	await page.getByRole("button", { name: "Cron" }).click();
+
+	await expect(page.getByLabel("Cron to explain")).toBeVisible();
+});
+
 test("the health endpoint reports service status", async ({ request }) => {
 	const response = await request.get("/api/health");
 	const body = await response.json();

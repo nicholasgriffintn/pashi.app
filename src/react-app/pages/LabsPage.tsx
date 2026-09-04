@@ -23,7 +23,8 @@ const EXPERIMENTS: readonly Experiment[] = [
 		blurb:
 			"Plain English for the things Pashi already parses: regular expressions, cron schedules, JWTs and curl commands.",
 		id: "explain",
-		state: "building",
+		path: "/labs/explain",
+		state: "live",
 		title: "Explainers",
 	},
 	{
