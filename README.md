@@ -12,7 +12,9 @@ Pashi has three layers on one domain.
 - **Tools** at `/tools` is the console: 79 generators and 18 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
 - **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool and fills its form.
 
-Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, or [/api/info](https://pashi.app/api/info) for the raw contract.
+Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, [/api/info](https://pashi.app/api/info) for the raw contract, or [/api/openapi.json](https://pashi.app/api/openapi.json) for an OpenAPI 3.1 document covering every path.
+
+Press `K` anywhere, or the search button, to open the command palette: tools, pages, projects and actions in one list. Pin the tools you use most from there.
 
 ## Agent access
 
@@ -117,7 +119,11 @@ Permanently failed conversions land in the `pashi-conversions-dlq` queue. Inspec
 pnpm exec wrangler queues list
 ```
 
-Service health, including the feature flags and bindings, is at `/api/health`.
+Service health, including the feature flags and bindings, is at `/api/health`. Usage is recorded to the `pashi_events` Analytics Engine dataset: tool runs, AI calls, conversions, exports and rate limits.
+
+Social cards are generated per page at `/og?path=/tools/uuid`, drawn from the same catalogue as everything else.
+
+The AI features have golden cases behind `POST /api/labs/evaluate`, which needs a key and returns 424 when any case fails.
 
 ## Checks
 
@@ -129,4 +135,4 @@ pnpm build        # tsc and vite build
 pnpm test:smoke   # playwright smoke suite against the built worker
 ```
 
-There are no unit tests here, on purpose.
+There are no unit tests here, on purpose. The smoke suite starts the real Worker in preview rather than mocking it, so it needs Docker for the converter container.

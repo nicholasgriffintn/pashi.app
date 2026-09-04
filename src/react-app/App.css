@@ -193,10 +193,9 @@ h1 {
 	align-items: stretch;
 	background: var(--console-bg);
 	border: 2px solid rgb(var(--yellow-rgb) / 0.5);
-	box-shadow: 3px 3px 0 rgb(var(--magenta-rgb) / 0.48);
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto auto;
-	margin-top: 0.75rem;
+	margin-top: var(--space-3);
 	min-height: 2.4rem;
 	transition:
 		border-color 160ms ease,
@@ -281,6 +280,10 @@ h1 {
 	display: grid;
 	min-height: 0;
 	position: relative;
+}
+
+.tool-surface > * {
+	max-width: min(38rem, 100%);
 }
 
 .tool-surface > .generator {
@@ -2751,11 +2754,16 @@ h1 {
 		margin: 0.4rem 0 0;
 	}
 
-	.app-mode-tabs {
+	.tool-controls {
 		grid-area: mode-tabs;
 		margin: 1rem 0 0;
+	}
+
+	.tool-controls .app-mode-tabs {
+		flex: 1 1 12rem;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		margin: 0;
 		max-width: none;
-		width: 100%;
 	}
 
 	.tool-surface {
@@ -2823,10 +2831,7 @@ h1 {
 
 @media (max-width: 560px) {
 	.api-key-control {
-		bottom: 1rem;
-		left: 1rem;
 		min-height: 2.75rem;
-		width: min(18rem, calc(100vw - 2rem));
 	}
 
 	.input-row {
@@ -2880,10 +2885,20 @@ h1 {
 .hub-header {
 	align-items: center;
 	border-bottom: 3px solid var(--cyan);
-	display: grid;
-	gap: var(--space-5);
-	grid-template-columns: auto minmax(0, 1fr);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-4) var(--space-5);
 	padding-bottom: var(--space-5);
+}
+
+.hub-intro {
+	flex: 1 1 24rem;
+	min-width: 0;
+}
+
+.hub-header .hub-logo-button {
+	flex: 0 0 auto;
+	order: 1;
 }
 
 .hub-logo-button {
@@ -2894,7 +2909,7 @@ h1 {
 
 .hub-logo {
 	display: block;
-	height: clamp(4.5rem, 10vw, 7rem);
+	height: clamp(5rem, 14vw, 11rem);
 	width: auto;
 }
 
@@ -3142,11 +3157,24 @@ h1 {
 .api-tool-list li,
 .lab-list li {
 	background: var(--panel-bg);
-	border: 2px solid rgb(var(--panel-border) / 0.24);
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
 	color: var(--panel-text);
 	display: grid;
 	gap: var(--space-2);
-	padding: var(--space-3) var(--space-4);
+	padding: var(--space-4);
+}
+
+.lab-list li {
+	border-left: 6px solid var(--cyan);
+}
+
+.api-tool-head h2,
+.lab-head h2 {
+	font-family: var(--font-display);
+	font-size: 1.35rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
 }
 
 .api-tool-head,
@@ -3210,8 +3238,24 @@ h1 {
 .tool-controls {
 	align-items: center;
 	display: flex;
-	gap: var(--space-3);
 	flex-wrap: wrap;
+	gap: var(--space-2) var(--space-3);
+	margin-bottom: var(--space-4);
+}
+
+.tool-controls .app-mode-tabs {
+	grid-template-columns: repeat(2, auto);
+	margin: 0;
+	max-width: none;
+}
+
+.tool-controls .palette-button,
+.tool-controls .theme-toggle {
+	min-height: 2.5rem;
+}
+
+.tool-controls .tool-home-link {
+	align-self: center;
 }
 
 .tool-home-link {
@@ -3259,7 +3303,7 @@ h1 {
 	display: grid;
 	gap: var(--space-2);
 	margin: var(--space-5) 0 var(--space-4);
-	max-width: 34rem;
+	max-width: 44rem;
 }
 
 .ask-form label {
@@ -3273,24 +3317,41 @@ h1 {
 .ask-form textarea {
 	background: var(--paper);
 	border: 2px solid var(--ink);
+	box-shadow: var(--shadow-hard);
 	color: var(--ink);
-	font: inherit;
-	padding: var(--space-2);
+	font-family: var(--font-mono);
+	font-size: 0.92rem;
+	padding: var(--space-3);
 	resize: vertical;
+}
+
+.ask-form textarea:focus-visible {
+	border-color: var(--cyan);
+	outline: 0;
 }
 
 .ask-form button,
 .ask-result button {
 	background: var(--cyan);
 	border: 2px solid var(--ink);
-	box-shadow: var(--shadow-hard);
+	box-shadow: 4px 4px 0 var(--magenta);
 	color: var(--ink);
 	cursor: pointer;
 	font-weight: 900;
 	justify-self: start;
 	letter-spacing: 0.08em;
-	padding: 0.55rem 1rem;
+	min-height: 2.6rem;
+	padding: 0.55rem 1.1rem;
 	text-transform: uppercase;
+	transition:
+		box-shadow var(--duration) var(--ease),
+		transform var(--duration) var(--ease);
+}
+
+.ask-form button:hover:not(:disabled),
+.ask-result button:hover {
+	box-shadow: 6px 6px 0 var(--magenta);
+	transform: translate(-2px, -2px);
 }
 
 .ask-form button:disabled {
@@ -3329,12 +3390,19 @@ h1 {
 
 .ask-result {
 	background: var(--panel-bg);
-	color: var(--panel-text);
 	border: 2px solid var(--cyan);
-	box-shadow: var(--shadow-hard);
+	box-shadow: 8px 8px 0 var(--magenta);
+	color: var(--panel-text);
 	display: grid;
 	gap: var(--space-3);
-	padding: var(--space-4);
+	padding: var(--space-5);
+}
+
+.ask-result h2 {
+	font-family: var(--font-display);
+	font-size: 1.4rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
 }
 
 .ask-result h2 {
@@ -3420,7 +3488,8 @@ h1 {
 
 .explain-subjects button[aria-pressed="true"] {
 	background: var(--cyan);
-	border-color: var(--cyan);
+	border-color: var(--ink);
+	box-shadow: 4px 4px 0 var(--magenta);
 	color: var(--ink);
 }
 

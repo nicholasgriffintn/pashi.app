@@ -45,14 +45,14 @@ export function HubPage() {
 	return (
 		<main className="hub">
 			<header className="hub-header">
-				<PashiLogoButton className="hub-logo-button" imageClassName="hub-logo" />
-				<div>
+				<div className="hub-intro">
 					<h1>Pashi</h1>
 					<p className="intro">
 						The home for things I build. Small tools, running experiments, and the odd whole app.
 					</p>
 					<PaletteButton label="Search everything" />
 				</div>
+				<PashiLogoButton className="hub-logo-button" imageClassName="hub-logo" />
 			</header>
 
 			<section aria-labelledby="hub-projects-title" className="hub-projects">
