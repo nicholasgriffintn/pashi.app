@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 test("the hub lists projects and links into the tools console", async ({ page }) => {
 	await page.goto("/");
@@ -100,6 +101,26 @@ test("the command palette searches tools, pages and actions", async ({ page }) =
 	await expect(page).toHaveURL(/\/tools\/convert\//);
 });
 
+async function storedHistoryCount(page: Page) {
+	return page.evaluate(
+		() =>
+			new Promise<number>((resolve) => {
+				const request = indexedDB.open("pashi", 1);
+
+				request.onerror = () => resolve(0);
+
+				request.onsuccess = () => {
+					const store = request.result.transaction("history", "readonly").objectStore("history");
+					const all = store.getAll();
+
+					all.onerror = () => resolve(0);
+
+					all.onsuccess = () => resolve(all.result.length);
+				};
+			}),
+	);
+}
+
 test("results persist across a reload", async ({ page }) => {
 	await page.goto("/tools/uuid");
 
@@ -109,34 +130,9 @@ test("results persist across a reload", async ({ page }) => {
 	await submit.click();
 	await expect(page.getByRole("button", { name: /Copy a link/ })).toBeVisible();
 
-	await submit.click();
-
 	await page.goto("/tools/uuid");
 
-	await expect
-		.poll(
-			() =>
-				page.evaluate(
-					() =>
-						new Promise<number>((resolve) => {
-							const request = indexedDB.open("pashi", 1);
-
-							request.onsuccess = () => {
-								const store = request.result
-									.transaction("history", "readonly")
-									.objectStore("history");
-								const all = store.getAll();
-
-								all.onsuccess = () => resolve(all.result.length);
-
-								all.onerror = () => resolve(0);
-							};
-							request.onerror = () => resolve(0);
-						}),
-				),
-			{ timeout: 10_000 },
-		)
-		.toBeGreaterThan(0);
+	await expect.poll(() => storedHistoryCount(page), { timeout: 10_000 }).toBeGreaterThan(0);
 });
 
 test("the health endpoint reports service status", async ({ request }) => {
