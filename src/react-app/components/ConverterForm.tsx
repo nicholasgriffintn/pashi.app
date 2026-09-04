@@ -71,7 +71,7 @@ export function ConverterForm({
 								onChange={(event) => onInputChange(event.target.value)}
 								placeholder={activeTool.placeholder}
 								required={activeTool.input.required}
-								rows={activeTool.id === "image-format" ? 3 : 9}
+								rows={activeTool.capabilities?.compactInput ? 3 : 9}
 								value={input}
 							/>
 						</label>

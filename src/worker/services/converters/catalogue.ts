@@ -974,6 +974,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			category: "Media",
 			examples: [],
 		},
+		capabilities: { acceptsSourceUrl: true, compactInput: true },
 		endpoint: "/api/image-format",
 		id: "image-format",
 		input: {
@@ -1116,6 +1117,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			category: "Media",
 			examples: [],
 		},
+		capabilities: { batchesByEffect: true },
 		endpoint: "/api/slackmoji",
 		id: "slackmoji",
 		input: {

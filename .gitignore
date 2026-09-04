@@ -201,3 +201,6 @@ dist
 ### Pashi ###
 .integration-dist/
 worker-configuration.d.ts
+
+test-results/
+playwright-report/

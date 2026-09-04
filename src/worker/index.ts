@@ -25,10 +25,12 @@ import {
 	createGeneratorRequestFromSearchParams,
 	usesAiMode,
 } from "./services/generators/request";
+import { createHealthResponse } from "./services/health";
 import { routeRequestToTool } from "./services/labs/ask";
 import { explainInput, isExplainSubject } from "./services/labs/explain";
 import { createSitemapResponse } from "./services/sitemap";
 import { readConverterBody, readGeneratorBody } from "./utils/body";
+import { withCacheControl } from "./utils/cache";
 import { toErrorResponse } from "./utils/error-response";
 import { errorJson } from "./utils/http";
 
@@ -70,7 +72,11 @@ async function guard(
 	});
 }
 
-app.get("/api/info", (c) => c.json(createApiIndexResponse(c.env)));
+app.get("/api/info", (c) =>
+	withCacheControl(Response.json(createApiIndexResponse(c.env)), "catalogue"),
+);
+
+app.get("/api/health", (c) => createHealthResponse(c.env));
 
 function aiUnavailable(env: WorkerEnv) {
 	return !createFeatureStatus(env).ai.available;

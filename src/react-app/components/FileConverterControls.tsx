@@ -28,7 +28,7 @@ export function FileConverterControls({
 	const fields = tool.api?.fields ?? [];
 	const outputField = fields.find((field) => field.id === "outputFormat");
 	const hasSourcePresetField = fields.some((field) => field.display?.control === "source-presets");
-	const acceptsUrlInput = tool.id === "image-format";
+	const acceptsUrlInput = tool.capabilities?.acceptsSourceUrl ?? false;
 
 	return (
 		<div className="field-grid">

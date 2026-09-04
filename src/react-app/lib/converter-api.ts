@@ -37,10 +37,17 @@ export interface ConverterApiContract {
 	response: "binary" | "json";
 }
 
+export interface ConverterCapabilities {
+	acceptsSourceUrl?: boolean;
+	batchesByEffect?: boolean;
+	compactInput?: boolean;
+}
+
 export interface ConverterInfoTool {
 	aliases: string[];
 	api?: ConverterApiContract;
 	audience: "Documents" | "Media";
+	capabilities?: ConverterCapabilities;
 	description: string;
 	display: {
 		actionLabel: string;

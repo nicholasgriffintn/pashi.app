@@ -418,12 +418,13 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 			const sourcePresetField = findSourcePresetField(activeTool);
 			const sourceKey = sourcePresetField ? converterFields[sourcePresetField.id]?.trim() : "";
 			const hasSourceKey = Boolean(sourceKey);
-			const hasImageUrl = activeTool.id === "image-format" && Boolean(input.trim());
+			const hasImageUrl =
+				(activeTool.capabilities?.acceptsSourceUrl ?? false) && Boolean(input.trim());
 
 			if (!selectedFile && !hasSourceKey && !hasImageUrl) {
 				const requirement = sourcePresetField
 					? `${activeTool.input.label.toLowerCase()} or a preset`
-					: activeTool.id === "image-format"
+					: (activeTool.capabilities?.acceptsSourceUrl ?? false)
 						? `${activeTool.input.label.toLowerCase()} or image URL`
 						: activeTool.input.label.toLowerCase();
 
@@ -447,7 +448,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 					...(selectedFile ? { sourceName: selectedFile.name } : {}),
 				};
 
-				if (activeTool.id === "image-format" && !selectedFile && hasImageUrl) {
+				if ((activeTool.capabilities?.acceptsSourceUrl ?? false) && !selectedFile && hasImageUrl) {
 					const format = outputFormat || activeTool.outputs[0] || "webp";
 					const blob = await convertImageThing(
 						activeTool.endpoint,
@@ -467,7 +468,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 				}
 
 				if (activeTool.runtime === "container") {
-					if (activeTool.id === "slackmoji") {
+					if (activeTool.capabilities?.batchesByEffect) {
 						await startSlackmojiBatchConversion(activeTool.endpoint, fields, selectedFile);
 					} else {
 						const nextResult = await convertQueuedThing(
