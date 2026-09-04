@@ -11,6 +11,19 @@ export function safeFilename(value: string) {
 	return value.replace(/[^a-z0-9_-]/gi, "-").toLowerCase() || "pashi";
 }
 
+export function fileExtension(value: string) {
+	const match = value.toLowerCase().match(/\.([a-z0-9]{1,8})$/);
+
+	return match ? match[1] : "";
+}
+
+export function safeFilenameWithExtension(value: string) {
+	const extension = fileExtension(value);
+	const stem = safeFilename(extension ? value.slice(0, -(extension.length + 1)) : value);
+
+	return extension ? `${stem}.${extension}` : stem;
+}
+
 export function safeHttpUrl(value: string | undefined) {
 	if (!value?.trim()) {
 		return undefined;

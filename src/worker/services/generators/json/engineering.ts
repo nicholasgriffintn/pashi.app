@@ -57,7 +57,10 @@ async function createUuids(request: GeneratorRequest) {
 	const name = request.fields.name || request.input || "name";
 	const namespace = request.fields.namespace || "url";
 	const outputFormat = parseChoice(request.fields.outputFormat, UUID_OUTPUT_FORMATS, "standard");
-	const uuids = Array.from({ length: count }, () => createUuid(format, name, namespace));
+	const isDeterministic = format === "v3" || format === "v5";
+	const uuids = Array.from({ length: count }, (_, index) =>
+		createUuid(format, isDeterministic && index > 0 ? `${name}#${index}` : name, namespace),
+	);
 	const values = await Promise.all(uuids);
 
 	return singleOrList(values.map((uuid) => formatUuidForOutput(uuid, outputFormat)));

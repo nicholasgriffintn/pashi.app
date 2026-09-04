@@ -1360,7 +1360,6 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			"md-to-docx",
 			"html-to-docx",
 			"docx-to-html",
-			"markdown-to-wordpress-html-converter",
 		],
 		api: {
 			accepts: DOCUMENT_REQUEST_FORMATS,
@@ -1617,10 +1616,12 @@ export function listConverterTools() {
 	return CONVERTER_TOOLS;
 }
 
-export function findConverterTool(type: string) {
-	const normalisedType = type.trim().toLowerCase();
+const CONVERTER_LOOKUP = new Map<string, ConverterTool>(
+	CONVERTER_TOOLS.flatMap((tool) =>
+		[tool.id, ...tool.aliases].map((key): [string, ConverterTool] => [key, tool]),
+	),
+);
 
-	return CONVERTER_TOOLS.find(
-		(tool) => tool.id === normalisedType || tool.aliases.includes(normalisedType),
-	);
+export function findConverterTool(type: string) {
+	return CONVERTER_LOOKUP.get(type.trim().toLowerCase());
 }

@@ -263,8 +263,16 @@ function uniqueBy(values: string[], keyFor: (value: string) => string) {
 	return output;
 }
 
+const MAX_REPEAT_OUTPUT_LENGTH = 200_000;
+
 function repeatInput(input: string, countValue: string | undefined) {
 	const count = parseInteger(countValue ?? "", 2, 1, 100);
+
+	if (input.length * count > MAX_REPEAT_OUTPUT_LENGTH) {
+		throw new Error(
+			`Repeat would produce more than ${MAX_REPEAT_OUTPUT_LENGTH.toLocaleString("en-GB")} characters. Shorten the input or lower the count.`,
+		);
+	}
 
 	return Array.from({ length: count }, () => input).join("\n");
 }

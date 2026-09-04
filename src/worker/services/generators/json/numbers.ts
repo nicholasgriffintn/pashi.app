@@ -9,6 +9,7 @@ import {
 	randomUnitInterval,
 	singleOrList,
 } from "../../../utils/generation";
+import { overBudget } from "../errors";
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import { fieldsResult, textResult } from "./result";
@@ -151,7 +152,15 @@ function createPrime(request: GeneratorRequest) {
 	return primes[randomIntegerInRange(primes.length)];
 }
 
+const MAX_PRIME_SPAN = 100_000;
+
 function primesInRange(min: number, max: number) {
+	if (max - min > MAX_PRIME_SPAN) {
+		throw overBudget(
+			`Prime search covers at most ${MAX_PRIME_SPAN.toLocaleString("en-GB")} numbers. Narrow the range.`,
+		);
+	}
+
 	const primes: number[] = [];
 
 	for (let value = min; value <= max; value += 1) {

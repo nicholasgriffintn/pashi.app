@@ -1,6 +1,6 @@
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
-import { createAiResult } from "./ai";
+import { createAiResult } from "./ai/index";
 import { createChartResult } from "./charts";
 import { createCssResult } from "./css";
 import { createDateResult } from "./dates";

@@ -80,12 +80,16 @@ export function schemaFor(kind: AiSupportedResultKind) {
 	}
 }
 
+function asSchemaRecord(schema: JsonSchema): Record<string, unknown> {
+	return { ...schema };
+}
+
 export function responseFormatFor(kind: AiSupportedResultKind) {
 	return {
-		type: "json_schema",
+		type: "json_schema" as const,
 		json_schema: {
 			name: `pashi_${kind}_result`,
-			schema: schemaFor(kind),
+			schema: asSchemaRecord(schemaFor(kind)),
 			strict: true,
 		},
 	};

@@ -1,6 +1,7 @@
 import { Container, getContainer } from "@cloudflare/containers";
 
-import { safeFilename } from "../../utils/text";
+import { UploadTooLargeError } from "../../utils/http";
+import { fileExtension, safeFilenameWithExtension } from "../../utils/text";
 import {
 	appendConversionOperationSearchParams,
 	createConversionOperationFields,
@@ -34,13 +35,27 @@ export interface ConversionEnv extends Env {
 }
 
 interface ConversionJobRecord extends ConversionJobMessage {
+	attempts?: number;
 	createdAt: string;
 	downloadUrl?: string;
 	error?: string;
+	expiresAt?: string;
+	failedAt?: string;
 	status: QueuedConversionStatus;
 	statusUrl: string;
 	updatedAt: string;
 }
+
+export class ConversionInputError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ConversionInputError";
+	}
+}
+
+const MAX_CONVERSION_ATTEMPTS = 3;
+const RETRY_DELAYS_SECONDS = [10, 60, 300];
+const JOB_LIFETIME_MS = 24 * 60 * 60 * 1000;
 
 interface UploadedConversionSource {
 	body: Blob | ReadableStream;
@@ -65,7 +80,7 @@ const KNOWN_AUDIO_OUTPUT_FORMATS = new Set([
 	"wma",
 ]);
 const KNOWN_DOCUMENT_OUTPUT_FORMATS = new Set(["docx", "epub", "html", "md", "odt", "rtf", "txt"]);
-const MAX_UPLOAD_BYTES = 250 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 const CONTAINER_PORT = 8080;
 const JOB_PREFIX = "conversions";
 const MAX_PRESET_LIST = 150;
@@ -126,7 +141,7 @@ export async function createQueuedConversionUploadResponse(
 
 	const now = new Date().toISOString();
 	const jobId = crypto.randomUUID();
-	const sourceName = safeFilename(source.name);
+	const sourceName = safeFilenameWithExtension(source.name);
 	const sourceKey = `${JOB_PREFIX}/${jobId}/source-${sourceName}`;
 	const outputKey = `${JOB_PREFIX}/${jobId}/output.${extensionForFormat(finalOutputFormat)}`;
 	const message: ConversionJobMessage = {
@@ -144,6 +159,7 @@ export async function createQueuedConversionUploadResponse(
 	const record: ConversionJobRecord = {
 		...message,
 		createdAt: now,
+		expiresAt: new Date(Date.now() + JOB_LIFETIME_MS).toISOString(),
 		status: "queued",
 		statusUrl: statusUrl(converterId, jobId),
 		updatedAt: now,
@@ -178,6 +194,13 @@ export async function createQueuedConversionLookupResponse(
 
 	if (!record || record.applicationId !== applicationId || record.converterId !== converterId) {
 		return Response.json({ error: "Conversion job not found." }, { status: 404 });
+	}
+
+	if (isExpiredJob(record)) {
+		return Response.json(
+			{ code: "expired", error: "Conversion job has expired. Upload the file again." },
+			{ status: 410 },
+		);
 	}
 
 	if (fields.download) {
@@ -219,8 +242,24 @@ export async function processConversionQueue(
 			await processConversionJob(message.body, env);
 			message.ack();
 		} catch (error) {
-			await markJobFailed(message.body, env, error);
-			message.retry();
+			if (error instanceof ConversionInputError) {
+				await markJobFailed(message.body, env, error);
+				message.ack();
+
+				continue;
+			}
+
+			const attempts = message.attempts;
+
+			if (attempts >= MAX_CONVERSION_ATTEMPTS) {
+				await markJobFailed(message.body, env, error);
+				message.ack();
+
+				continue;
+			}
+
+			await updateJobStatus(env, message.body.jobId, "processing", { attempts });
+			message.retry({ delaySeconds: RETRY_DELAYS_SECONDS[attempts - 1] ?? 300 });
 		}
 	}
 }
@@ -231,7 +270,7 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	const source = await env.CONVERSION_BUCKET.get(message.sourceKey);
 
 	if (!source) {
-		throw new Error("Source object is missing.");
+		throw new ConversionInputError("Source file is no longer available. Upload it again.");
 	}
 
 	const fixedLengthBody = new FixedLengthStream(source.size);
@@ -242,6 +281,13 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	url.searchParams.set("kind", message.kind);
 	url.searchParams.set("outputFormat", message.outputFormat);
 	url.searchParams.set("sourceName", message.sourceName);
+
+	const sourceFormat = fileExtension(message.sourceName);
+
+	if (sourceFormat) {
+		url.searchParams.set("sourceFormat", sourceFormat);
+	}
+
 	appendConversionOperationSearchParams(url, message.operationFields ?? {});
 	const response = await container.fetch(
 		new Request(url, {
@@ -257,7 +303,13 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 	await bodyPipe;
 
 	if (!response.ok || !response.body) {
-		throw new Error(await response.text());
+		const detail = await response.text();
+
+		if (response.status >= 400 && response.status < 500) {
+			throw new ConversionInputError(detail || "That file could not be converted.");
+		}
+
+		throw new Error(detail || `Conversion container failed with ${response.status}.`);
 	}
 
 	const outputBody = await createKnownLengthBody(response);
@@ -268,9 +320,14 @@ async function processConversionJob(message: ConversionJobMessage, env: Conversi
 		},
 	});
 	await outputBody.done;
+	await env.CONVERSION_BUCKET.delete(message.sourceKey);
 	await updateJobStatus(env, message.jobId, "complete", {
 		downloadUrl: downloadUrl(message.converterId, message.jobId),
 	});
+}
+
+function isExpiredJob(record: ConversionJobRecord) {
+	return record.expiresAt ? Date.parse(record.expiresAt) < Date.now() : false;
 }
 
 export async function listSlackmojiPresets(env: ConversionEnv): Promise<SlackmojiPreset[]> {
@@ -340,7 +397,7 @@ async function readUploadedConversionSource(
 	const contentLength = Number(request.headers.get("content-length") ?? 0);
 
 	if (contentLength > MAX_UPLOAD_BYTES) {
-		return undefined;
+		throw new UploadTooLargeError(MAX_UPLOAD_BYTES);
 	}
 
 	const url = new URL(request.url);
@@ -391,11 +448,29 @@ async function readUploadedConversionSource(
 	}
 
 	return {
-		body: request.body,
+		body: request.body.pipeThrough(createByteLimitStream(MAX_UPLOAD_BYTES)),
 		contentType: contentType || "application/octet-stream",
 		fields,
 		name: fields.sourceName || fields.name || "upload",
 	};
+}
+
+function createByteLimitStream(limit: number) {
+	let total = 0;
+
+	return new TransformStream<Uint8Array, Uint8Array>({
+		transform(chunk, controller) {
+			total += chunk.byteLength;
+
+			if (total > limit) {
+				controller.error(new UploadTooLargeError(MAX_UPLOAD_BYTES));
+
+				return;
+			}
+
+			controller.enqueue(chunk);
+		},
+	});
 }
 
 async function readJobRecord(env: ConversionEnv, jobId: string) {
@@ -438,6 +513,7 @@ async function markJobFailed(message: ConversionJobMessage, env: ConversionEnv, 
 	try {
 		await updateJobStatus(env, message.jobId, "failed", {
 			error: error instanceof Error ? error.message : "Conversion failed.",
+			failedAt: new Date().toISOString(),
 		});
 	} catch {
 		await writeJobRecord(env, {

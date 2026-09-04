@@ -103,7 +103,15 @@ export async function createImageFormatResponse(request: ConverterRequest) {
 		return json({ error: "Could not fetch and convert that image URL." }, response.status || 502);
 	}
 
-	const headers = new Headers(response.headers);
+	const headers = new Headers();
+	const upstreamContentLength = response.headers.get("Content-Length");
+
+	if (upstreamContentLength) {
+		headers.set("Content-Length", upstreamContentLength);
+	}
+
+	headers.set("X-Content-Type-Options", "nosniff");
+
 	const outputExtension = extension(imageRequest.format);
 
 	headers.set(

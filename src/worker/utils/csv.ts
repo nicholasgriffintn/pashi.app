@@ -4,8 +4,14 @@ export function csvRow(values: readonly string[]) {
 	return values.map(csvValue).join(",");
 }
 
+const FORMULA_PREFIX_PATTERN = /^[=+\-@\t\r]/;
+const NUMERIC_PATTERN = /^-?\d+(\.\d+)?$/;
+
 export function csvValue(value: string) {
-	return `"${value.replace(/"/g, '""')}"`;
+	const safeValue =
+		FORMULA_PREFIX_PATTERN.test(value) && !NUMERIC_PATTERN.test(value) ? `'${value}` : value;
+
+	return `"${safeValue.replace(/"/g, '""')}"`;
 }
 
 export function recordsToCsv(records: readonly StringRecord[]) {

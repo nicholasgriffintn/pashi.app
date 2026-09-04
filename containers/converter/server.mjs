@@ -494,8 +494,24 @@ function atempoFilter(value) {
 	return `atempo=${speed.toFixed(2)}`;
 }
 
-function pandocArgs(inputPath, outputPath) {
-	return [inputPath, "-o", outputPath];
+const PANDOC_READERS = Object.freeze({
+	docx: "docx",
+	epub: "epub",
+	html: "html",
+	htm: "html",
+	latex: "latex",
+	md: "markdown",
+	markdown: "markdown",
+	odt: "odt",
+	rtf: "rtf",
+	tex: "latex",
+	txt: "markdown",
+});
+
+function pandocArgs(inputPath, outputPath, sourceExtension) {
+	const reader = sourceExtension ? PANDOC_READERS[sourceExtension] : undefined;
+
+	return [...(reader ? ["--from", reader] : []), "--sandbox", inputPath, "-o", outputPath];
 }
 
 async function runCommand(command, args) {
@@ -559,7 +575,10 @@ function byteLimitStream(maxBytes) {
 async function handleConvert(request, response) {
 	const url = new URL(request.url, "http://localhost");
 	const kind = url.searchParams.get("kind");
-	const sourceExtension = extensionFromSourceName(url.searchParams.get("sourceName") ?? "");
+	const declaredFormat = url.searchParams.get("sourceFormat") ?? "";
+	const sourceExtension =
+		(OUTPUT_FORMAT_PATTERN.test(declaredFormat) ? declaredFormat : undefined) ??
+		extensionFromSourceName(url.searchParams.get("sourceName") ?? "");
 	const outputFormat = normaliseFormat(kind ?? "", url.searchParams.get("outputFormat") ?? "");
 	const operationFields = Object.fromEntries(url.searchParams.entries());
 	const contentLength = Number(request.headers["content-length"] ?? 0);
@@ -589,7 +608,7 @@ async function handleConvert(request, response) {
 		await mkdir(workDir, { recursive: true });
 		await pipeline(request, byteLimitStream(MAX_BYTES), createWriteStream(inputPath));
 		if (kind === "document") {
-			await runPandoc(pandocArgs(inputPath, outputPath));
+			await runPandoc(pandocArgs(inputPath, outputPath, sourceExtension));
 		} else if (
 			kind === "image" &&
 			outputFormat === "png" &&
@@ -609,12 +628,16 @@ async function handleConvert(request, response) {
 		});
 		await pipeline(createReadStream(outputPath), response);
 	} catch (error) {
-		response.writeHead(error instanceof PayloadTooLargeError ? error.status : 422, {
-			"Content-Type": "application/json",
-		});
-		response.end(
-			JSON.stringify({ error: error instanceof Error ? error.message : "Conversion failed." }),
-		);
+		if (response.headersSent) {
+			response.destroy(error instanceof Error ? error : new Error("Conversion failed."));
+		} else {
+			response.writeHead(error instanceof PayloadTooLargeError ? error.status : 422, {
+				"Content-Type": "application/json",
+			});
+			response.end(
+				JSON.stringify({ error: error instanceof Error ? error.message : "Conversion failed." }),
+			);
+		}
 	} finally {
 		await rm(workDir, { force: true, recursive: true });
 	}

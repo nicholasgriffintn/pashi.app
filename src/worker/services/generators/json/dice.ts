@@ -5,6 +5,7 @@ import {
 	randomIntegerInRange,
 	singleOrList,
 } from "../../../utils/generation";
+import { overBudget } from "../errors";
 import type { GeneratorRequest } from "../request";
 
 interface DiceNotation {
@@ -290,9 +291,9 @@ function createDiceDistribution(notation: DiceNotation) {
 		return createMechanicDistribution(notation);
 	}
 
-	if (notation.dice > 50 || notation.sides > 200 || notation.dice * notation.sides > 5000) {
-		throw new Error(
-			"Exact dice probability supports up to 50 dice, 200 sides, or 5000 dice-side combinations.",
+	if (notation.dice > 50 || notation.sides > 200 || notation.dice * notation.sides > 2000) {
+		throw overBudget(
+			"Exact dice probability supports up to 50 dice, 200 sides, or 2000 dice-side combinations.",
 		);
 	}
 
@@ -313,9 +314,15 @@ function createDiceDistribution(notation: DiceNotation) {
 	return applyModifier(distribution, notation.modifier);
 }
 
+const MAX_MECHANIC_COMBINATIONS = 1_000_000;
+
 function createMechanicDistribution(notation: DiceNotation) {
-	if (notation.dice > 8 || notation.sides > 30) {
-		throw new Error("Advanced dice probability supports up to 8 dice with 30 sides.");
+	const combinations = notation.sides ** notation.dice;
+
+	if (notation.dice > 8 || notation.sides > 30 || combinations > MAX_MECHANIC_COMBINATIONS) {
+		throw overBudget(
+			`Drop and keep probability enumerates every roll, so it supports up to ${MAX_MECHANIC_COMBINATIONS.toLocaleString("en-GB")} combinations (${notation.dice}d${notation.sides} needs ${combinations.toLocaleString("en-GB")}).`,
+		);
 	}
 
 	const distribution = new Map<number, bigint>();

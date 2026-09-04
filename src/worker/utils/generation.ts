@@ -87,9 +87,14 @@ export function parseDate(input: string) {
 	}
 
 	const numeric = Number(input);
+	const digits = input.trim();
 
-	if (Number.isFinite(numeric)) {
-		return new Date(input.length <= 10 ? numeric * 1000 : numeric);
+	if (Number.isFinite(numeric) && /^-?\d+$/.test(digits)) {
+		if (digits.replace("-", "").length === 4) {
+			return new Date(Date.UTC(numeric, 0, 1));
+		}
+
+		return new Date(digits.replace("-", "").length <= 10 ? numeric * 1000 : numeric);
 	}
 
 	const parsed = new Date(input);
@@ -115,7 +120,7 @@ export function randomBytes(length: number) {
 }
 
 export function randomCharacters(alphabet: string, length: number) {
-	return Array.from(randomBytes(length), (byte) => alphabet[byte % alphabet.length]).join("");
+	return Array.from({ length }, () => alphabet[randomIntegerInRange(alphabet.length)]).join("");
 }
 
 export function randomHex(length: number) {

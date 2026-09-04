@@ -1,30 +1,85 @@
 import type { Context } from "hono";
 
+import { PayloadTooLargeError } from "./http";
+
 const BODY_INPUT_FIELD_IDS = new Set(["data", "file", "input"]);
+const MAX_TEXT_BODY_BYTES = 1024 * 1024;
+
+function assertDeclaredSizeWithinLimit(c: Context, limit: number) {
+	const declared = Number(c.req.header("content-length") ?? "");
+
+	if (Number.isFinite(declared) && declared > limit) {
+		throw new PayloadTooLargeError(limit);
+	}
+}
+
+async function readBoundedText(c: Context, limit = MAX_TEXT_BODY_BYTES) {
+	assertDeclaredSizeWithinLimit(c, limit);
+
+	const body = c.req.raw.body;
+
+	if (!body) {
+		return "";
+	}
+
+	const reader = body.getReader();
+	const chunks: Uint8Array[] = [];
+	let size = 0;
+
+	try {
+		for (;;) {
+			const { done, value } = await reader.read();
+
+			if (done) {
+				break;
+			}
+
+			size += value.byteLength;
+
+			if (size > limit) {
+				throw new PayloadTooLargeError(limit);
+			}
+
+			chunks.push(value);
+		}
+	} finally {
+		reader.releaseLock();
+	}
+
+	const merged = new Uint8Array(size);
+	let offset = 0;
+
+	for (const chunk of chunks) {
+		merged.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+
+	return new TextDecoder().decode(merged);
+}
+
+async function readBoundedJson(c: Context) {
+	const text = await readBoundedText(c);
+
+	if (!text) {
+		return undefined;
+	}
+
+	try {
+		return JSON.parse(text) as unknown;
+	} catch {
+		return undefined;
+	}
+}
 
 export interface ToolBody {
 	fields: Record<string, string>;
 	input: string;
 }
 
-export async function readInputBody(c: Context) {
-	let body: unknown;
-
-	try {
-		body = await c.req.json();
-	} catch {
-		return "";
-	}
-
-	return isInputBody(body) ? body.input : "";
-}
-
 export async function readGeneratorBody(c: Context): Promise<ToolBody> {
-	let body: unknown;
+	const body = await readBoundedJson(c);
 
-	try {
-		body = await c.req.json();
-	} catch {
+	if (body === undefined) {
 		return { fields: {}, input: "" };
 	}
 
@@ -41,11 +96,9 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 	const queryInput = params.get("input") || params.get("data") || "";
 
 	if (contentType.includes("application/json")) {
-		let body: unknown;
+		const body = await readBoundedJson(c);
 
-		try {
-			body = await c.req.json();
-		} catch {
+		if (body === undefined) {
 			return { fields: queryFields, input: "" };
 		}
 
@@ -59,15 +112,21 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 	}
 
 	if (contentType.includes("multipart/form-data")) {
+		assertDeclaredSizeWithinLimit(c, MAX_TEXT_BODY_BYTES);
+
 		try {
 			return bodyFromFormData(await c.req.formData(), queryFields, queryInput);
-		} catch {
+		} catch (error) {
+			if (error instanceof PayloadTooLargeError) {
+				throw error;
+			}
+
 			return { fields: queryFields, input: queryInput };
 		}
 	}
 
 	if (contentType.includes("application/x-www-form-urlencoded")) {
-		const bodyParams = new URLSearchParams(await c.req.text());
+		const bodyParams = new URLSearchParams(await readBoundedText(c));
 
 		return {
 			fields: {
@@ -78,7 +137,7 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 		};
 	}
 
-	const input = await c.req.text();
+	const input = await readBoundedText(c);
 
 	return {
 		fields: queryFields,

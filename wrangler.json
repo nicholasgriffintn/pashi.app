@@ -10,6 +10,37 @@
 		"ENABLE_AI": "false",
 		"ENABLE_CONVERSIONS": "true"
 	},
+	"unsafe": {
+		"bindings": [
+			{
+				"name": "RATE_LIMIT_READ",
+				"type": "ratelimit",
+				"namespace_id": "1001",
+				"simple": {
+					"limit": 120,
+					"period": 60
+				}
+			},
+			{
+				"name": "RATE_LIMIT_WRITE",
+				"type": "ratelimit",
+				"namespace_id": "1002",
+				"simple": {
+					"limit": 30,
+					"period": 60
+				}
+			},
+			{
+				"name": "RATE_LIMIT_EXPENSIVE",
+				"type": "ratelimit",
+				"namespace_id": "1003",
+				"simple": {
+					"limit": 10,
+					"period": 60
+				}
+			}
+		]
+	},
 	"ai": {
 		"binding": "AI",
 		"remote": true
@@ -47,9 +78,11 @@
 	"queues": {
 		"consumers": [
 			{
+				"dead_letter_queue": "pashi-conversions-dlq",
 				"max_batch_size": 1,
 				"max_retries": 3,
-				"queue": "pashi-conversions"
+				"queue": "pashi-conversions",
+				"retry_delay": 10
 			}
 		],
 		"producers": [

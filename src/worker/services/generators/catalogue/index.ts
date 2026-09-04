@@ -60,7 +60,7 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	],
 	"cron-expression": ["cron-expression-generator"],
 	date: ["dates", "random-date-generator"],
-	datetime: ["date-time", "datetimes", "random-timestamp-generator", "epoch-timestamp-generator"],
+	datetime: ["date-time", "datetimes", "random-timestamp-generator"],
 	emoji: ["emojis", "random-emoji-generator"],
 	"emoji-image": ["emoji-images"],
 	"encryption-key": ["encryption-keys"],
@@ -127,12 +127,7 @@ const GENERATOR_ALIASES: Partial<Record<string, readonly string[]>> = {
 	string: ["strings", "random-string-generator", "text-generator"],
 	"text-shadow": ["text-shadow-generator"],
 	time: ["times", "random-time-generator"],
-	timestamp: [
-		"timestamps",
-		"unix-timestamp-converter",
-		"batch-timestamp-converter",
-		"iso-8601-timestamp-converter",
-	],
+	timestamp: ["timestamps", "batch-timestamp-converter"],
 	utm: ["utm-builder", "utm-generator", "url-utm-builder"],
 	"us-state": ["us-states"],
 	username: ["usernames"],
@@ -1774,16 +1769,20 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 	];
 }
 
-export function findGenerator(type: string) {
-	const normalisedType = type.trim().toLowerCase();
+const GENERATOR_TOOLS = createGeneratorTools();
 
-	return createGeneratorTools().find(
-		(generator) => generator.id === normalisedType || generator.aliases.includes(normalisedType),
-	);
+const GENERATOR_LOOKUP = new Map<string, GeneratorTool>(
+	GENERATOR_TOOLS.flatMap((generator) =>
+		[generator.id, ...generator.aliases].map((key): [string, GeneratorTool] => [key, generator]),
+	),
+);
+
+export function findGenerator(type: string) {
+	return GENERATOR_LOOKUP.get(type.trim().toLowerCase());
 }
 
 export function listGeneratorTools() {
-	return createGeneratorTools();
+	return GENERATOR_TOOLS;
 }
 
 function tool(

@@ -1,6 +1,7 @@
 import { isRecordArray, recordToText, uniqueKeys } from "../../shared/records";
 import { csvRow } from "../utils/csv";
-import { json } from "../utils/http";
+import { toErrorResponse } from "../utils/error-response";
+import { errorJson } from "../utils/http";
 import { safeFilename } from "../utils/text";
 import { isExportFormat, type ExportFormat } from "./export-formats";
 import { createFeatureStatus, type FeatureEnv } from "./features";
@@ -19,19 +20,23 @@ export async function createExportResponse(
 	const generator = findGenerator(type);
 
 	if (!generator) {
-		return json({ error: "Unknown generator type." }, 404);
+		return errorJson("Unknown generator type.", 404, "not_found");
 	}
 
 	if (generator.result.kind === "image") {
-		return json({ error: "Image generators are exported from their image endpoint." }, 400);
+		return errorJson(
+			"Image generators are exported from their image endpoint.",
+			400,
+			"invalid_request",
+		);
 	}
 
 	if (!isExportFormat(format)) {
-		return json({ error: "Unsupported export format." }, 400);
+		return errorJson("Unsupported export format.", 400, "invalid_request");
 	}
 
 	if (usesAiMode(request) && (!env || !createFeatureStatus(env).ai.available)) {
-		return json({ error: "AI mode is not available." }, 503);
+		return errorJson("AI mode is not available.", 503, "unavailable");
 	}
 
 	try {
@@ -45,7 +50,7 @@ export async function createExportResponse(
 			},
 		});
 	} catch (error) {
-		return json({ error: error instanceof Error ? error.message : "Export failed." }, 400);
+		return toErrorResponse(error, "Export failed.");
 	}
 }
 

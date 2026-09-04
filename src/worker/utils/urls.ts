@@ -1,36 +1,19 @@
-const BLOCKED_HOSTNAMES = new Set(["0.0.0.0", "127.0.0.1", "localhost"]);
+import { isPublicIpv4, parseIpv4 } from "./ip";
 
-function ipv4Parts(hostname: string) {
-	const parts = hostname.split(".");
+const BLOCKED_HOST_SUFFIXES = [".local", ".localhost", ".internal", ".home.arpa"];
 
-	if (parts.length !== 4) {
-		return undefined;
+function isBlockedHostname(hostname: string) {
+	if (!hostname.includes(".")) {
+		return true;
 	}
 
-	const numbers = parts.map((part) => Number(part));
-
-	return numbers.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)
-		? numbers
-		: undefined;
-}
-
-function isBlockedIpv4(hostname: string) {
-	const parts = ipv4Parts(hostname);
-
-	if (!parts) {
-		return false;
+	if (BLOCKED_HOST_SUFFIXES.some((suffix) => hostname.endsWith(suffix))) {
+		return true;
 	}
 
-	const [first, second] = parts;
+	const address = parseIpv4(hostname);
 
-	return (
-		first === 0 ||
-		first === 10 ||
-		first === 127 ||
-		(first === 169 && second === 254) ||
-		(first === 172 && second >= 16 && second <= 31) ||
-		(first === 192 && second === 168)
-	);
+	return address === undefined ? false : !isPublicIpv4(address);
 }
 
 export function parsePublicHttpUrl(value: string) {
@@ -54,10 +37,9 @@ export function parsePublicHttpUrl(value: string) {
 		(url.protocol !== "http:" && url.protocol !== "https:") ||
 		url.username ||
 		url.password ||
-		BLOCKED_HOSTNAMES.has(hostname) ||
-		hostname.endsWith(".local") ||
 		hostname.includes(":") ||
-		isBlockedIpv4(hostname)
+		hostname.startsWith("[") ||
+		isBlockedHostname(hostname)
 	) {
 		return undefined;
 	}

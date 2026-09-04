@@ -1,4 +1,5 @@
-import { json } from "../../utils/http";
+import { toErrorResponse } from "../../utils/error-response";
+import { errorJson, json } from "../../utils/http";
 import { createFeatureStatus, type FeatureEnv } from "../features";
 import { findGenerator } from "./catalogue";
 import { createImageResponse } from "./image";
@@ -15,13 +16,13 @@ export async function createGeneratorResponse(
 	const generator = findGenerator(type);
 
 	if (!generator) {
-		return json({ error: "Unknown generator type." }, 404);
+		return errorJson("Unknown generator type.", 404, "not_found");
 	}
 
 	const generatedAt = new Date().toISOString();
 
 	if (usesAiMode(request) && (!env || !createFeatureStatus(env).ai.available)) {
-		return json({ error: "AI mode is not available." }, 503);
+		return errorJson("AI mode is not available.", 503, "unavailable");
 	}
 
 	if (generator.result.kind === "image") {
@@ -40,6 +41,6 @@ export async function createGeneratorResponse(
 			generatedAt,
 		});
 	} catch (error) {
-		return json({ error: error instanceof Error ? error.message : "Generation failed." }, 400);
+		return toErrorResponse(error, "Generation failed.");
 	}
 }

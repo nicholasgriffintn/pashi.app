@@ -113,6 +113,7 @@ function formatDate(date: Date, format: (typeof DATE_FORMATS)[number]) {
 			return new Intl.DateTimeFormat("en-GB", {
 				day: "2-digit",
 				month: "2-digit",
+				timeZone: "UTC",
 				year: "numeric",
 			}).format(date);
 		case "long":
@@ -131,6 +132,7 @@ function formatDate(date: Date, format: (typeof DATE_FORMATS)[number]) {
 			return new Intl.DateTimeFormat("en-US", {
 				day: "2-digit",
 				month: "2-digit",
+				timeZone: "UTC",
 				year: "numeric",
 			}).format(date);
 		case "iso8601":

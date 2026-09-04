@@ -476,13 +476,11 @@ function createAge(request: GeneratorRequest) {
 }
 
 function createBirthDate(age: number) {
-	const date = new Date();
+	const year = new Date().getUTCFullYear() - age;
+	const month = randomIntegerInRange(12);
+	const day = randomIntegerInRange(28) + 1;
 
-	date.setUTCFullYear(date.getUTCFullYear() - age);
-	date.setUTCMonth(randomIntegerInRange(12));
-	date.setUTCDate(randomIntegerInRange(28) + 1);
-
-	return date.toISOString().slice(0, 10);
+	return new Date(Date.UTC(year, month, day)).toISOString().slice(0, 10);
 }
 
 function createFinancialData(countryCode: string) {

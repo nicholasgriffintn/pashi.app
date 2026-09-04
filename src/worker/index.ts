@@ -1,9 +1,13 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 
 import { requireApiKey, type ApiKeyVariables } from "./middleware/api-key-access";
-import { blockBots } from "./middleware/bot-blocker";
+import { apiCors } from "./middleware/cors";
+import { enforceRateLimit } from "./security/guard";
+import { isExpensiveGeneratorId, policyFor } from "./security/policies";
 import type { ApiKeyEnv } from "./services/access/api-keys";
 import { createApiIndexResponse } from "./services/api-info";
+import { assertUniqueToolIdentifiers } from "./services/catalogue-integrity";
 import { createConverterResponse, findConverterTool } from "./services/converters";
 import {
 	ConversionContainer,
@@ -21,29 +25,60 @@ import {
 } from "./services/generators/request";
 import { createSitemapResponse } from "./services/sitemap";
 import { readConverterBody, readGeneratorBody } from "./utils/body";
+import { toErrorResponse } from "./utils/error-response";
+import { errorJson } from "./utils/http";
+
+assertUniqueToolIdentifiers();
 
 type WorkerEnv = ConversionEnv & ApiKeyEnv;
 
-const app = new Hono<{
+type AppContext = {
 	Bindings: WorkerEnv;
 	Variables: ApiKeyVariables;
-}>({ strict: false });
+};
 
-app.use("*", blockBots);
+const app = new Hono<AppContext>({ strict: false });
+
+app.use("*", apiCors);
+
+app.onError((error) => toErrorResponse(error, "Something went wrong handling that request."));
+
+async function guard(
+	c: Context<AppContext>,
+	options: {
+		isAiMode?: boolean;
+		isContainerRuntime?: boolean;
+		isExpensiveGenerator?: boolean;
+		isUpload?: boolean;
+	} = {},
+) {
+	return enforceRateLimit({
+		applicationId: c.get("application")?.id,
+		env: c.env,
+		policy: policyFor({
+			isAiMode: options.isAiMode ?? false,
+			isContainerRuntime: options.isContainerRuntime ?? false,
+			isExpensiveGenerator: options.isExpensiveGenerator ?? false,
+			isUpload: options.isUpload ?? false,
+			method: c.req.method,
+		}),
+		request: c.req.raw,
+	});
+}
 
 app.get("/api/info", (c) => c.json(createApiIndexResponse(c.env)));
 
-app.get("/sitemap.xml", (c) => {
-	const origin = new URL(c.req.url).origin;
+app.get("/sitemap.xml", (c) => createSitemapResponse(new URL(c.req.url).origin));
 
-	return createSitemapResponse(origin);
-});
-
-app.get("/export/:type/:format", async (c) => {
+app.on(["GET", "POST"], "/export/:type/:format", async (c) => {
 	const generator = findGenerator(c.req.param("type"));
-	const request = createGeneratorRequestFromSearchParams(new URL(c.req.url).searchParams);
+	const request =
+		c.req.method === "GET"
+			? createGeneratorRequestFromSearchParams(new URL(c.req.url).searchParams)
+			: await readGeneratorBody(c).then((body) => createGeneratorRequest(body.input, body.fields));
+	const isAiMode = Boolean(generator?.modes?.includes("ai")) && usesAiMode(request);
 
-	if (generator?.modes?.includes("ai") && usesAiMode(request)) {
+	if (isAiMode) {
 		const denied = await requireApiKey(c);
 
 		if (denied) {
@@ -51,20 +86,13 @@ app.get("/export/:type/:format", async (c) => {
 		}
 	}
 
-	return createExportResponse(c.req.param("type"), c.req.param("format"), request, c.env);
-});
+	const limited = await guard(c, {
+		isAiMode,
+		isExpensiveGenerator: generator ? isExpensiveGeneratorId(generator.id) : false,
+	});
 
-app.post("/export/:type/:format", async (c) => {
-	const body = await readGeneratorBody(c);
-	const generator = findGenerator(c.req.param("type"));
-	const request = createGeneratorRequest(body.input, body.fields);
-
-	if (generator?.modes?.includes("ai") && usesAiMode(request)) {
-		const denied = await requireApiKey(c);
-
-		if (denied) {
-			return denied;
-		}
+	if (limited) {
+		return limited;
 	}
 
 	return createExportResponse(c.req.param("type"), c.req.param("format"), request, c.env);
@@ -74,16 +102,26 @@ app.get("/api/:type", async (c) => {
 	const type = c.req.param("type");
 	const params = new URL(c.req.url).searchParams;
 	const request = createGeneratorRequestFromSearchParams(params);
-
 	const generatorTool = findGenerator(type);
 
 	if (generatorTool) {
-		if (generatorTool.modes?.includes("ai") && usesAiMode(request)) {
+		const isAiMode = Boolean(generatorTool.modes?.includes("ai")) && usesAiMode(request);
+
+		if (isAiMode) {
 			const denied = await requireApiKey(c);
 
 			if (denied) {
 				return denied;
 			}
+		}
+
+		const limited = await guard(c, {
+			isAiMode,
+			isExpensiveGenerator: isExpensiveGeneratorId(generatorTool.id),
+		});
+
+		if (limited) {
+			return limited;
 		}
 
 		return createGeneratorResponse(type, request, params, c.env);
@@ -102,16 +140,28 @@ app.get("/api/:type", async (c) => {
 			const application = c.get("application");
 
 			if (!application) {
-				return c.json({ error: "API key authentication is unavailable." }, 503);
+				return errorJson("API key authentication is unavailable.", 503, "unavailable");
+			}
+
+			const limited = await guard(c, { isContainerRuntime: true });
+
+			if (limited) {
+				return limited;
 			}
 
 			return createConverterResponse(type, request, c.env, params, application.id);
 		}
 
+		const limited = await guard(c);
+
+		if (limited) {
+			return limited;
+		}
+
 		return createConverterResponse(type, request, c.env, params);
 	}
 
-	return c.json({ error: "Unknown tool type." }, 404);
+	return errorJson("Unknown tool type.", 404, "not_found");
 });
 
 app.post("/api/:type", async (c) => {
@@ -121,13 +171,23 @@ app.post("/api/:type", async (c) => {
 	if (generatorTool) {
 		const body = await readGeneratorBody(c);
 		const request = createGeneratorRequest(body.input, body.fields);
+		const isAiMode = Boolean(generatorTool.modes?.includes("ai")) && usesAiMode(request);
 
-		if (generatorTool.modes?.includes("ai") && usesAiMode(request)) {
+		if (isAiMode) {
 			const denied = await requireApiKey(c);
 
 			if (denied) {
 				return denied;
 			}
+		}
+
+		const limited = await guard(c, {
+			isAiMode,
+			isExpensiveGenerator: isExpensiveGeneratorId(generatorTool.id),
+		});
+
+		if (limited) {
+			return limited;
 		}
 
 		return createGeneratorResponse(type, request, new URLSearchParams(), c.env);
@@ -146,12 +206,18 @@ app.post("/api/:type", async (c) => {
 			const application = c.get("application");
 
 			if (!application) {
-				return c.json({ error: "API key authentication is unavailable." }, 503);
+				return errorJson("API key authentication is unavailable.", 503, "unavailable");
 			}
 
 			const contentType = c.req.header("content-type")?.toLowerCase() ?? "";
+			const isUpload = isQueuedConversionUploadRequest(converterTool.id, contentType);
+			const limited = await guard(c, { isContainerRuntime: true, isUpload });
 
-			if (isQueuedConversionUploadRequest(converterTool.id, contentType)) {
+			if (limited) {
+				return limited;
+			}
+
+			if (isUpload) {
 				return createQueuedConversionUploadResponse(
 					converterTool.id,
 					c.req.raw,
@@ -172,12 +238,18 @@ app.post("/api/:type", async (c) => {
 			);
 		}
 
+		const limited = await guard(c);
+
+		if (limited) {
+			return limited;
+		}
+
 		const body = await readConverterBody(c);
 
 		return createConverterResponse(type, createGeneratorRequest(body.input, body.fields), c.env);
 	}
 
-	return c.json({ error: "Unknown tool type." }, 404);
+	return errorJson("Unknown tool type.", 404, "not_found");
 });
 
 export { ConversionContainer };
