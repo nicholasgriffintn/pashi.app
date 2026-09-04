@@ -12,17 +12,25 @@ export function AboutPage() {
 				Pashi takes its name from the manga SFX <em>pashi</em>: a crisp smack or click of impact.
 			</p>
 			<p>
-				It started as a set of tiny generators and grew into the place I put side projects. The
-				tools console covers the formats I reach for most. Labs is where AI experiments live before
-				they earn a permanent home. Anything large enough to need its own deploy gets a subdomain
-				and a card on the front page.
+				When I first started Pashi i was looking to build an app that provided generators and
+				convertors for my other services (such as my ai platform) to use over an api. Since then
+				i've decided to make more out of this application.
+			</p>
+			<p>Today, Pashi is the place where I experiment and build new side projects from.</p>
+			<p>
+				The tools console covers the formats I reach for most. Labs is where AI experiments live
+				before they earn a permanent home. Anything large enough to need its own deploy gets a
+				subdomain and a card on the front page.
 			</p>
 			<h2>How it runs</h2>
 			<p>
-				One Cloudflare Worker serves the API and the single page app. Text conversions run in the
-				Worker itself. Media and document conversions run in a container behind a queue, with
-				results held in object storage for a day. Everything is rate limited, and the whole tool
-				catalogue is published at <Link to="/api">the API</Link> so other programs can use it.
+				Pashi runs off the Cloudflare's workers platform, this includes the entire api and React
+				application. Alongside this, we are also using Cloudflare Workers AI and Cloudflare
+				Containers For some of the convertors.
+			</p>
+			<p>
+				The entire tool catalogue is published at <Link to="/api">the API</Link> so other programs
+				can use it.
 			</p>
 			<p>
 				Source lives on{" "}

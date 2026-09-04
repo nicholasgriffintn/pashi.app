@@ -2850,11 +2850,13 @@ h1 {
 }
 
 .project-card {
+	align-items: flex-start;
 	background: var(--panel-bg);
 	border: 2px solid var(--panel-border);
 	box-shadow: var(--shadow-hard);
 	color: var(--panel-text);
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	gap: var(--space-2);
 	padding: var(--space-4);
 	text-decoration: none;
@@ -2889,13 +2891,24 @@ h1 {
 	margin: 0;
 }
 
+.project-card .card-action {
+	margin-top: var(--space-2);
+}
+
+.project-card > :nth-last-child(2) {
+	margin-bottom: auto;
+}
+
 .project-card-status {
+	align-items: center;
 	color: var(--on-accent);
+	display: inline-flex;
 	font-size: 0.72rem;
 	font-weight: 900;
-	justify-self: start;
+	height: 1.6rem;
 	letter-spacing: 0.14em;
-	padding: 0.15rem 0.45rem;
+	line-height: 1;
+	padding: 0 0.5rem;
 	text-transform: uppercase;
 }
 
@@ -3633,10 +3646,12 @@ h1 {
 	font-size: 0.74rem;
 	font-weight: 900;
 	gap: 0.4rem;
+	height: 2.5rem;
 	justify-self: start;
 	letter-spacing: 0.1em;
-	margin-top: var(--space-2);
-	padding: 0.45rem 0.8rem;
+	line-height: 1;
+	margin-top: auto;
+	padding: 0 0.85rem;
 	text-decoration: none;
 	text-transform: uppercase;
 	transition:
@@ -3648,6 +3663,7 @@ h1 {
 
 .card-action span {
 	font-size: 0.9em;
+	line-height: 1;
 	transition: transform var(--duration) var(--ease);
 }
 
