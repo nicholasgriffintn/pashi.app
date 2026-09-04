@@ -11,8 +11,10 @@ import {
 	getInitialValues,
 	type GeneratorValues,
 } from "./generator-state";
+import { replaceAppSearch } from "./navigation";
 import { appendResultHistory, clearResultHistoryForResult } from "./result-history";
 import type { ResultStageValue } from "./result-types";
+import { buildShareSearch } from "./share-link";
 
 function createInitialResult(tool: GeneratorInfoTool, values: GeneratorValues, generateId: number) {
 	return tool.result.kind === "image"
@@ -160,6 +162,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			setGenerateId(nextGenerateId);
 			setResultMode("standard");
 			setResult(createImageResult(activeTool, input, fieldValues, nextGenerateId));
+			replaceAppSearch(buildShareSearch(input, fieldValues));
 
 			return;
 		}
@@ -176,6 +179,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			setResult(nextResult);
 			setResultMode(aiMode ? "ai" : "standard");
 			setIsLoading(false);
+			replaceAppSearch(buildShareSearch(input, fieldValues));
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Generation failed.");
 			setIsLoading(false);

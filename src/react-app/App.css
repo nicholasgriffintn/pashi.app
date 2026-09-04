@@ -455,7 +455,7 @@ h1 {
 
 .tool-trigger small {
 	color: rgb(var(--ink-deep-rgb) / 0.54);
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 }
@@ -1149,6 +1149,7 @@ h1 {
 }
 
 .result-box[data-result-tone="code"] .result-generated-at {
+	font-size: 0.72rem;
 	background: linear-gradient(90deg, var(--ink-void) 0 72%, rgb(var(--ink-void-rgb) / 0.92));
 	border-top-color: rgb(var(--cyan-rgb) / 0.24);
 	color: rgb(var(--paper-warm-rgb) / 0.72);
@@ -1170,18 +1171,19 @@ h1 {
 
 .result-summary-strip span {
 	color: rgb(var(--ink-rgb) / 0.72);
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	font-weight: 900;
 	line-height: 1.1;
 }
 
 .result-generated-at {
+	font-size: 0.72rem;
 	align-items: center;
 	background: linear-gradient(90deg, var(--ink) 0 72%, rgb(var(--ink-rgb) / 0.92));
 	border-top: 2px solid rgb(var(--ink-rgb) / 0.2);
 	color: rgb(var(--paper-rgb) / 0.76);
 	display: flex;
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	font-weight: 800;
 	justify-self: stretch;
 	letter-spacing: 0.02em;
@@ -1332,7 +1334,7 @@ h1 {
 
 .result-summary-panel dt {
 	color: var(--yellow);
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	font-weight: 900;
 	text-transform: uppercase;
 }
@@ -1444,7 +1446,7 @@ h1 {
 	border: 1px solid rgb(var(--ink-rgb) / 0.3);
 	color: rgb(var(--ink-rgb) / 0.74);
 	font:
-		900 0.58rem / 1 "Trebuchet MS",
+		900 0.7rem / 1 "Trebuchet MS",
 		system-ui,
 		sans-serif;
 	padding: 0.24rem 0.34rem;
@@ -1737,7 +1739,7 @@ h1 {
 
 .record-preview-item span {
 	color: rgb(var(--ink-rgb) / 0.72);
-	font-size: 0.58rem;
+	font-size: 0.7rem;
 	font-weight: 900;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1853,7 +1855,7 @@ h1 {
 .result-history-item span,
 .result-history-item em {
 	color: rgb(var(--ink-rgb) / 0.72);
-	font-size: 0.58rem;
+	font-size: 0.7rem;
 	font-weight: 900;
 	text-transform: uppercase;
 }
@@ -2039,7 +2041,7 @@ h1 {
 
 .coin-result-header span {
 	color: rgb(var(--ink-rgb) / 0.72);
-	font-size: 0.58rem;
+	font-size: 0.7rem;
 	font-weight: 900;
 	text-transform: uppercase;
 }
@@ -2310,7 +2312,7 @@ h1 {
 
 .colour-card dt,
 .colour-card dd {
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	line-height: 1.15;
 	margin: 0;
 }
@@ -2411,7 +2413,7 @@ h1 {
 .slackmoji-batch-effect,
 .slackmoji-batch-status {
 	font:
-		800 0.58rem / 1.2 "Trebuchet MS",
+		800 0.7rem / 1.2 "Trebuchet MS",
 		system-ui,
 		sans-serif;
 	text-transform: uppercase;
@@ -2670,6 +2672,15 @@ h1 {
 	.result-content,
 	.tool-surface > .generator {
 		animation: none;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
 	}
 
 	.result-action-slot {
@@ -2956,7 +2967,7 @@ h1 {
 
 .project-card-status {
 	color: var(--ink);
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	font-weight: 900;
 	justify-self: start;
 	letter-spacing: 0.14em;
@@ -3147,7 +3158,7 @@ h1 {
 .api-tool-kind,
 .lab-state {
 	color: var(--yellow);
-	font-size: 0.62rem;
+	font-size: 0.72rem;
 	font-weight: 900;
 	letter-spacing: 0.12em;
 	text-transform: uppercase;

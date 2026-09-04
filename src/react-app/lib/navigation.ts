@@ -9,3 +9,11 @@ export function replaceAppPath(path: string) {
 		window.history.replaceState(null, "", path);
 	}
 }
+
+export function replaceAppSearch(search: string) {
+	const next = `${window.location.pathname}${search ? `?${search}` : ""}`;
+
+	if (`${window.location.pathname}${window.location.search}` !== next) {
+		window.history.replaceState(window.history.state, "", next);
+	}
+}

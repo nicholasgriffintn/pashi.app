@@ -1,5 +1,5 @@
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { isAuthenticatedApiUrl } from "../lib/api-request";
@@ -18,6 +18,7 @@ import {
 import { resultHistoryForResult } from "../lib/result-history";
 import { createResultSummary, type ResultSummary } from "../lib/result-summary";
 import type { ResultStageValue, TextResultStageValue } from "../lib/result-types";
+import { useFocusTrap } from "../lib/use-focus-trap";
 import { CoinFlipResultView } from "./CoinFlipResultView";
 import { DiceResultView } from "./DiceResultView";
 import { ResultHistory } from "./ResultHistory";
@@ -103,11 +104,14 @@ export function ResultStage({
 	const generatedAtTime = formatGeneratedAtTime(result?.generatedAt);
 	const summary = result ? createResultSummary(result, generatedAtLabel) : undefined;
 	const [isExpanded, setIsExpanded] = useState(false);
+	const dialogRef = useRef<HTMLDivElement | null>(null);
 	const [historyViewKey, setHistoryViewKey] = useState<string | undefined>();
 	const expandedResult = result && isExpanded ? result : undefined;
 	const expandedSummary = expandedResult
 		? createResultSummary(expandedResult, generatedAtLabel)
 		: undefined;
+
+	useFocusTrap(dialogRef, Boolean(expandedResult));
 	const currentHistory = resultHistoryForResult(resultHistory, result);
 	const resultToolKey = result && "type" in result ? result.type : undefined;
 	const resultViewKey = result
@@ -251,12 +255,22 @@ export function ResultStage({
 			</div>
 			{expandedResult && typeof document !== "undefined"
 				? createPortal(
-						<div className="result-dialog-backdrop" role="presentation">
+						<div
+							className="result-dialog-backdrop"
+							onClick={(event) => {
+								if (event.target === event.currentTarget) {
+									setIsExpanded(false);
+								}
+							}}
+							role="presentation"
+						>
 							<div
 								aria-label="Expanded result"
 								aria-modal="true"
 								className="result-dialog"
+								ref={dialogRef}
 								role="dialog"
+								tabIndex={-1}
 							>
 								<div className="result-dialog-header">
 									<span>Result detail</span>

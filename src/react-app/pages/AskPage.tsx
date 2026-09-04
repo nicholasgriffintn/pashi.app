@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useApiKey } from "../lib/api-key-context";
 import { fetchJson } from "../lib/query-client";
+import { useDocumentMetadata } from "../lib/use-document-metadata";
 
 interface ToolRoute {
 	confidence: number;
@@ -43,6 +44,11 @@ export function AskPage() {
 	const navigate = useNavigate();
 	const { apiKey } = useApiKey();
 	const [request, setRequest] = useState("");
+
+	useDocumentMetadata(
+		"Ask Pashi",
+		"Describe what you need and Pashi picks the tool and fills the form.",
+	);
 
 	const { data, error, isPending, mutate } = useMutation({
 		mutationFn: (value: string) =>

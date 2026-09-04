@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ConverterConsole } from "../components/ConverterConsole";
 import { GeneratorConsole } from "../components/GeneratorConsole";
 import { ToolModeTabs } from "../components/ToolModeTabs";
+import { useDocumentMetadata } from "../lib/use-document-metadata";
 
 interface ToolsPageProps {
 	mode: "convert" | "generate";
@@ -25,6 +26,13 @@ export function ToolsPage({ mode }: ToolsPageProps) {
 			void navigate(`/tools/convert/${nextToolId}`, { replace: options?.replace });
 		},
 		[navigate],
+	);
+
+	useDocumentMetadata(
+		toolId ? toolId.replaceAll("-", " ") : mode === "convert" ? "Converters" : "Generators",
+		mode === "convert"
+			? "Convert between text, data, document and media formats."
+			: "Generate UUIDs, tokens, colours, test data and more.",
 	);
 
 	const controls = <ToolModeTabs mode={mode} />;

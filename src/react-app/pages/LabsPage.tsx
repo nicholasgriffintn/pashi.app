@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 
+import { useDocumentMetadata } from "../lib/use-document-metadata";
+
 interface Experiment {
 	blurb: string;
 	id: string;
@@ -34,6 +36,11 @@ const EXPERIMENTS: readonly Experiment[] = [
 ];
 
 export function LabsPage() {
+	useDocumentMetadata(
+		"Labs",
+		"AI experiments in Pashi: plain English tool routing, format explainers and agent access.",
+	);
+
 	return (
 		<main className="page">
 			<Link className="page-back" to="/">

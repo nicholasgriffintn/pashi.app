@@ -7,6 +7,7 @@ import { downloadApiResource } from "../lib/download";
 import type { GeneratorInfoTool } from "../lib/generator-info";
 import { resultToText } from "../lib/result-format";
 import type { ResultStageValue } from "../lib/result-types";
+import { shareUrlFor } from "../lib/share-link";
 
 interface ResultActionsProps {
 	exportFormats: string[];
@@ -280,9 +281,16 @@ export function ResultActions({
 	}
 
 	const resultText = createResultText(result);
+	const shareUrl = shareUrlFor(window.location.pathname, input, fields);
 
 	return (
 		<div className="result-actions" aria-label="Result actions">
+			<ActionButton
+				icon="⚯"
+				label="Copy a link that reproduces this result"
+				onClick={() => runAction(() => copyText(shareUrl), "Link copied")}
+				text="Link"
+			/>
 			{resultText ? (
 				<ActionButton
 					icon="⧉"

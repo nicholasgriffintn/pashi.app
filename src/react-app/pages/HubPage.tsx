@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { PashiLogoButton } from "../components/PashiLogoButton";
 import { PROJECTS, STATUS_LABELS, type Project } from "../lib/projects";
+import { useDocumentMetadata } from "../lib/use-document-metadata";
 
 function ProjectCard({ project }: { project: Project }) {
 	const body = (
@@ -37,6 +38,8 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export function HubPage() {
+	useDocumentMetadata("Pashi");
+
 	return (
 		<main className="hub">
 			<header className="hub-header">
