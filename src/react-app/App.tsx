@@ -5,7 +5,6 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { queryClient } from "./lib/query-client";
 import { HubPage } from "./pages/HubPage";
-import { LegacyToolRedirect } from "./pages/LegacyToolRedirect";
 import { ToolsPage } from "./pages/ToolsPage";
 
 import "./App.css";
@@ -50,8 +49,6 @@ function App() {
 							<Route element={<ExplainPage />} path="/labs/explain" />
 							<Route element={<AboutPage />} path="/about" />
 							<Route element={<ApiDocsPage />} path="/api" />
-							<Route element={<LegacyToolRedirect prefix="convert" />} path="/convert/:toolId" />
-							<Route element={<LegacyToolRedirect prefix="generate" />} path="/:toolId" />
 							<Route element={<Navigate replace to="/" />} path="*" />
 						</Routes>
 					</Suspense>

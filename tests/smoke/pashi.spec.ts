@@ -11,12 +11,6 @@ test("the hub lists projects and links into the tools console", async ({ page })
 	await expect(page).toHaveURL(/\/tools$/);
 });
 
-test("legacy tool URLs redirect to the new route", async ({ page }) => {
-	await page.goto("/uuid");
-
-	await expect(page).toHaveURL(/\/tools\/uuid$/);
-});
-
 test("a generator runs and offers a share link", async ({ page }) => {
 	await page.goto("/tools/uuid");
 

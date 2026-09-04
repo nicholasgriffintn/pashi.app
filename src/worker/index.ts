@@ -44,7 +44,6 @@ app.get("/api/openapi.json", (c) =>
 
 app.get("/og", (c) => createOgImageResponse(new URL(c.req.url).searchParams.get("path") ?? "/"));
 
-app.route("/api/v1/labs", createLabsRoutes());
 app.route("/api/labs", createLabsRoutes());
 
 app.all("/mcp", async (c) => {
@@ -111,7 +110,6 @@ app.on(["GET", "POST"], "/export/:type/:format", async (c) => {
 	return response;
 });
 
-app.route("/api/v1", createToolRoutes());
 app.route("/api", createToolRoutes());
 
 export { ConversionContainer };

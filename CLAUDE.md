@@ -17,7 +17,7 @@ Pashi (https://pashi.app) is the home for side projects: a hub that lists projec
 - **British spelling** in identifiers and copy (`colour`, `normalise`, `catalogue`).
 - **Design tokens only.** Colours, shadows, radii and spacing come from the token block at the top of `src/react-app/index.css`. No raw hex in component CSS.
 - **Bound every generator.** Anything that loops on a user-supplied count, range or notation must have an explicit budget and return 422 when exceeded.
-- **Public API surface is a contract.** `/api/:type`, `/export/:type/:format` and the alias URLs are linked from outside. Add, don't rename; redirect old paths.
+- **One canonical path per thing.** No compatibility aliases, no version prefixes, no redirects kept "just in case". If a path changes, change it.
 
 ## Commands
 

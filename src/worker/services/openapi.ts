@@ -62,7 +62,7 @@ export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 	const paths: Record<string, unknown> = {};
 
 	for (const tool of listGeneratorTools()) {
-		paths[`/api/v1/${tool.id}`] = {
+		paths[`/api/${tool.id}`] = {
 			get: {
 				description: tool.description,
 				operationId: `generate_${tool.id.replaceAll("-", "_")}`,
@@ -90,7 +90,7 @@ export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 	}
 
 	for (const tool of listConverterTools().filter((entry) => isConverterAvailable(entry, env))) {
-		paths[`/api/v1/${tool.id}`] = {
+		paths[`/api/${tool.id}`] = {
 			post: {
 				description: tool.description,
 				operationId: `convert_${tool.id.replaceAll("-", "_")}`,
@@ -112,7 +112,7 @@ export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 		};
 	}
 
-	paths["/api/v1/info"] = {
+	paths["/api/info"] = {
 		get: {
 			description: "The full tool catalogue, export formats and live feature status.",
 			operationId: "info",
@@ -122,7 +122,7 @@ export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 		},
 	};
 
-	paths["/api/v1/health"] = {
+	paths["/api/health"] = {
 		get: {
 			description: "Service health, bindings and feature flags.",
 			operationId: "health",
