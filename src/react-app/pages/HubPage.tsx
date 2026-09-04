@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
 
 import { PashiLogoButton } from "../components/PashiLogoButton";
-import { PROJECTS, STATUS_LABELS, type Project } from "../lib/projects";
+import { PROJECTS, STATUS_LABELS, type Project, type ProjectKind } from "../lib/projects";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
+
+const SECTIONS: { kind: ProjectKind; title: string }[] = [
+	{ kind: "project", title: "Projects" },
+	{ kind: "extension", title: "Chrome extensions" },
+];
 
 function ProjectCard({ project }: { project: Project }) {
 	const body = (
@@ -56,16 +61,22 @@ export function HubPage() {
 				<PashiLogoButton className="hub-logo-button" imageClassName="hub-logo" />
 			</header>
 
-			<section aria-labelledby="hub-projects-title" className="hub-projects">
-				<h2 className="hub-section-title" id="hub-projects-title">
-					Projects
-				</h2>
-				<div className="project-grid">
-					{PROJECTS.map((project) => (
-						<ProjectCard key={project.id} project={project} />
-					))}
-				</div>
-			</section>
+			{SECTIONS.map((section) => (
+				<section
+					aria-labelledby={`hub-${section.kind}-title`}
+					className="hub-projects"
+					key={section.kind}
+				>
+					<h2 className="hub-section-title" id={`hub-${section.kind}-title`}>
+						{section.title}
+					</h2>
+					<div className="project-grid">
+						{PROJECTS.filter((project) => project.kind === section.kind).map((project) => (
+							<ProjectCard key={project.id} project={project} />
+						))}
+					</div>
+				</section>
+			))}
 		</main>
 	);
 }

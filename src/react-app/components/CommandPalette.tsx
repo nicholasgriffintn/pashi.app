@@ -132,7 +132,7 @@ export function CommandPalette() {
 		];
 
 		const projectCommands = PROJECTS.filter((project) => project.external).map((project) => ({
-			group: "Projects",
+			group: project.kind === "extension" ? "Extensions" : "Projects",
 			hint: "External",
 			id: `project-${project.id}`,
 			label: project.name,
