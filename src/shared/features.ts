@@ -24,7 +24,7 @@ export const FEATURE_REQUIRED_SERVICES = {
 } as const satisfies Record<FeatureKey, readonly ServiceKey[]>;
 
 export const SERVICE_LABELS = {
-	ai: "Cloudflare Workers AI",
+	ai: "Polychat",
 	conversionBucket: "Conversion R2 bucket",
 	conversionContainer: "Conversion container",
 	conversionQueue: "Conversion queue",

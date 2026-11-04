@@ -55,8 +55,8 @@ export function ApiDocsPage() {
 			</pre>
 
 			<p>
-				Media and document conversion needs an API key in <code>X-API-Key</code>, because those run
-				in a container. Exports are available at{" "}
+				Media and document conversion needs an API key in <code>X-API-Key</code> or a connected
+				Polychat Pro account, because those run in a container. Exports are available at{" "}
 				<code>/export/&#123;tool&#125;/&#123;format&#125;</code>
 				{data ? ` in ${data.exportFormats.join(", ")}.` : "."}
 			</p>

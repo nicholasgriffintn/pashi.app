@@ -1,4 +1,4 @@
-import { runAiObject, type AiEnv } from "../../ai/run";
+import { runAiObject, type AiClient } from "../../ai/run";
 import { listConverterTools } from "../converters/catalogue";
 import { listGeneratorTools } from "../generators/catalogue";
 
@@ -71,7 +71,7 @@ function isRoutePayload(value: unknown): value is {
 	);
 }
 
-export async function routeRequestToTool(env: AiEnv, request: string): Promise<ToolRoute> {
+export async function routeRequestToTool(ai: AiClient, request: string): Promise<ToolRoute> {
 	const trimmed = request.trim();
 
 	if (!trimmed) {
@@ -91,7 +91,7 @@ export async function routeRequestToTool(env: AiEnv, request: string): Promise<T
 	}));
 
 	const payload = await runAiObject(
-		env,
+		ai,
 		"route",
 		[
 			{ content: SYSTEM_PROMPT, role: "system" },

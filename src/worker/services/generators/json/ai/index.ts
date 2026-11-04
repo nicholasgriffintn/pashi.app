@@ -1,14 +1,15 @@
+import { runAiObject, type AiClient } from "../../../../ai/run";
 import type { GeneratorRequest } from "../../request";
 import { usesAiMode } from "../../request";
 import type { GeneratorTool, JsonResult } from "../../types";
 import { readAiPayload } from "./payload";
-import { AI_MODEL, createPrompt, SYSTEM_PROMPT } from "./prompt";
+import { createPrompt, SYSTEM_PROMPT } from "./prompt";
 import { isAiSupportedResultKind, responseFormatFor } from "./schema";
 
 export async function createAiResult(
 	generator: GeneratorTool,
 	request: GeneratorRequest,
-	ai: Ai | undefined,
+	ai: AiClient | undefined,
 ): Promise<JsonResult | undefined> {
 	if (!usesAiMode(request)) {
 		return undefined;
@@ -22,19 +23,16 @@ export async function createAiResult(
 		throw new Error("AI mode is not configured.");
 	}
 
-	const output = await ai.run(AI_MODEL, {
-		messages: [
+	const payload = await runAiObject(
+		ai,
+		"generate",
+		[
 			{ role: "system", content: SYSTEM_PROMPT },
 			{ role: "user", content: createPrompt(generator, request) },
 		],
-		chat_template_kwargs: {
-			enable_thinking: false,
-		},
-		max_completion_tokens: 1600,
-		response_format: responseFormatFor(generator.result.kind),
-		temperature: 0.7,
-	});
-	const payload = readAiPayload(output);
+		readAiPayload,
+		responseFormatFor(generator.result.kind),
+	);
 
 	return {
 		input: request.input,

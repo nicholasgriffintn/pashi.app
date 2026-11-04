@@ -3,7 +3,6 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
-import { useApiKey } from "../lib/api-key-context";
 import { fetchJson } from "../lib/query-client";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
@@ -43,7 +42,6 @@ function routeUrl(route: ToolRoute) {
 
 export function AskPage() {
 	const navigate = useNavigate();
-	const { apiKey } = useApiKey();
 	const [request, setRequest] = useState("");
 
 	useDocumentMetadata(
@@ -55,10 +53,7 @@ export function AskPage() {
 		mutationFn: (value: string) =>
 			fetchJson<ToolRoute>("/api/labs/ask", {
 				body: JSON.stringify({ input: value }),
-				headers: {
-					"Content-Type": "application/json",
-					...(apiKey.trim() ? { "X-API-Key": apiKey.trim() } : {}),
-				},
+				headers: { "Content-Type": "application/json" },
 				method: "POST",
 			}),
 	});
@@ -87,7 +82,7 @@ export function AskPage() {
 					rows={3}
 					value={request}
 				/>
-				<KeyRequiredNotice what="Ask Pashi" />
+				<KeyRequiredNotice requires="polychat" what="Ask Pashi" />
 				<button disabled={isPending || !request.trim()} type="submit">
 					{isPending ? "Thinking" : "Find the tool"}
 				</button>

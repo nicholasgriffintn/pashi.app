@@ -157,7 +157,7 @@ export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 		},
 		info: {
 			description:
-				"Generators, converters and AI experiments. Text tools are open; media conversion and the AI endpoints need an API key.",
+				"Generators, converters and AI experiments. Text tools are open; the AI endpoints need a connected Polychat account, and media conversion needs an API key or Polychat Pro.",
 			title: "Pashi",
 			version: "1.0.0",
 		},

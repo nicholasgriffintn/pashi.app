@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 
-import { requireApiKey } from "../middleware/api-key-access";
+import {
+	aiClientFor,
+	requireConversionAccess,
+	requirePolychat,
+} from "../middleware/polychat-access";
 import { isExpensiveGeneratorId } from "../security/policies";
 import { createApiIndexResponse } from "../services/api-info";
 import { createConverterResponse, findConverterTool } from "../services/converters";
@@ -39,7 +43,7 @@ export function createToolRoutes() {
 			const isAiMode = Boolean(generatorTool.modes?.includes("ai")) && usesAiMode(request);
 
 			if (isAiMode) {
-				const denied = await requireApiKey(c);
+				const denied = await requirePolychat(c);
 
 				if (denied) {
 					return denied;
@@ -57,7 +61,7 @@ export function createToolRoutes() {
 				return limited;
 			}
 
-			const response = await createGeneratorResponse(type, request, params, c.env);
+			const response = await createGeneratorResponse(type, request, params, c.env, aiClientFor(c));
 
 			recordEvent(c.env, {
 				durationMs: Date.now() - startedAt,
@@ -74,7 +78,7 @@ export function createToolRoutes() {
 
 		if (converterTool) {
 			if (converterTool.runtime === "container") {
-				const denied = await requireApiKey(c);
+				const denied = await requireConversionAccess(c);
 
 				if (denied) {
 					return denied;
@@ -132,7 +136,7 @@ export function createToolRoutes() {
 			const isAiMode = Boolean(generatorTool.modes?.includes("ai")) && usesAiMode(request);
 
 			if (isAiMode) {
-				const denied = await requireApiKey(c);
+				const denied = await requirePolychat(c);
 
 				if (denied) {
 					return denied;
@@ -150,7 +154,13 @@ export function createToolRoutes() {
 				return limited;
 			}
 
-			const response = await createGeneratorResponse(type, request, new URLSearchParams(), c.env);
+			const response = await createGeneratorResponse(
+				type,
+				request,
+				new URLSearchParams(),
+				c.env,
+				aiClientFor(c),
+			);
 
 			recordEvent(c.env, {
 				durationMs: Date.now() - startedAt,
@@ -167,7 +177,7 @@ export function createToolRoutes() {
 
 		if (converterTool) {
 			if (converterTool.runtime === "container") {
-				const denied = await requireApiKey(c);
+				const denied = await requireConversionAccess(c);
 
 				if (denied) {
 					return denied;

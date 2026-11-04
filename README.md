@@ -28,9 +28,9 @@ It needs an API key and speaks JSON-RPC over POST.
 
 ## API access
 
-Workers AI requests, the Labs endpoints and container-backed converters require an application API key. Send it in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
+AI runs on [Polychat](https://polychat.app). AI mode and the Labs endpoints need a connected Polychat account, and usage counts against that account's plan.
 
-In the app, **Sign in** in the header takes you to `/sign-in`, where the key is stored in the browser and used on every page until you clear it.
+Container-backed converters need an application API key or a connected Polychat Pro account. Send a key in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
 
 Locally, `pnpm dev` seeds a permanent development key into the local KV store the first time it runs, and writes it to `.env.local` so the sign-in page can offer it with one click. Run `pnpm seed:dev` to do the seeding on its own.
 
@@ -127,7 +127,7 @@ Service health, including the feature flags and bindings, is at `/api/health`. U
 
 Social cards are generated per page at `/og?path=/tools/uuid`, drawn from the same catalogue as everything else.
 
-The AI features have golden cases behind `POST /api/labs/evaluate`, which needs a key and returns 424 when any case fails.
+The AI features have golden cases behind `POST /api/labs/evaluate`, which needs a connected Polychat account and returns 424 when any case fails.
 
 ## Checks
 

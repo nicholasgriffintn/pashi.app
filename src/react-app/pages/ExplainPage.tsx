@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
-import { useApiKey } from "../lib/api-key-context";
 import { fetchJson } from "../lib/query-client";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
@@ -31,7 +30,6 @@ const SUBJECTS: { id: Subject; label: string; placeholder: string }[] = [
 ];
 
 export function ExplainPage() {
-	const { apiKey } = useApiKey();
 	const [subject, setSubject] = useState<Subject>("regex");
 	const [input, setInput] = useState("");
 
@@ -46,10 +44,7 @@ export function ExplainPage() {
 		mutationFn: (value: string) =>
 			fetchJson<Explanation>(`/api/labs/explain/${subject}`, {
 				body: JSON.stringify({ input: value }),
-				headers: {
-					"Content-Type": "application/json",
-					...(apiKey.trim() ? { "X-API-Key": apiKey.trim() } : {}),
-				},
+				headers: { "Content-Type": "application/json" },
 				method: "POST",
 			}),
 	});
@@ -94,7 +89,7 @@ export function ExplainPage() {
 					rows={4}
 					value={input}
 				/>
-				<KeyRequiredNotice what="Explainers" />
+				<KeyRequiredNotice requires="polychat" what="Explainers" />
 				<button disabled={isPending || !input.trim()} type="submit">
 					{isPending ? "Reading" : "Explain"}
 				</button>

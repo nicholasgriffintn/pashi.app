@@ -37,7 +37,11 @@ function unavailableServices(services: ServiceStatusMap, requiredServices: reado
 
 export function createServiceStatus(env: FeatureEnv): ServiceStatusMap {
 	return {
-		ai: serviceStatus(SERVICE_LABELS.ai, SERVICE_REQUIRED_FEATURES.ai, Boolean(env.AI)),
+		ai: serviceStatus(
+			SERVICE_LABELS.ai,
+			SERVICE_REQUIRED_FEATURES.ai,
+			Boolean(env.POLYCHAT_API_URL),
+		),
 		conversionBucket: serviceStatus(
 			SERVICE_LABELS.conversionBucket,
 			SERVICE_REQUIRED_FEATURES.conversionBucket,

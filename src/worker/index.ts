@@ -3,8 +3,10 @@ import { Hono } from "hono";
 import { createMcpResponse } from "./mcp/protocol";
 import { requireApiKey } from "./middleware/api-key-access";
 import { apiCors } from "./middleware/cors";
+import { aiClientFor, requirePolychat } from "./middleware/polychat-access";
 import { guard, type AppContext } from "./routes/context";
 import { createLabsRoutes } from "./routes/labs";
+import { createPolychatRoutes } from "./routes/polychat";
 import { createToolRoutes } from "./routes/tools";
 import { isExpensiveGeneratorId } from "./security/policies";
 import { assertUniqueToolIdentifiers } from "./services/catalogue-integrity";
@@ -45,6 +47,7 @@ app.get("/api/openapi.json", (c) =>
 app.get("/og", (c) => createOgImageResponse(new URL(c.req.url).searchParams.get("path") ?? "/"));
 
 app.route("/api/labs", createLabsRoutes());
+app.route("/api/polychat", createPolychatRoutes());
 
 app.all("/mcp", async (c) => {
 	const denied = await requireApiKey(c);
@@ -77,7 +80,7 @@ app.on(["GET", "POST"], "/export/:type/:format", async (c) => {
 	const isAiMode = Boolean(generator?.modes?.includes("ai")) && usesAiMode(request);
 
 	if (isAiMode) {
-		const denied = await requireApiKey(c);
+		const denied = await requirePolychat(c);
 
 		if (denied) {
 			return denied;
@@ -98,6 +101,7 @@ app.on(["GET", "POST"], "/export/:type/:format", async (c) => {
 		c.req.param("format"),
 		request,
 		c.env,
+		aiClientFor(c),
 	);
 
 	recordEvent(c.env, {

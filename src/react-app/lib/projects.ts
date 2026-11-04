@@ -29,7 +29,7 @@ export const PROJECTS: readonly Project[] = [
 		id: "labs",
 		kind: "project",
 		name: "Labs",
-		stack: ["Workers AI", "MCP"],
+		stack: ["Polychat", "MCP"],
 		status: "lab",
 		url: "/labs",
 	},

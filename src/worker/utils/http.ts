@@ -1,5 +1,6 @@
 export type ErrorCode =
 	| "expired"
+	| "forbidden"
 	| "internal"
 	| "invalid_request"
 	| "not_found"

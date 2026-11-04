@@ -153,7 +153,7 @@ test("signing in stores the key and the header reflects it", async ({ page }) =>
 	await page.goto("/labs/ask");
 
 	await expect(page.getByRole("link", { name: "Signed in" })).toBeVisible();
-	await expect(page.getByText(/needs an API key/)).toHaveCount(0);
+	await expect(page.getByText("Ask Pashi needs Polychat.")).toBeVisible();
 });
 
 test("the health endpoint reports service status", async ({ request }) => {

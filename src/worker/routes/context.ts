@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 
-import type { ApiKeyVariables } from "../middleware/api-key-access";
+import type { PolychatVariables } from "../middleware/polychat-access";
 import { enforceRateLimit } from "../security/guard";
 import { policyFor } from "../security/policies";
 import type { ApiKeyEnv } from "../services/access/api-keys";
@@ -11,7 +11,7 @@ export type WorkerEnv = ConversionEnv & ApiKeyEnv & EventEnv;
 
 export type AppContext = {
 	Bindings: WorkerEnv;
-	Variables: ApiKeyVariables;
+	Variables: PolychatVariables;
 };
 
 export interface GuardOptions {
@@ -23,7 +23,7 @@ export interface GuardOptions {
 
 export async function guard(c: Context<AppContext>, options: GuardOptions = {}) {
 	return enforceRateLimit({
-		applicationId: c.get("application")?.id,
+		applicationId: c.get("application")?.id ?? c.get("polychat")?.subjectId,
 		env: c.env,
 		policy: policyFor({
 			isAiMode: options.isAiMode ?? false,

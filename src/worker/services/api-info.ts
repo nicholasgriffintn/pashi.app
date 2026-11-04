@@ -26,7 +26,7 @@ export function createApiIndexResponse(env: FeatureEnv) {
 	return {
 		authentication: {
 			headers: ["Authorization: Bearer <api-key>", "X-API-Key: <api-key>"],
-			requiredFor: ["Workers AI mode", "container converters"],
+			requiredFor: ["container converters, unless a Polychat Pro account is connected"],
 		},
 		endpoints: tools.flatMap((tool) => (tool.endpoint ? [tool.endpoint] : [])),
 		exportFormats: listExportFormats(),

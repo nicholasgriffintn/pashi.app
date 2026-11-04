@@ -25,8 +25,8 @@ export function AboutPage() {
 			<h2>How it runs</h2>
 			<p>
 				Pashi runs off the Cloudflare's workers platform, this includes the entire api and React
-				application. Alongside this, we are also using Cloudflare Workers AI and Cloudflare
-				Containers For some of the convertors.
+				application. Alongside this, we are also using Polychat for AI and Cloudflare Containers For
+				some of the convertors.
 			</p>
 			<p>
 				The entire tool catalogue is published at <Link to="/api">the API</Link> so other programs

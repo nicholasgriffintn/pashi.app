@@ -7,7 +7,7 @@ interface ApiKeyControlProps {
 }
 
 export function ApiKeyControl({
-	hint = "Needed for media conversion and the AI labs. Kept in this tab only.",
+	hint = "For media conversion without Polychat Pro. Kept in this tab only.",
 }: ApiKeyControlProps) {
 	const { apiKey, setApiKey } = useApiKey();
 	const [isRevealed, setIsRevealed] = useState(false);

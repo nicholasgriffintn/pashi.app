@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 
 import { useApiKey } from "../lib/api-key-context";
+import { usePolychatSession } from "../lib/use-polychat-session";
 import { PaletteButton } from "./PaletteButton";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -13,7 +14,8 @@ const NAV_ITEMS = [
 
 export function SiteHeader() {
 	const { apiKey } = useApiKey();
-	const isSignedIn = Boolean(apiKey.trim());
+	const session = usePolychatSession();
+	const isSignedIn = Boolean(apiKey.trim()) || session.status === "connected";
 
 	return (
 		<header className="site-header">

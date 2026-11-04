@@ -1,4 +1,5 @@
 import { isRecordArray, recordToText, uniqueKeys } from "../../shared/records";
+import type { AiClient } from "../ai/run";
 import { csvRow } from "../utils/csv";
 import { toErrorResponse } from "../utils/error-response";
 import { errorJson } from "../utils/http";
@@ -16,6 +17,7 @@ export async function createExportResponse(
 	format: string,
 	request: GeneratorRequest,
 	env?: FeatureEnv,
+	ai?: AiClient,
 ) {
 	const generator = findGenerator(type);
 
@@ -40,7 +42,7 @@ export async function createExportResponse(
 	}
 
 	try {
-		const result = await createJsonResult(generator, request, env?.AI ? { AI: env.AI } : undefined);
+		const result = await createJsonResult(generator, request, ai);
 
 		return new Response(formatExportResult(result, format), {
 			headers: {

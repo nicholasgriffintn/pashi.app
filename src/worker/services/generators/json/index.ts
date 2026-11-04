@@ -1,3 +1,4 @@
+import type { AiClient } from "../../../ai/run";
 import type { GeneratorRequest } from "../request";
 import type { GeneratorTool, JsonResult } from "../types";
 import { createAiResult } from "./ai/index";
@@ -19,9 +20,9 @@ import { createToolsResult } from "./tools";
 export async function createJsonResult(
 	generator: GeneratorTool,
 	request: GeneratorRequest,
-	env?: Pick<Env, "AI">,
+	ai?: AiClient,
 ): Promise<JsonResult> {
-	const aiResult = await createAiResult(generator, request, env?.AI);
+	const aiResult = await createAiResult(generator, request, ai);
 
 	if (aiResult) {
 		return aiResult;

@@ -193,6 +193,12 @@ export async function sha256(value: string) {
 	return createDigest(value, "SHA-256");
 }
 
+export async function sha256Base64Url(value: string) {
+	const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+
+	return bytesToBase64Url(new Uint8Array(digest));
+}
+
 export type DigestAlgorithm = "MD5" | "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
 
 export async function createDigest(value: string, algorithm: DigestAlgorithm) {

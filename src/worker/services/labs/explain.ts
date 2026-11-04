@@ -1,4 +1,4 @@
-import { runAiObject, type AiEnv } from "../../ai/run";
+import { runAiObject, type AiClient } from "../../ai/run";
 
 export const EXPLAIN_SUBJECTS = ["cron", "curl", "jwt", "regex", "sql"] as const;
 
@@ -50,7 +50,7 @@ function isExplanationPayload(value: unknown): value is {
 }
 
 export async function explainInput(
-	env: AiEnv,
+	ai: AiClient,
 	subject: ExplainSubject,
 	input: string,
 ): Promise<Explanation> {
@@ -65,7 +65,7 @@ export async function explainInput(
 	}
 
 	const payload = await runAiObject(
-		env,
+		ai,
 		"explain",
 		[
 			{ content: SYSTEM_PROMPT, role: "system" },

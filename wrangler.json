@@ -7,9 +7,9 @@
 	"preview_urls": false,
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
-		"AI_GATEWAY_ID": "pashi",
 		"ENABLE_AI": "true",
-		"ENABLE_CONVERSIONS": "true"
+		"ENABLE_CONVERSIONS": "true",
+		"POLYCHAT_API_URL": "https://api.polychat.app"
 	},
 	"unsafe": {
 		"bindings": [
@@ -41,10 +41,6 @@
 				}
 			}
 		]
-	},
-	"ai": {
-		"binding": "AI",
-		"remote": true
 	},
 	"kv_namespaces": [
 		{

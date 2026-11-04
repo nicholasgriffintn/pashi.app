@@ -68,7 +68,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 			intro="Generate and convert everyday formats."
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
-			keyRequiredFor={resultMode === "ai" ? "AI mode" : undefined}
+			keyRequiredFor={resultMode === "ai" ? { requires: "polychat", what: "AI mode" } : undefined}
 			notification={notification}
 			onClearResultHistory={clearResultHistory}
 			onImageError={handleImageError}

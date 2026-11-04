@@ -1,3 +1,4 @@
+import type { AiClient } from "../../ai/run";
 import { toErrorResponse } from "../../utils/error-response";
 import { errorJson, json } from "../../utils/http";
 import { createFeatureStatus, type FeatureEnv } from "../features";
@@ -12,6 +13,7 @@ export async function createGeneratorResponse(
 	request: GeneratorRequest,
 	params = new URLSearchParams(),
 	env?: FeatureEnv,
+	ai?: AiClient,
 ) {
 	const generator = findGenerator(type);
 
@@ -25,6 +27,10 @@ export async function createGeneratorResponse(
 		return errorJson("AI mode is not available.", 503, "unavailable");
 	}
 
+	if (usesAiMode(request) && !ai) {
+		return errorJson("Connect Polychat to use AI mode.", 401, "unauthorised");
+	}
+
 	if (generator.result.kind === "image") {
 		const response = createImageResponse(generator, request, params);
 
@@ -34,7 +40,7 @@ export async function createGeneratorResponse(
 	}
 
 	try {
-		const result = await createJsonResult(generator, request, env?.AI ? { AI: env.AI } : undefined);
+		const result = await createJsonResult(generator, request, ai);
 
 		return json({
 			...result,
