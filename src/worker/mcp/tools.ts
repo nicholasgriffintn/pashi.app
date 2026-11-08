@@ -200,7 +200,7 @@ export async function callMcpTool(
 	}
 
 	if (name === "pashi_judge_charades") {
-		return judgeCharadesClip(argumentsValue, ai);
+		return judgeCharadesClip(argumentsValue, env, ai);
 	}
 
 	const type = typeof argumentsValue.type === "string" ? argumentsValue.type : "";

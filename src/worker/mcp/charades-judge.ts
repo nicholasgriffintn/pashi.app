@@ -1,6 +1,7 @@
 import { isRecord } from "../../shared/records";
 import type { AiClient } from "../ai/run";
 import { createDecision } from "../services/polychat/client";
+import { isPolychatPro, type PolychatSessionEnv } from "../services/polychat/session";
 import { CHARADES_DECKS } from "./charades";
 
 export const CHARADES_DRAMA_LEVELS = [
@@ -161,6 +162,7 @@ function readClip(value: unknown) {
 
 export async function judgeCharadesClip(
 	argumentsValue: Record<string, unknown>,
+	env: PolychatSessionEnv,
 	ai: AiClient | undefined,
 ) {
 	const deck = CHARADES_DECKS.find((entry) => entry.id === argumentsValue.deck);
@@ -180,6 +182,10 @@ export async function judgeCharadesClip(
 		throw new Error(
 			"The audience runs on Polychat. Connect Pashi through your Polychat link to be judged.",
 		);
+	}
+
+	if (!(await isPolychatPro(env, ai.apiKey))) {
+		throw new Error("Charades is a Polychat Pro app. Upgrade your Polychat plan to be judged.");
 	}
 
 	const response = await createDecision(
