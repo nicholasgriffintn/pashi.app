@@ -1,4 +1,7 @@
+import { isRecord } from "../../shared/records";
+import type { AiClient } from "../ai/run";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
+import { listMcpResources, readMcpResource } from "./resources";
 import { callMcpTool, MCP_TOOLS } from "./tools";
 
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18"]);
@@ -32,10 +35,17 @@ function negotiateVersion(params: Record<string, unknown> | undefined) {
 	return SUPPORTED_PROTOCOL_VERSIONS.has(requested) ? requested : DEFAULT_PROTOCOL_VERSION;
 }
 
-async function handleRequest(request: JsonRpcRequest, env: ConversionEnv) {
+async function handleRequest(
+	request: JsonRpcRequest,
+	env: ConversionEnv,
+	ai: AiClient | undefined,
+) {
 	if (request.method === "initialize") {
 		return result(request.id, {
-			capabilities: { tools: { listChanged: false } },
+			capabilities: {
+				resources: { listChanged: false, subscribe: false },
+				tools: { listChanged: false },
+			},
 			protocolVersion: negotiateVersion(request.params),
 			serverInfo: { name: "pashi", version: "1.0.0" },
 		});
@@ -43,6 +53,23 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv) {
 
 	if (request.method === "tools/list") {
 		return result(request.id, { tools: MCP_TOOLS });
+	}
+
+	if (request.method === "resources/list") {
+		return result(request.id, { resources: listMcpResources() });
+	}
+
+	if (request.method === "resources/templates/list") {
+		return result(request.id, { resourceTemplates: [] });
+	}
+
+	if (request.method === "resources/read") {
+		const uri = typeof request.params?.uri === "string" ? request.params.uri : "";
+		const resource = readMcpResource(uri);
+
+		return resource
+			? result(request.id, resource)
+			: failure(request.id, -32002, `Resource not found: ${uri}`);
 	}
 
 	if (request.method === "tools/call") {
@@ -53,11 +80,12 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv) {
 				: {};
 
 		try {
-			const value = await callMcpTool(name, argumentsValue, env);
+			const value = await callMcpTool(name, argumentsValue, env, ai);
 
 			return result(request.id, {
 				content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
 				isError: false,
+				...(isRecord(value) ? { structuredContent: value } : {}),
 			});
 		} catch (error) {
 			return result(request.id, {
@@ -79,7 +107,7 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv) {
 	return failure(request.id, -32601, `Unknown method: ${request.method}`);
 }
 
-export async function createMcpResponse(request: Request, env: ConversionEnv) {
+export async function createMcpResponse(request: Request, env: ConversionEnv, ai?: AiClient) {
 	if (request.method !== "POST") {
 		return Response.json(failure(null, -32600, "Use POST for MCP requests."), { status: 405 });
 	}
@@ -94,7 +122,7 @@ export async function createMcpResponse(request: Request, env: ConversionEnv) {
 
 	if (Array.isArray(body)) {
 		const responses = await Promise.all(
-			body.filter(isJsonRpcRequest).map((entry) => handleRequest(entry, env)),
+			body.filter(isJsonRpcRequest).map((entry) => handleRequest(entry, env, ai)),
 		);
 
 		return Response.json(responses);
@@ -104,7 +132,7 @@ export async function createMcpResponse(request: Request, env: ConversionEnv) {
 		return Response.json(failure(null, -32600, "Invalid request."), { status: 400 });
 	}
 
-	const response = await handleRequest(body, env);
+	const response = await handleRequest(body, env, ai);
 
 	if (body.id === undefined) {
 		return new Response(null, { status: 202 });

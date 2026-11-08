@@ -1,11 +1,17 @@
+import type { AiClient } from "../ai/run";
 import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { createConverterResponse } from "../services/converters/response";
 import { listGeneratorTools } from "../services/generators/catalogue";
 import { createGeneratorRequest } from "../services/generators/request";
 import { createGeneratorResponse } from "../services/generators/response";
+import { MCP_VIEW_URIS, type McpToolUiMeta } from "./apps";
+import { CHARADES_DECKS, setUpCharades } from "./charades";
+import { judgeCharadesClip } from "./charades-judge";
+import { describeTool } from "./describe";
 
 export interface McpToolDefinition {
+	_meta?: { ui: McpToolUiMeta };
 	annotations: { readOnlyHint: boolean };
 	description: string;
 	inputSchema: Record<string, unknown>;
@@ -35,6 +41,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_list_tools",
 	},
 	{
+		_meta: { ui: { resourceUri: MCP_VIEW_URIS.generator } },
 		annotations: { readOnlyHint: true },
 		description:
 			"Run a Pashi generator, such as uuid, password, dice or colour. Returns the generated result as JSON.",
@@ -55,6 +62,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_generate",
 	},
 	{
+		_meta: { ui: { resourceUri: MCP_VIEW_URIS.converter } },
 		annotations: { readOnlyHint: true },
 		description:
 			"Run a Pashi text converter, such as markdown-to-jira, json-transform or timestamp-transform. Media and document conversion is not available over MCP.",
@@ -73,6 +81,54 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_convert",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Describe one Pashi generator or text converter: its input and the options it accepts, with labels and allowed values.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				type: { description: "The generator or converter id, for example uuid.", type: "string" },
+			},
+			required: ["type"],
+			type: "object",
+		},
+		name: "pashi_describe_tool",
+	},
+	{
+		_meta: { ui: { resourceUri: MCP_VIEW_URIS.charades } },
+		annotations: { readOnlyHint: true },
+		description:
+			"Open Charades: act out a card on camera for six seconds and an AI audience guesses which card it was. Opens a game view; the player does the acting.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				deck: {
+					description: "The deck to start with. Leave empty to let the player choose.",
+					enum: CHARADES_DECKS.map((deck) => deck.id),
+					type: "string",
+				},
+			},
+			type: "object",
+		},
+		name: "pashi_play_charades",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Judge one Charades performance. Called by the Charades view with the recorded clip; not useful from a conversation.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				card: { description: "Index of the card being acted in the deck.", type: "integer" },
+				deck: { enum: CHARADES_DECKS.map((deck) => deck.id), type: "string" },
+				video: { description: "A base64 video/webm or video/mp4 data URL.", type: "string" },
+			},
+			required: ["deck", "card", "video"],
+			type: "object",
+		},
+		name: "pashi_judge_charades",
 	},
 ];
 
@@ -133,9 +189,18 @@ export async function callMcpTool(
 	name: string,
 	argumentsValue: Record<string, unknown>,
 	env: ConversionEnv,
+	ai?: AiClient,
 ): Promise<unknown> {
 	if (name === "pashi_list_tools") {
 		return listTools(argumentsValue);
+	}
+
+	if (name === "pashi_play_charades") {
+		return setUpCharades(argumentsValue);
+	}
+
+	if (name === "pashi_judge_charades") {
+		return judgeCharadesClip(argumentsValue, env, ai);
 	}
 
 	const type = typeof argumentsValue.type === "string" ? argumentsValue.type : "";
@@ -144,6 +209,10 @@ export async function callMcpTool(
 
 	if (!type) {
 		throw new Error("A tool id is required.");
+	}
+
+	if (name === "pashi_describe_tool") {
+		return describeTool(type);
 	}
 
 	if (name === "pashi_generate") {

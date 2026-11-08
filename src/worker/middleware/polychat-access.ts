@@ -63,3 +63,15 @@ export async function requireConversionAccess<E extends PolychatContext>(c: Cont
 
 	return undefined;
 }
+
+export async function requireAgentAccess<E extends PolychatContext>(c: Context<E>) {
+	const credential = await resolvePolychatCredential(c.req.raw, c.env);
+
+	if (credential) {
+		c.set("polychat", credential);
+
+		return undefined;
+	}
+
+	return requireApiKey(c);
+}

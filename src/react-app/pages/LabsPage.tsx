@@ -29,17 +29,17 @@ const EXPERIMENTS: readonly Experiment[] = [
 	},
 	{
 		blurb:
-			"A Model Context Protocol endpoint so coding agents can list and call the toolkit directly.",
-		id: "mcp",
-		state: "building",
-		title: "Agent access",
+			"Pashi's games and tool views are MCP Apps. Add https://pashi.app/mcp as an MCP server in Polychat or any host that renders apps, and results arrive as interactive views. Charades opens on its own.",
+		id: "mcp-apps",
+		state: "live",
+		title: "MCP Apps",
 	},
 ];
 
 export function LabsPage() {
 	useDocumentMetadata(
 		"Labs",
-		"AI experiments in Pashi: plain English tool routing, format explainers and agent access.",
+		"AI experiments in Pashi: plain English tool routing, format explainers and MCP Apps.",
 	);
 
 	return (

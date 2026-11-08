@@ -1,9 +1,8 @@
 import { Hono } from "hono";
 
 import { createMcpResponse } from "./mcp/protocol";
-import { requireApiKey } from "./middleware/api-key-access";
 import { apiCors } from "./middleware/cors";
-import { aiClientFor, requirePolychat } from "./middleware/polychat-access";
+import { aiClientFor, requireAgentAccess, requirePolychat } from "./middleware/polychat-access";
 import { guard, type AppContext } from "./routes/context";
 import { createLabsRoutes } from "./routes/labs";
 import { createPolychatRoutes } from "./routes/polychat";
@@ -50,7 +49,7 @@ app.route("/api/labs", createLabsRoutes());
 app.route("/api/polychat", createPolychatRoutes());
 
 app.all("/mcp", async (c) => {
-	const denied = await requireApiKey(c);
+	const denied = await requireAgentAccess(c);
 
 	if (denied) {
 		return denied;
@@ -62,7 +61,7 @@ app.all("/mcp", async (c) => {
 		return limited;
 	}
 
-	const response = await createMcpResponse(c.req.raw, c.env);
+	const response = await createMcpResponse(c.req.raw, c.env, aiClientFor(c));
 
 	recordEvent(c.env, { name: "mcp_call", outcome: response.ok ? "ok" : "error" });
 

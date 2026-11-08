@@ -1,0 +1,506 @@
+.charades {
+	max-width: 60rem;
+}
+
+.picker {
+	display: grid;
+	gap: var(--space-3);
+}
+
+.picker-lede {
+	font-family: var(--font-display);
+	font-size: clamp(1.3rem, 4vw, 1.8rem);
+	line-height: 1.1;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.deck-grid {
+	display: grid;
+	gap: var(--space-5);
+	grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+	padding: var(--space-3) var(--space-2) var(--space-4);
+}
+
+.deck {
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+	position: relative;
+	text-align: left;
+}
+
+.deck-back,
+.deck-face {
+	aspect-ratio: 5 / 7;
+	border: var(--border-loud);
+	display: block;
+}
+
+.deck-back {
+	background:
+		repeating-linear-gradient(45deg, rgb(var(--magenta-rgb) / 0.55) 0 2px, transparent 2px 9px),
+		var(--surface-paper);
+	inset: 0;
+	opacity: 0.85;
+	position: absolute;
+	rotate: var(--back-tilt, 3deg);
+	translate: 0.5rem 0.5rem;
+}
+
+.deck-face {
+	background: var(--surface-paper);
+	box-shadow: var(--shadow-hard);
+	color: var(--ink);
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-4) var(--space-3);
+	place-content: center;
+	position: relative;
+	rotate: var(--tilt, -2deg);
+	transition:
+		rotate var(--duration) var(--ease),
+		translate var(--duration) var(--ease),
+		box-shadow var(--duration) var(--ease);
+}
+
+.deck:hover .deck-face,
+.deck:focus-visible .deck-face {
+	box-shadow: var(--shadow-pop);
+	rotate: 0deg;
+	translate: 0 -0.5rem;
+}
+
+.deck:focus-visible {
+	outline: 0;
+}
+
+.deck-name {
+	font-family: var(--font-display);
+	font-size: 1.35rem;
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.deck-sample {
+	font-size: 0.75rem;
+	opacity: 0.75;
+}
+
+.game {
+	display: grid;
+	gap: var(--space-5);
+}
+
+@media (min-width: 52rem) {
+	.game {
+		grid-template-columns: minmax(0, 1fr) 18rem;
+	}
+}
+
+.game-main,
+.game-side {
+	align-content: start;
+	display: grid;
+	gap: var(--space-4);
+}
+
+.stage {
+	aspect-ratio: 16 / 9;
+	background:
+		radial-gradient(ellipse at top, rgb(var(--magenta-rgb) / 0.22), transparent 70%),
+		var(--ink-void);
+	border: 8px solid var(--panel-border);
+	box-shadow: inset 0 0 60px rgb(var(--ink-void-rgb) / 0.6);
+	color: var(--paper);
+	overflow: hidden;
+	position: relative;
+	transition: border-color 0.5s var(--ease);
+}
+
+.stage[data-phase="recording"] {
+	border-color: var(--magenta);
+}
+
+.stage-video {
+	height: 100%;
+	object-fit: cover;
+	transform: scaleX(-1);
+	width: 100%;
+}
+
+.stage-dark {
+	display: grid;
+	gap: var(--space-3);
+	inset: 0;
+	justify-items: center;
+	padding: var(--space-4);
+	place-content: center;
+	position: absolute;
+	text-align: center;
+}
+
+.stage-dark-title {
+	font-family: var(--font-display);
+	font-size: 1.6rem;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.stage-note {
+	color: var(--paper-warm);
+	font-size: 0.78rem;
+	margin: 0;
+	max-width: 20rem;
+}
+
+.stage-countdown {
+	animation: charades-zoom 0.5s var(--ease);
+	display: grid;
+	font-family: var(--font-display);
+	font-size: clamp(5rem, 18vw, 9rem);
+	inset: 0;
+	line-height: 1;
+	place-items: center;
+	position: absolute;
+	text-shadow: 0.05em 0.05em 0 var(--magenta);
+}
+
+.stage-rolling {
+	align-items: center;
+	background: rgb(var(--ink-void-rgb) / 0.6);
+	display: flex;
+	font-family: var(--font-mono);
+	font-size: 0.72rem;
+	gap: var(--space-2);
+	left: var(--space-3);
+	letter-spacing: 0.14em;
+	padding: var(--space-1) var(--space-3);
+	position: absolute;
+	text-transform: uppercase;
+	top: var(--space-3);
+}
+
+.stage-dot {
+	animation: charades-blink 1s steps(2) infinite;
+	background: var(--magenta);
+	border-radius: 50%;
+	height: 0.5rem;
+	width: 0.5rem;
+}
+
+.stage-progress {
+	background: rgb(var(--ink-void-rgb) / 0.4);
+	bottom: 0;
+	height: 0.4rem;
+	left: 0;
+	position: absolute;
+	right: 0;
+}
+
+.stage-progress span {
+	background: var(--magenta);
+	display: block;
+	height: 100%;
+	transform-origin: left;
+	transition: transform 1s linear;
+}
+
+.stage-judging {
+	align-items: center;
+	backdrop-filter: blur(4px);
+	background: rgb(var(--ink-void-rgb) / 0.6);
+	display: flex;
+	flex-direction: column;
+	font-family: var(--font-display);
+	font-size: 1.2rem;
+	gap: var(--space-3);
+	inset: 0;
+	justify-content: center;
+	position: absolute;
+	text-transform: uppercase;
+}
+
+.stage-spinner {
+	animation: charades-spin 0.8s linear infinite;
+	border: 3px solid rgb(var(--paper-rgb) / 0.3);
+	border-radius: 50%;
+	border-top-color: var(--cyan);
+	height: 2rem;
+	width: 2rem;
+}
+
+.game-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.game-actions .button {
+	min-height: 3rem;
+}
+
+.game-leave {
+	margin-left: auto;
+}
+
+.rounds {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.rounds li {
+	border: 2px solid var(--edge);
+	color: var(--body-muted);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	padding: var(--space-1) var(--space-3);
+}
+
+.rounds li[data-correct="true"] {
+	border-color: var(--green);
+	color: var(--body-text);
+}
+
+.ticket {
+	background: var(--panel-bg);
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
+	color: var(--panel-text);
+	display: grid;
+	grid-template-columns: 1fr auto;
+}
+
+.ticket > div {
+	display: grid;
+	padding: var(--space-3) var(--space-4);
+}
+
+.ticket-stub {
+	border-left: 2px dashed var(--edge);
+	text-align: right;
+}
+
+.ticket-value {
+	font-family: var(--font-mono);
+	font-size: 2.2rem;
+	line-height: 1;
+}
+
+.card {
+	animation: charades-deal 0.5s var(--ease);
+	aspect-ratio: 5 / 7;
+	background: var(--surface-paper);
+	border: var(--border-loud);
+	box-shadow: var(--shadow-pop);
+	color: var(--ink);
+	display: grid;
+	gap: var(--space-2);
+	justify-self: center;
+	padding: var(--space-5) var(--space-4);
+	place-content: center;
+	position: relative;
+	rotate: -2deg;
+	text-align: center;
+	width: min(14rem, 70vw);
+}
+
+.card-corner {
+	color: var(--magenta);
+	font-family: var(--font-mono);
+	font-size: 0.62rem;
+	left: var(--space-3);
+	letter-spacing: 0.14em;
+	position: absolute;
+	text-transform: uppercase;
+	top: var(--space-2);
+}
+
+.card-corner-end {
+	bottom: var(--space-2);
+	left: auto;
+	right: var(--space-3);
+	rotate: 180deg;
+	top: auto;
+}
+
+.card-label {
+	font-size: 0.7rem;
+	font-weight: 900;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.card-text {
+	font-family: var(--font-display);
+	font-size: clamp(1.5rem, 6vw, 2.1rem);
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.verdict {
+	display: grid;
+	gap: var(--space-4);
+}
+
+.verdict-guess {
+	font-family: var(--font-display);
+	font-size: 1.8rem;
+	line-height: 1.05;
+	margin: var(--space-1) 0;
+	text-transform: uppercase;
+}
+
+.guesses {
+	display: grid;
+	gap: var(--space-2);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.guess {
+	display: grid;
+	font-size: 0.85rem;
+	gap: var(--space-1);
+}
+
+.guess-head {
+	display: flex;
+	justify-content: space-between;
+}
+
+.guess-head span:last-child {
+	font-family: var(--font-mono);
+}
+
+.guess[data-secret="true"] .guess-head {
+	color: var(--magenta);
+	font-weight: 700;
+}
+
+.guess-bar {
+	background: var(--ground-tint-strong);
+	display: block;
+	height: 0.45rem;
+}
+
+.guess-fill {
+	animation: charades-grow 0.6s var(--ease) both;
+	animation-delay: var(--delay, 0ms);
+	background: var(--edge);
+	display: block;
+	height: 100%;
+	transform-origin: left;
+}
+
+.guess[data-secret="true"] .guess-fill {
+	background: var(--magenta);
+}
+
+.verdict-foot {
+	align-items: center;
+	border-top: 2px solid var(--edge-soft);
+	display: flex;
+	gap: var(--space-3);
+	justify-content: space-between;
+	padding-top: var(--space-3);
+}
+
+.stamp {
+	animation: charades-stamp 0.3s var(--ease) 0.5s both;
+	border: 3px solid var(--green);
+	color: var(--green);
+	font-family: var(--font-mono);
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.18em;
+	padding: var(--space-1) var(--space-3);
+	rotate: -6deg;
+	text-transform: uppercase;
+}
+
+.stamp[data-caught="true"] {
+	border-color: var(--magenta);
+	color: var(--magenta);
+}
+
+.verdict-talking {
+	color: var(--body-muted);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+}
+
+.drama {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.drama-scale {
+	display: grid;
+	gap: var(--space-1);
+	grid-auto-columns: 1fr;
+	grid-auto-flow: column;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.drama-scale li {
+	border-top: 6px solid var(--ground-tint-strong);
+	color: var(--body-muted);
+	font-size: 0.62rem;
+	padding-top: var(--space-1);
+}
+
+.drama-scale li[data-reached="true"] {
+	border-color: var(--magenta);
+}
+
+.drama-scale li[data-active="true"] {
+	color: var(--body-text);
+	font-weight: 700;
+}
+
+@keyframes charades-deal {
+	from {
+		opacity: 0;
+		transform: translateX(2rem) rotate(6deg);
+	}
+}
+
+@keyframes charades-zoom {
+	from {
+		opacity: 0;
+		transform: scale(1.5);
+	}
+}
+
+@keyframes charades-blink {
+	to {
+		opacity: 0.2;
+	}
+}
+
+@keyframes charades-spin {
+	to {
+		rotate: 360deg;
+	}
+}
+
+@keyframes charades-grow {
+	from {
+		transform: scaleX(0);
+	}
+}
+
+@keyframes charades-stamp {
+	from {
+		opacity: 0;
+		scale: 1.5;
+	}
+}
