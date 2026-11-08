@@ -88,3 +88,13 @@ test("every Polychat app tool opens with no input on a view that resolves", asyn
 		expect(read.result.contents[0].text, app.name).toContain("PashiBridge");
 	}
 });
+
+test("handshake and discovery traffic from a host is not rate limited", async ({ request }) => {
+	await Promise.all(
+		Array.from({ length: 15 }, (_, index) =>
+			rpc(request, index + 1, index % 2 === 0 ? "initialize" : "tools/list", {
+				protocolVersion: "2025-06-18",
+			}),
+		),
+	);
+});
