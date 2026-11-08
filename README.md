@@ -24,7 +24,17 @@ An MCP endpoint at `/mcp` exposes three meta tools rather than one per generator
 - `pashi_generate` runs a generator.
 - `pashi_convert` runs a text converter. Media and document conversion is not available over MCP.
 
-It needs an API key and speaks JSON-RPC over POST.
+It speaks JSON-RPC over POST and takes either a Pashi API key or the Polychat link token as a bearer token.
+
+### MCP Apps
+
+Pashi's views and games are [MCP Apps](https://modelcontextprotocol.io/specification/draft/apps): `ui://pashi/...` resources served from `/mcp` as self-contained HTML that a host renders in a sandboxed frame.
+
+- `pashi_generate` and `pashi_convert` link `ui://pashi/generator` and `ui://pashi/converter`, which show the result with its options editable and run it again from the view.
+- `pashi_play_charades` links `ui://pashi/charades`. You act a card on camera for six seconds and an AI audience guesses it. The judging runs on the linked Polychat account, so it needs the link token rather than an API key.
+- Apps that open without a tool call carry `_meta["app.polychat/standalone"]: true` on their `resources/list` entry.
+
+To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps) with your token, then ask for a password, a Jira conversion or a game of Charades.
 
 ## API access
 
