@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { createMcpResponse } from "./mcp/protocol";
+import { readMcpCallPolicies } from "./mcp/rate-policy";
 import { apiCors } from "./middleware/cors";
 import { aiClientFor, requireAgentAccess, requirePolychat } from "./middleware/polychat-access";
 import { guard, type AppContext } from "./routes/context";
@@ -55,7 +56,10 @@ app.all("/mcp", async (c) => {
 		return denied;
 	}
 
-	const limited = await guard(c, { isAiMode: true });
+	const outcomes = await Promise.all(
+		(await readMcpCallPolicies(c.req.raw)).map((policy) => guard(c, { policy })),
+	);
+	const limited = outcomes.find((outcome) => outcome !== undefined);
 
 	if (limited) {
 		return limited;

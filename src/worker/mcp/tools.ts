@@ -1,4 +1,5 @@
 import type { AiClient } from "../ai/run";
+import type { PolicyName } from "../security/policies";
 import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { createConverterResponse } from "../services/converters/response";
@@ -30,9 +31,10 @@ export interface McpToolDefinition {
 	description: string;
 	inputSchema: Record<string, unknown>;
 	name: string;
+	ratePolicy: PolicyName;
 }
 
-export const MCP_TOOLS: readonly McpToolDefinition[] = [
+const MCP_TOOLS: readonly McpToolDefinition[] = [
 	{
 		annotations: { readOnlyHint: true },
 		description:
@@ -53,6 +55,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_list_tools",
+		ratePolicy: "read",
 	},
 	{
 		_meta: { ui: { resourceUri: MCP_VIEW_URIS.generator } },
@@ -74,6 +77,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_generate",
+		ratePolicy: "expensive",
 	},
 	{
 		_meta: { ui: { resourceUri: MCP_VIEW_URIS.converter } },
@@ -95,6 +99,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_convert",
+		ratePolicy: "expensive",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -109,6 +114,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_describe_tool",
+		ratePolicy: "read",
 	},
 	{
 		_meta: {
@@ -134,6 +140,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_play_charades",
+		ratePolicy: "read",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -150,6 +157,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_judge_charades",
+		ratePolicy: "read",
 	},
 	{
 		_meta: {
@@ -165,6 +173,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			"Open Photo Sorter: the player names some piles, drops in up to 80 photos and an AI files each one, flagging faces, text, blur and screenshots. Opens a sorting view; the photos stay with the player.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_play_photo_sorter",
+		ratePolicy: "read",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -197,6 +206,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_sort_photo",
+		ratePolicy: "read",
 	},
 	{
 		_meta: {
@@ -222,6 +232,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_play_twenty_questions",
+		ratePolicy: "read",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -239,6 +250,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_start_twenty_questions",
+		ratePolicy: "read",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -258,6 +270,7 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_ask_twenty_questions",
+		ratePolicy: "read",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -272,8 +285,23 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_reveal_twenty_questions",
+		ratePolicy: "read",
 	},
 ];
+
+export function listMcpTools() {
+	return MCP_TOOLS.map(({ _meta, annotations, description, inputSchema, name }) => ({
+		_meta,
+		annotations,
+		description,
+		inputSchema,
+		name,
+	}));
+}
+
+export function mcpToolRatePolicy(name: string): PolicyName {
+	return MCP_TOOLS.find((tool) => tool.name === name)?.ratePolicy ?? "expensive";
+}
 
 function stringFields(value: unknown): Record<string, string> {
 	if (typeof value !== "object" || value === null || Array.isArray(value)) {

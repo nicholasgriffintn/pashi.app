@@ -2,10 +2,12 @@ import { isRecord } from "../../shared/records";
 import type { AiClient } from "../ai/run";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listMcpResources, readMcpResource } from "./resources";
-import { callMcpTool, MCP_TOOLS } from "./tools";
+import { callMcpTool, listMcpTools } from "./tools";
 
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18"]);
 const DEFAULT_PROTOCOL_VERSION = "2025-06-18";
+
+export const MCP_MAX_BATCH = 20;
 
 interface JsonRpcRequest {
 	id?: number | string | null;
@@ -52,7 +54,7 @@ async function handleRequest(
 	}
 
 	if (request.method === "tools/list") {
-		return result(request.id, { tools: MCP_TOOLS });
+		return result(request.id, { tools: listMcpTools() });
 	}
 
 	if (request.method === "resources/list") {
@@ -118,6 +120,13 @@ export async function createMcpResponse(request: Request, env: ConversionEnv, ai
 		body = await request.json();
 	} catch {
 		return Response.json(failure(null, -32700, "Invalid JSON."), { status: 400 });
+	}
+
+	if (Array.isArray(body) && body.length > MCP_MAX_BATCH) {
+		return Response.json(
+			failure(null, -32600, `Send at most ${MCP_MAX_BATCH} messages in one batch.`),
+			{ status: 422 },
+		);
 	}
 
 	if (Array.isArray(body)) {
