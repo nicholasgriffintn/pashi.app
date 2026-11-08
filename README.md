@@ -32,7 +32,7 @@ Pashi's views and games are [MCP Apps](https://modelcontextprotocol.io/specifica
 
 - `pashi_generate` and `pashi_convert` link `ui://pashi/generator` and `ui://pashi/converter`, which show the result with its options editable and run it again from the view.
 - `pashi_play_charades` links `ui://pashi/charades`. You act a card on camera for six seconds and an AI audience guesses it. The judging runs on the linked Polychat account, so it needs the link token rather than an API key.
-- Apps that open without a tool call carry `_meta["app.polychat/standalone"]: true` on their `resources/list` entry.
+- A tool that opens an app on its own carries `_meta["app.polychat/app"]` (name, description, category, layout) next to its `_meta.ui.resourceUri`. It is read-only and needs no arguments, so a host can open the app by calling it with `{}`.
 
 To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps) with your token, then ask for a password, a Jira conversion or a game of Charades.
 

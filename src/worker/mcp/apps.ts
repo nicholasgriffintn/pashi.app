@@ -1,5 +1,5 @@
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
-export const MCP_APP_STANDALONE_META_KEY = "app.polychat/standalone";
+export const POLYCHAT_APP_META_KEY = "app.polychat/app";
 export const PASHI_SITE_URL = "https://pashi.app";
 
 export const MCP_VIEW_URIS = {
@@ -29,4 +29,11 @@ export interface McpAppUiMeta {
 
 export interface McpToolUiMeta {
 	resourceUri: McpViewUri;
+}
+
+export interface PolychatAppMeta {
+	category?: string;
+	description?: string;
+	layout?: "contained" | "workspace";
+	name?: string;
 }
