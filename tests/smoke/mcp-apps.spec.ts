@@ -31,15 +31,22 @@ test("the MCP endpoint lists app views and serves one", async ({ request }) => {
 
 	expect(initialised.result.capabilities.resources).toBeDefined();
 
-	const listed = await rpc(request, 2, "resources/list");
-	const charades = listed.result.resources.find(
-		(resource: { uri: string }) => resource.uri === "ui://pashi/charades",
+	const tools = await rpc(request, 2, "tools/list");
+	const charadesTool = tools.result.tools.find(
+		(tool: { name: string }) => tool.name === "pashi_play_charades",
 	);
 
-	expect(charades).toMatchObject({
-		_meta: { "app.polychat/standalone": true },
-		mimeType: "text/html;profile=mcp-app",
+	expect(charadesTool).toMatchObject({
+		_meta: { "app.polychat/app": { name: "Charades" }, ui: { resourceUri: "ui://pashi/charades" } },
+		annotations: { readOnlyHint: true },
 	});
+	expect(charadesTool.inputSchema.required).toBeUndefined();
+
+	const listed = await rpc(request, 4, "resources/list");
+
+	expect(listed.result.resources).toContainEqual(
+		expect.objectContaining({ mimeType: "text/html;profile=mcp-app", uri: "ui://pashi/charades" }),
+	);
 
 	const read = await rpc(request, 3, "resources/read", { uri: "ui://pashi/charades" });
 	const [content] = read.result.contents;

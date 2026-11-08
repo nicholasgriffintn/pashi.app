@@ -5,13 +5,18 @@ import { createConverterResponse } from "../services/converters/response";
 import { listGeneratorTools } from "../services/generators/catalogue";
 import { createGeneratorRequest } from "../services/generators/request";
 import { createGeneratorResponse } from "../services/generators/response";
-import { MCP_VIEW_URIS, type McpToolUiMeta } from "./apps";
+import {
+	MCP_VIEW_URIS,
+	POLYCHAT_APP_META_KEY,
+	type McpToolUiMeta,
+	type PolychatAppMeta,
+} from "./apps";
 import { CHARADES_DECKS, setUpCharades } from "./charades";
 import { judgeCharadesClip } from "./charades-judge";
 import { describeTool } from "./describe";
 
 export interface McpToolDefinition {
-	_meta?: { ui: McpToolUiMeta };
+	_meta?: { [POLYCHAT_APP_META_KEY]?: PolychatAppMeta; ui: McpToolUiMeta };
 	annotations: { readOnlyHint: boolean };
 	description: string;
 	inputSchema: Record<string, unknown>;
@@ -97,7 +102,14 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_describe_tool",
 	},
 	{
-		_meta: { ui: { resourceUri: MCP_VIEW_URIS.charades } },
+		_meta: {
+			[POLYCHAT_APP_META_KEY]: {
+				category: "play",
+				description: "Act out a card on camera for six seconds and an AI audience guesses it.",
+				name: "Charades",
+			},
+			ui: { resourceUri: MCP_VIEW_URIS.charades },
+		},
 		annotations: { readOnlyHint: true },
 		description:
 			"Open Charades: act out a card on camera for six seconds and an AI audience guesses which card it was. Opens a game view; the player does the acting.",
