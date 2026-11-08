@@ -6,7 +6,7 @@ test("the hub lists projects and links into the tools console", async ({ page })
 
 	await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pashi");
 	await expect(page.getByRole("heading", { name: "Tools" })).toBeVisible();
-	await expect(page.getByRole("heading", { name: "Marquee" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "News Snapshotter" })).toBeVisible();
 	await expect(page.getByRole("heading", { name: "Chrome extensions" })).toBeVisible();
 	await expect(page.getByRole("heading", { name: "Header Forge" })).toBeVisible();
 

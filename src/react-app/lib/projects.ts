@@ -35,17 +35,6 @@ export const PROJECTS: readonly Project[] = [
 	},
 	{
 		blurb:
-			"Find films and television across your streaming services, get tailored recommendations, and keep your own shelf.",
-		external: true,
-		id: "marquee",
-		kind: "project",
-		name: "Marquee",
-		stack: ["Hyperdrive", "Vectorize", "Workflows"],
-		status: "live",
-		url: "https://marquee.pashi.app",
-	},
-	{
-		blurb:
 			"Full-page snapshots of news and sport sites, captured on a schedule and kept over time to track headlines and layouts.",
 		external: true,
 		id: "news-snapshotter",
