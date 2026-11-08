@@ -49,3 +49,40 @@ test("the MCP endpoint lists app views and serves one", async ({ request }) => {
 	expect(content.text).toContain("<!doctype html>");
 	expect(content.text).toContain("--magenta");
 });
+
+test("every standalone app has a play tool linking a view that resolves", async ({ request }) => {
+	const listed = await rpc(request, 1, "resources/list");
+	const standalone = listed.result.resources
+		.filter(
+			(resource: { _meta: Record<string, unknown> }) => resource._meta["app.polychat/standalone"],
+		)
+		.map((resource: { uri: string }) => resource.uri);
+
+	expect(standalone).toEqual(
+		expect.arrayContaining([
+			"ui://pashi/charades",
+			"ui://pashi/photo-sorter",
+			"ui://pashi/twenty-questions",
+		]),
+	);
+
+	const tools = await rpc(request, 2, "tools/list");
+	const linked = tools.result.tools.flatMap(
+		(tool: {
+			_meta?: { ui?: { resourceUri: string } };
+			annotations: { readOnlyHint: boolean };
+		}) => {
+			expect(tool.annotations.readOnlyHint).toBe(true);
+
+			return tool._meta?.ui ? [tool._meta.ui.resourceUri] : [];
+		},
+	);
+
+	for (const uri of standalone) {
+		expect(linked).toContain(uri);
+
+		const read = await rpc(request, 3, "resources/read", { uri });
+
+		expect(read.result.contents[0].text).toContain("PashiBridge");
+	}
+});

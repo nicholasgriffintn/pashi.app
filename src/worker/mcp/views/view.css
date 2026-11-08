@@ -67,6 +67,28 @@ body {
 	margin: 0;
 }
 
+.picker {
+	display: grid;
+	gap: var(--space-3);
+}
+
+.picker-lede {
+	font-family: var(--font-display);
+	font-size: clamp(1.3rem, 4vw, 1.8rem);
+	line-height: 1.1;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.sr-only {
+	clip-path: inset(50%);
+	height: 1px;
+	overflow: hidden;
+	position: absolute;
+	white-space: nowrap;
+	width: 1px;
+}
+
 .panel {
 	background: var(--panel-bg);
 	border: 2px solid var(--panel-border);

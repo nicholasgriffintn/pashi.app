@@ -9,6 +9,15 @@ import { MCP_VIEW_URIS, type McpToolUiMeta } from "./apps";
 import { CHARADES_DECKS, setUpCharades } from "./charades";
 import { judgeCharadesClip } from "./charades-judge";
 import { describeTool } from "./describe";
+import { PHOTO_SORTER_LIMITS, setUpPhotoSorter, sortPhoto } from "./photo-sorter";
+import {
+	askTwentyQuestions,
+	revealTwentyQuestions,
+	setUpTwentyQuestions,
+	startTwentyQuestions,
+	TWENTY_QUESTIONS_QUESTION_LENGTH,
+} from "./twenty-questions";
+import { TWENTY_QUESTIONS_CATEGORIES } from "./twenty-questions-secrets";
 
 export interface McpToolDefinition {
 	_meta?: { ui: McpToolUiMeta };
@@ -130,6 +139,114 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_judge_charades",
 	},
+	{
+		_meta: { ui: { resourceUri: MCP_VIEW_URIS.photoSorter } },
+		annotations: { readOnlyHint: true },
+		description:
+			"Open Photo Sorter: the player names some piles, drops in up to 80 photos and an AI files each one, flagging faces, text, blur and screenshots. Opens a sorting view; the photos stay with the player.",
+		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
+		name: "pashi_play_photo_sorter",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Sort one photo into one of the given piles. Called by the Photo Sorter view; not useful from a conversation.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				image: {
+					description: `A base64 image/jpeg, image/png or image/webp data URL of at most ${PHOTO_SORTER_LIMITS.maxBytes / 1024 / 1024} MiB.`,
+					type: "string",
+				},
+				piles: {
+					items: {
+						additionalProperties: false,
+						properties: {
+							description: { maxLength: PHOTO_SORTER_LIMITS.descriptionLength, type: "string" },
+							id: { type: "string" },
+							label: { maxLength: PHOTO_SORTER_LIMITS.labelLength, type: "string" },
+						},
+						required: ["id", "label"],
+						type: "object",
+					},
+					maxItems: PHOTO_SORTER_LIMITS.maxPiles,
+					minItems: PHOTO_SORTER_LIMITS.minPiles,
+					type: "array",
+				},
+			},
+			required: ["image", "piles"],
+			type: "object",
+		},
+		name: "pashi_sort_photo",
+	},
+	{
+		_meta: { ui: { resourceUri: MCP_VIEW_URIS.twentyQuestions } },
+		annotations: { readOnlyHint: true },
+		description:
+			"Open Twenty Questions: an AI thinks of something and the player has twenty yes or no questions to find it. Opens a game view; the player asks the questions.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				category: {
+					description: "The category to play. Leave empty to let the player choose.",
+					enum: TWENTY_QUESTIONS_CATEGORIES.map((category) => category.id),
+					type: "string",
+				},
+			},
+			type: "object",
+		},
+		name: "pashi_play_twenty_questions",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Start a game of Twenty Questions and get its game token. Called by the Twenty Questions view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				category: {
+					enum: TWENTY_QUESTIONS_CATEGORIES.map((category) => category.id),
+					type: "string",
+				},
+			},
+			required: ["category"],
+			type: "object",
+		},
+		name: "pashi_start_twenty_questions",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Ask one yes or no question, or make a guess, in a game of Twenty Questions. Called by the Twenty Questions view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				question: {
+					maxLength: TWENTY_QUESTIONS_QUESTION_LENGTH.max,
+					minLength: TWENTY_QUESTIONS_QUESTION_LENGTH.min,
+					type: "string",
+				},
+				token: { description: "The game token from pashi_start_twenty_questions.", type: "string" },
+			},
+			required: ["token", "question"],
+			type: "object",
+		},
+		name: "pashi_ask_twenty_questions",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Give up a game of Twenty Questions and reveal the secret. Called by the Twenty Questions view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				token: { description: "The game token from pashi_start_twenty_questions.", type: "string" },
+			},
+			required: ["token"],
+			type: "object",
+		},
+		name: "pashi_reveal_twenty_questions",
+	},
 ];
 
 function stringFields(value: unknown): Record<string, string> {
@@ -201,6 +318,30 @@ export async function callMcpTool(
 
 	if (name === "pashi_judge_charades") {
 		return judgeCharadesClip(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_play_photo_sorter") {
+		return setUpPhotoSorter();
+	}
+
+	if (name === "pashi_sort_photo") {
+		return sortPhoto(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_play_twenty_questions") {
+		return setUpTwentyQuestions(argumentsValue);
+	}
+
+	if (name === "pashi_start_twenty_questions") {
+		return startTwentyQuestions(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_ask_twenty_questions") {
+		return askTwentyQuestions(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_reveal_twenty_questions") {
+		return revealTwentyQuestions(argumentsValue, env, ai);
 	}
 
 	const type = typeof argumentsValue.type === "string" ? argumentsValue.type : "";

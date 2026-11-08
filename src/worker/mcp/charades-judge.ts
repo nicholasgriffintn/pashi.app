@@ -1,8 +1,18 @@
-import { isRecord } from "../../shared/records";
 import type { AiClient } from "../ai/run";
 import { createDecision } from "../services/polychat/client";
-import { isPolychatPro, type PolychatSessionEnv } from "../services/polychat/session";
+import {
+	type DecisionScore,
+	normaliseDecisionScore,
+	readDecisionAnswers,
+	readDecisionChoice,
+	readDecisionNoul,
+	readDecisionScore,
+	roundDecisionScore,
+} from "../services/polychat/decisions";
+import type { PolychatSessionEnv } from "../services/polychat/session";
+import { readBase64DataUrl } from "../utils/data-url";
 import { CHARADES_DECKS } from "./charades";
+import { requirePolychatPro } from "./pro-gate";
 
 export const CHARADES_DRAMA_LEVELS = [
 	"Barely moving",
@@ -15,16 +25,7 @@ export const CHARADES_CLIP_MAX_BYTES = 6 * 1024 * 1024;
 
 const TALKING_THRESHOLD = 0.6;
 const CORRECT_BONUS = 25;
-const CLIP_PATTERN = /^data:(video\/(?:mp4|webm));base64,([A-Za-z0-9+/]+={0,2})$/;
-
-interface ChoiceAnswer {
-	probabilities: Record<string, number>;
-}
-
-interface ScoreAnswer {
-	legend: Record<string, unknown>;
-	score: number;
-}
+const CLIP_TYPES = ["video/mp4", "video/webm"];
 
 const cardId = (index: number) => `c${index}`;
 
@@ -61,59 +62,23 @@ function buildRequest(cards: readonly string[], video: string, deckName: string)
 	};
 }
 
-function readAnswers(response: unknown): Record<string, unknown> {
-	if (!isRecord(response) || !isRecord(response.answers)) {
-		throw new Error("The audience gave an answer Pashi could not read.");
-	}
-
-	return response.answers;
-}
-
-function readChoice(answer: unknown): ChoiceAnswer | undefined {
-	return isRecord(answer) && answer.type === "choice" && isRecord(answer.probabilities)
-		? {
-				probabilities: Object.fromEntries(
-					Object.entries(answer.probabilities).filter(
-						(entry): entry is [string, number] => typeof entry[1] === "number",
-					),
-				),
-			}
-		: undefined;
-}
-
-function readNoul(answer: unknown) {
-	return isRecord(answer) && answer.type === "noul" && typeof answer.noul === "number"
-		? answer.noul
-		: 0;
-}
-
-function readScore(answer: unknown): ScoreAnswer | undefined {
-	return isRecord(answer) &&
-		answer.type === "score" &&
-		typeof answer.score === "number" &&
-		isRecord(answer.legend)
-		? { legend: answer.legend, score: answer.score }
-		: undefined;
-}
-
-function readDrama(answer: ScoreAnswer | undefined) {
+function readDrama(answer: DecisionScore | undefined) {
 	if (!answer) {
 		return { label: "", level: -1, score: 0 };
 	}
 
-	const topLevel = Object.keys(answer.legend).length - 1;
-	const level = Math.min(topLevel, Math.max(0, Math.round(answer.score)));
+	const level = roundDecisionScore(answer);
 
 	return {
 		label: CHARADES_DRAMA_LEVELS[level] ?? "",
 		level,
-		score: topLevel > 0 ? Math.min(1, Math.max(0, answer.score / topLevel)) : 0,
+		score: normaliseDecisionScore(answer),
 	};
 }
 
 function judge(response: unknown, cards: readonly string[], secretIndex: number) {
-	const answers = readAnswers(response);
-	const probabilities = readChoice(answers.card)?.probabilities ?? {};
+	const answers = readDecisionAnswers(response);
+	const probabilities = readDecisionChoice(answers.card)?.probabilities ?? {};
 	const guesses = cards
 		.map((card, index) => ({ card, probability: probabilities[cardId(index)] ?? 0 }))
 		.toSorted((left, right) => right.probability - left.probability);
@@ -121,7 +86,7 @@ function judge(response: unknown, cards: readonly string[], secretIndex: number)
 	const secretProbability = probabilities[cardId(secretIndex)] ?? 0;
 	const topGuess = guesses[0]?.card ?? "";
 	const correct = topGuess === secret;
-	const talking = readNoul(answers.talking);
+	const talking = readDecisionNoul(answers.talking);
 	const caughtTalking = talking >= TALKING_THRESHOLD;
 	const raw = Math.round(secretProbability * 100) + (correct ? CORRECT_BONUS : 0);
 
@@ -129,10 +94,10 @@ function judge(response: unknown, cards: readonly string[], secretIndex: number)
 		card: secret,
 		caughtTalking,
 		correct,
-		drama: readDrama(readScore(answers.drama)),
+		drama: readDrama(readDecisionScore(answers.drama)),
 		dramaLevels: CHARADES_DRAMA_LEVELS,
 		guesses,
-		performing: readNoul(answers.performing),
+		performing: readDecisionNoul(answers.performing),
 		points: caughtTalking ? Math.floor(raw / 2) : raw,
 		secretProbability,
 		secretRank: guesses.findIndex((guess) => guess.card === secret) + 1,
@@ -142,22 +107,19 @@ function judge(response: unknown, cards: readonly string[], secretIndex: number)
 }
 
 function readClip(value: unknown) {
-	const match = typeof value === "string" ? CLIP_PATTERN.exec(value) : null;
+	const clip = readBase64DataUrl(value, CLIP_TYPES);
 
-	if (!match) {
+	if (!clip) {
 		throw new Error("Send the clip as a base64 video/webm or video/mp4 data URL.");
 	}
 
-	const padding = match[2].endsWith("==") ? 2 : match[2].endsWith("=") ? 1 : 0;
-	const bytes = Math.floor((match[2].length * 3) / 4) - padding;
-
-	if (bytes > CHARADES_CLIP_MAX_BYTES) {
+	if (clip.bytes > CHARADES_CLIP_MAX_BYTES) {
 		throw new Error(
 			`The clip is over the ${CHARADES_CLIP_MAX_BYTES / 1024 / 1024} MiB budget. Record a shorter take.`,
 		);
 	}
 
-	return match[0];
+	return clip.dataUrl;
 }
 
 export async function judgeCharadesClip(
@@ -178,19 +140,10 @@ export async function judgeCharadesClip(
 
 	const video = readClip(argumentsValue.video);
 
-	if (!ai) {
-		throw new Error(
-			"The audience runs on Polychat. Connect Pashi through your Polychat link to be judged.",
-		);
-	}
-
-	if (!(await isPolychatPro(env, ai.apiKey))) {
-		throw new Error("Charades is a Polychat Pro app. Upgrade your Polychat plan to be judged.");
-	}
-
+	const client = await requirePolychatPro(env, ai, "Charades", "be judged");
 	const response = await createDecision(
-		ai.env,
-		ai.apiKey,
+		client.env,
+		client.apiKey,
 		buildRequest(deck.cards, video, deck.name),
 	);
 

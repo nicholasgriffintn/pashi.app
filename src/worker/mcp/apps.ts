@@ -6,6 +6,8 @@ export const MCP_VIEW_URIS = {
 	charades: "ui://pashi/charades",
 	converter: "ui://pashi/converter",
 	generator: "ui://pashi/generator",
+	photoSorter: "ui://pashi/photo-sorter",
+	twentyQuestions: "ui://pashi/twenty-questions",
 } as const;
 
 export type McpViewUri = (typeof MCP_VIEW_URIS)[keyof typeof MCP_VIEW_URIS];
