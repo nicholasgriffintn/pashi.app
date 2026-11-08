@@ -152,7 +152,14 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_judge_charades",
 	},
 	{
-		_meta: { ui: { resourceUri: MCP_VIEW_URIS.photoSorter } },
+		_meta: {
+			[POLYCHAT_APP_META_KEY]: {
+				category: "play",
+				description: "Name your piles, tip out up to 80 photos and an AI files each one.",
+				name: "Photo Sorter",
+			},
+			ui: { resourceUri: MCP_VIEW_URIS.photoSorter },
+		},
 		annotations: { readOnlyHint: true },
 		description:
 			"Open Photo Sorter: the player names some piles, drops in up to 80 photos and an AI files each one, flagging faces, text, blur and screenshots. Opens a sorting view; the photos stay with the player.",
@@ -192,7 +199,14 @@ export const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_sort_photo",
 	},
 	{
-		_meta: { ui: { resourceUri: MCP_VIEW_URIS.twentyQuestions } },
+		_meta: {
+			[POLYCHAT_APP_META_KEY]: {
+				category: "play",
+				description: "An AI thinks of something. Twenty yes or no questions to find it.",
+				name: "Twenty Questions",
+			},
+			ui: { resourceUri: MCP_VIEW_URIS.twentyQuestions },
+		},
 		annotations: { readOnlyHint: true },
 		description:
 			"Open Twenty Questions: an AI thinks of something and the player has twenty yes or no questions to find it. Opens a game view; the player asks the questions.",

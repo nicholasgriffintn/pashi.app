@@ -57,39 +57,34 @@ test("the MCP endpoint lists app views and serves one", async ({ request }) => {
 	expect(content.text).toContain("--magenta");
 });
 
-test("every standalone app has a play tool linking a view that resolves", async ({ request }) => {
-	const listed = await rpc(request, 1, "resources/list");
-	const standalone = listed.result.resources
-		.filter(
-			(resource: { _meta: Record<string, unknown> }) => resource._meta["app.polychat/standalone"],
-		)
-		.map((resource: { uri: string }) => resource.uri);
+test("every Polychat app tool opens with no input on a view that resolves", async ({ request }) => {
+	const listed = await rpc(request, 1, "tools/list");
+	const tools: {
+		_meta?: { "app.polychat/app"?: { name?: string }; ui?: { resourceUri: string } };
+		annotations: { readOnlyHint: boolean };
+		inputSchema: { required?: string[] };
+		name: string;
+	}[] = listed.result.tools;
 
-	expect(standalone).toEqual(
+	for (const tool of tools) {
+		expect(tool.annotations.readOnlyHint, tool.name).toBe(true);
+	}
+
+	const apps = tools.filter((tool) => tool._meta?.["app.polychat/app"]);
+
+	expect(apps.map((tool) => tool.name)).toEqual(
 		expect.arrayContaining([
-			"ui://pashi/charades",
-			"ui://pashi/photo-sorter",
-			"ui://pashi/twenty-questions",
+			"pashi_play_charades",
+			"pashi_play_photo_sorter",
+			"pashi_play_twenty_questions",
 		]),
 	);
 
-	const tools = await rpc(request, 2, "tools/list");
-	const linked = tools.result.tools.flatMap(
-		(tool: {
-			_meta?: { ui?: { resourceUri: string } };
-			annotations: { readOnlyHint: boolean };
-		}) => {
-			expect(tool.annotations.readOnlyHint).toBe(true);
+	for (const app of apps) {
+		expect(app.inputSchema.required, app.name).toBeUndefined();
 
-			return tool._meta?.ui ? [tool._meta.ui.resourceUri] : [];
-		},
-	);
+		const read = await rpc(request, 2, "resources/read", { uri: app._meta?.ui?.resourceUri });
 
-	for (const uri of standalone) {
-		expect(linked).toContain(uri);
-
-		const read = await rpc(request, 3, "resources/read", { uri });
-
-		expect(read.result.contents[0].text).toContain("PashiBridge");
+		expect(read.result.contents[0].text, app.name).toContain("PashiBridge");
 	}
 });

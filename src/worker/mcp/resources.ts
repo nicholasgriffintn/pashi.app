@@ -112,7 +112,6 @@ const VIEWS: readonly McpView[] = [
 		description:
 			"Name your piles, tip out up to 80 photos and watch each one get filed, with faces, text, blur and screenshots flagged.",
 		name: "photo-sorter",
-		standalone: true,
 		template: {
 			body: photoSorterBody,
 			css: photoSorterCss,
@@ -133,7 +132,6 @@ const VIEWS: readonly McpView[] = [
 		description:
 			"Something is sealed on the server. Ask yes or no questions and every answer comes back as a probability.",
 		name: "twenty-questions",
-		standalone: true,
 		template: {
 			body: twentyQuestionsBody,
 			css: twentyQuestionsCss,
