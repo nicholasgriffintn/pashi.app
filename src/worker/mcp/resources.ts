@@ -1,6 +1,5 @@
 import {
 	MCP_APP_MIME_TYPE,
-	MCP_APP_STANDALONE_META_KEY,
 	MCP_VIEW_URIS,
 	type McpAppUiMeta,
 	type McpViewUri,
@@ -26,7 +25,6 @@ interface McpView {
 	data: unknown;
 	description: string;
 	name: string;
-	standalone: boolean;
 	template: ViewTemplate;
 	title: string;
 	ui: McpAppUiMeta;
@@ -40,7 +38,6 @@ const VIEWS: readonly McpView[] = [
 		data: { kind: "generator", toolUrl: `${PASHI_SITE_URL}/tools/` },
 		description: "Shows a pashi_generate result with its options editable, and runs it again.",
 		name: "generator",
-		standalone: false,
 		template: {
 			body: consoleBody,
 			css: consoleCss,
@@ -56,7 +53,6 @@ const VIEWS: readonly McpView[] = [
 		description:
 			"Shows a pashi_convert result next to its input, with the input and options editable.",
 		name: "converter",
-		standalone: false,
 		template: {
 			body: consoleBody,
 			css: consoleCss,
@@ -79,7 +75,6 @@ const VIEWS: readonly McpView[] = [
 		description:
 			"Six seconds, one card, an audience of one decision model. Act it out on camera and see what it guesses.",
 		name: "charades",
-		standalone: true,
 		template: { body: charadesBody, css: charadesCss, script: charadesScript, title: "Charades" },
 		title: "Charades",
 		ui: {
@@ -91,13 +86,9 @@ const VIEWS: readonly McpView[] = [
 	},
 ];
 
-function viewMeta(view: McpView) {
-	return view.standalone ? { [MCP_APP_STANDALONE_META_KEY]: true, ui: view.ui } : { ui: view.ui };
-}
-
 export function listMcpResources() {
 	return VIEWS.map((view) => ({
-		_meta: viewMeta(view),
+		_meta: { ui: view.ui },
 		description: view.description,
 		mimeType: MCP_APP_MIME_TYPE,
 		name: view.name,
@@ -116,7 +107,7 @@ export function readMcpResource(uri: string) {
 	return {
 		contents: [
 			{
-				_meta: viewMeta(view),
+				_meta: { ui: view.ui },
 				mimeType: MCP_APP_MIME_TYPE,
 				text: renderViewDocument(view.template, view.data),
 				uri: view.uri,
