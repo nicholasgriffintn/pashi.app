@@ -1,0 +1,89 @@
+<main class="view charades" id="charades">
+	<header class="view-head">
+		<div>
+			<p class="eyebrow">Pashi party</p>
+			<h1 class="view-title">Charades</h1>
+		</div>
+	</header>
+
+	<section class="picker" id="screen-picker">
+		<p class="picker-lede">Six seconds, one card, an audience of one decision model.</p>
+		<p class="muted" id="rules"></p>
+		<div class="deck-grid" id="deck-grid"></div>
+	</section>
+
+	<section class="game" id="screen-game" hidden>
+		<div class="game-main">
+			<div class="stage" id="stage" data-phase="off">
+				<video class="stage-video" id="stage-video" autoplay muted playsinline hidden></video>
+				<div class="stage-dark" id="stage-dark">
+					<p class="stage-dark-title">The stage is dark.</p>
+					<button type="button" class="button button-primary" id="open-camera">
+						Raise the curtain
+					</button>
+					<p class="stage-note">
+						Camera and microphone. Nothing is kept once the audience has voted.
+					</p>
+				</div>
+				<span class="stage-countdown" id="stage-countdown" hidden></span>
+				<span class="stage-rolling" id="stage-rolling" hidden>
+					<span class="stage-dot"></span>
+					<span id="stage-rolling-text">Rolling</span>
+				</span>
+				<span class="stage-progress" id="stage-progress" hidden
+					><span id="stage-progress-fill"></span
+				></span>
+				<div class="stage-judging" id="stage-judging" hidden>
+					<span class="stage-spinner" aria-hidden="true"></span>
+					<span>The audience is deliberating…</span>
+				</div>
+			</div>
+			<div class="game-actions">
+				<button type="button" class="button button-primary" id="action" disabled>Action</button>
+				<button type="button" class="button" id="next-card">Deal another</button>
+				<button type="button" class="button game-leave" id="change-deck">Change deck</button>
+			</div>
+			<p class="alert" id="error" role="alert" hidden></p>
+			<ol class="rounds" id="rounds" aria-label="Rounds played"></ol>
+		</div>
+
+		<aside class="game-side">
+			<div class="ticket">
+				<div>
+					<span class="field-label">Score</span>
+					<strong class="ticket-value" id="score">0</strong>
+				</div>
+				<div class="ticket-stub">
+					<span class="field-label">Round</span>
+					<strong class="ticket-value" id="round">0</strong>
+				</div>
+			</div>
+			<div class="card" id="card">
+				<span class="card-corner" id="card-corner"></span>
+				<span class="card-label">Act out</span>
+				<span class="card-text" id="card-text"></span>
+				<span class="card-corner card-corner-end" id="card-corner-end" aria-hidden="true"></span>
+			</div>
+			<p class="muted" id="instructions">
+				Press Action, survive the countdown and perform. You score the probability the audience
+				gives your card, plus a bonus if it is their top guess.
+			</p>
+			<section class="verdict" id="verdict" aria-live="polite" hidden>
+				<div>
+					<span class="field-label">The audience thinks</span>
+					<p class="verdict-guess" id="verdict-guess"></p>
+					<p class="muted" id="verdict-summary"></p>
+				</div>
+				<ol class="guesses" id="verdict-guesses"></ol>
+				<div class="verdict-foot">
+					<span class="stamp" id="verdict-stamp"></span>
+					<span class="verdict-talking" id="verdict-talking"></span>
+				</div>
+				<div class="drama">
+					<span class="field-label">Drama</span>
+					<ol class="drama-scale" id="verdict-drama"></ol>
+				</div>
+			</section>
+		</aside>
+	</section>
+</main>

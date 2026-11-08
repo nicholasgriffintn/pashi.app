@@ -1,0 +1,34 @@
+<main class="view console" id="console">
+	<header class="view-head">
+		<div>
+			<p class="eyebrow" id="console-kind">Pashi</p>
+			<h1 class="view-title" id="console-title">Waiting for a result</h1>
+		</div>
+		<p class="muted" id="console-meta"></p>
+	</header>
+	<p class="muted" id="console-empty">Waiting for the host to send a tool result.</p>
+	<p class="alert" id="console-error" role="alert" hidden></p>
+	<div class="console-body">
+		<section class="panel console-result" id="console-result" aria-live="polite" hidden>
+			<div class="console-result-head">
+				<span class="field-label">Result</span>
+				<div class="console-actions">
+					<button type="button" class="button" id="console-copy">Copy</button>
+					<button type="button" class="button" id="console-open">Open in Pashi</button>
+				</div>
+			</div>
+			<div class="console-output" id="console-output"></div>
+		</section>
+		<form class="panel console-form" id="console-form" hidden>
+			<div class="field" id="console-input-field">
+				<label class="field-label" for="console-input" id="console-input-label">Input</label>
+				<textarea id="console-input" name="input"></textarea>
+			</div>
+			<div class="console-fields" id="console-fields"></div>
+			<div class="console-actions">
+				<button type="submit" class="button button-primary" id="console-run">Run again</button>
+				<span class="muted" id="console-status" aria-live="polite"></span>
+			</div>
+		</form>
+	</div>
+</main>

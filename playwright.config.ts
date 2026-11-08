@@ -15,7 +15,7 @@ export default defineConfig({
 		trace: "on-first-retry",
 	},
 	webServer: {
-		command: `pnpm exec vite preview --port ${PORT} --strictPort`,
+		command: `node scripts/seed-dev-key.mjs && pnpm exec vite preview --port ${PORT} --strictPort`,
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,
 		url: `http://localhost:${PORT}`,

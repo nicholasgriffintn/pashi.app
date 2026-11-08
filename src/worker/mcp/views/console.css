@@ -1,0 +1,149 @@
+.console-body {
+	display: grid;
+	gap: var(--space-4);
+}
+
+.console[data-kind="generator"] .console-form {
+	order: 2;
+}
+
+@media (min-width: 44rem) {
+	.console[data-kind="converter"] .console-body {
+		align-items: start;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	.console[data-kind="converter"] .console-form {
+		order: -1;
+	}
+}
+
+.console-result-head {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	justify-content: space-between;
+}
+
+.console-actions {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.console-fields {
+	display: grid;
+	gap: var(--space-3);
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+.console-fields .field-wide {
+	grid-column: 1 / -1;
+}
+
+.console-output {
+	max-height: 28rem;
+	overflow: auto;
+}
+
+.console-output pre {
+	font-family: var(--font-mono);
+	font-size: 0.88rem;
+	margin: 0;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+.console-lines {
+	display: grid;
+	font-family: var(--font-mono);
+	font-size: 0.88rem;
+	gap: var(--space-1);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.console-lines li {
+	border-bottom: 1px solid var(--edge-soft);
+	overflow-wrap: anywhere;
+	padding-bottom: var(--space-1);
+}
+
+.console-record {
+	display: grid;
+	gap: var(--space-1) var(--space-3);
+	grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+	margin: 0;
+}
+
+.console-record dt {
+	color: var(--panel-muted);
+	font-size: 0.78rem;
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.console-record dd {
+	font-family: var(--font-mono);
+	font-size: 0.88rem;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.console-table {
+	border-collapse: collapse;
+	font-size: 0.85rem;
+	width: 100%;
+}
+
+.console-table th,
+.console-table td {
+	border-bottom: 1px solid var(--edge-soft);
+	padding: var(--space-1) var(--space-2);
+	text-align: left;
+	vertical-align: top;
+}
+
+.console-table th {
+	color: var(--panel-muted);
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.console-table td {
+	font-family: var(--font-mono);
+	overflow-wrap: anywhere;
+}
+
+.console-swatches {
+	display: grid;
+	gap: var(--space-2);
+	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.console-swatches li {
+	border: 2px solid var(--panel-border);
+	display: grid;
+}
+
+.console-swatch {
+	aspect-ratio: 3 / 2;
+}
+
+.console-swatches code {
+	font-family: var(--font-mono);
+	font-size: 0.8rem;
+	padding: var(--space-1) var(--space-2);
+}
+
+.console[data-kind="generator"] #console-input {
+	min-height: 2.75rem;
+}

@@ -253,3 +253,16 @@ export async function createCompletion(
 
 	return content;
 }
+
+const DECISION_TIMEOUT_MS = 60_000;
+
+export async function createDecision(env: PolychatEnv, apiKey: string, request: unknown) {
+	return requireOk(
+		await send(env, "/decisions", {
+			apiKey,
+			body: JSON.stringify(request),
+			method: "POST",
+			timeoutMs: DECISION_TIMEOUT_MS,
+		}),
+	);
+}
