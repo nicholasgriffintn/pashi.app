@@ -3,7 +3,7 @@ import { parse as parseCookies } from "hono/utils/cookie";
 import type { PolychatConnectOutcome, PolychatSessionStatus } from "../../../shared/polychat";
 import { isRecord } from "../../../shared/records";
 import { randomHex, sha256, sha256Base64Url } from "../../utils/generation";
-import { openValue, sealValue } from "../../utils/sealed-value";
+import { deleteSealedRecord, readSealedRecord, writeSealedRecord } from "../../utils/sealed-record";
 import {
 	exchangeCode,
 	PolychatError,
@@ -47,33 +47,22 @@ export interface PolychatCredential {
 	subjectId: string;
 }
 
-async function readSealed(
-	env: PolychatSessionEnv,
-	prefix: string,
-	token: string,
-): Promise<unknown> {
-	const sealed = await env.APPLICATIONS.get(`${prefix}${await sha256(token)}`);
-	const opened = sealed ? await openValue(token, sealed) : undefined;
-
-	return opened ? JSON.parse(opened) : undefined;
+function readSealed(env: PolychatSessionEnv, prefix: string, token: string) {
+	return readSealedRecord(env.APPLICATIONS, prefix, token);
 }
 
-async function writeSealed(
+function writeSealed(
 	env: PolychatSessionEnv,
 	prefix: string,
 	token: string,
 	value: ConnectRecord | ConnectedRecord,
 	expirationTtl?: number,
 ) {
-	await env.APPLICATIONS.put(
-		`${prefix}${await sha256(token)}`,
-		await sealValue(token, JSON.stringify(value)),
-		expirationTtl ? { expirationTtl } : undefined,
-	);
+	return writeSealedRecord(env.APPLICATIONS, prefix, token, value, expirationTtl);
 }
 
-async function deleteSealed(env: PolychatSessionEnv, prefix: string, token: string) {
-	await env.APPLICATIONS.delete(`${prefix}${await sha256(token)}`);
+function deleteSealed(env: PolychatSessionEnv, prefix: string, token: string) {
+	return deleteSealedRecord(env.APPLICATIONS, prefix, token);
 }
 
 async function readConnected(env: PolychatSessionEnv, prefix: string, token: string) {

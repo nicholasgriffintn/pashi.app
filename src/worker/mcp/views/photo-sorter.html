@@ -1,0 +1,51 @@
+<main class="view sorter" id="sorter">
+	<header class="view-head">
+		<div>
+			<p class="eyebrow">Pashi darkroom</p>
+			<h1 class="view-title">Photo Sorter</h1>
+		</div>
+	</header>
+
+	<section class="piles-editor" aria-label="Piles">
+		<div class="presets">
+			<span class="field-label">Piles</span>
+			<span class="preset-list" id="presets"></span>
+		</div>
+		<div class="chips" id="chips"></div>
+	</section>
+
+	<input type="file" id="file-input" accept="image/*" multiple hidden />
+
+	<label class="drop drop-empty" id="drop-empty" for="file-input">
+		<span class="stack" aria-hidden="true">
+			<span class="stack-print"></span>
+			<span class="stack-print"></span>
+			<span class="stack-print"></span>
+		</span>
+		<span class="drop-title">Tip the pile out here.</span>
+		<span class="drop-copy" id="drop-copy"></span>
+	</label>
+
+	<section class="table" id="table" hidden>
+		<div class="toolbar">
+			<label class="drop drop-more" id="drop-more" for="file-input">Add more to the pile</label>
+			<button type="button" class="button" id="resort">Re-sort with these piles</button>
+			<button type="button" class="button button-loud" id="clear">Clear table</button>
+		</div>
+		<div class="progress">
+			<span class="progress-bar"><span class="progress-fill" id="progress-fill"></span></span>
+			<span class="progress-count" id="progress-count"></span>
+		</div>
+		<p class="alert" id="error" role="alert" hidden></p>
+
+		<section class="your-call" id="your-call" hidden>
+			<header class="your-call-head">
+				<h2 class="your-call-title">Your call</h2>
+				<span class="muted" id="your-call-note"></span>
+			</header>
+			<div class="prints prints-wide" id="your-call-prints"></div>
+		</section>
+
+		<div class="pile-grid" id="pile-grid"></div>
+	</section>
+</main>

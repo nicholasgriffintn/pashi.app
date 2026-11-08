@@ -12,14 +12,32 @@ import {
 	CHARADES_RULES,
 } from "./charades";
 import { CHARADES_CLIP_MAX_BYTES, CHARADES_DRAMA_LEVELS } from "./charades-judge";
+import {
+	PHOTO_SORTER_FLAGS,
+	PHOTO_SORTER_KEEPER_LEVELS,
+	PHOTO_SORTER_LIMITS,
+	PHOTO_SORTER_PRESETS,
+} from "./photo-sorter";
+import {
+	TWENTY_QUESTIONS_MAX_QUESTIONS,
+	TWENTY_QUESTIONS_QUESTION_LENGTH,
+	TWENTY_QUESTIONS_WARMTH_LEVELS,
+} from "./twenty-questions";
+import { TWENTY_QUESTIONS_CATEGORIES } from "./twenty-questions-secrets";
 import { renderViewDocument, type ViewTemplate } from "./view-document";
 import charadesBody from "./views/charades.html?raw";
 import charadesScript from "./views/charades.js?raw";
 import consoleBody from "./views/console.html?raw";
 import consoleScript from "./views/console.js?raw";
+import photoSorterBody from "./views/photo-sorter.html?raw";
+import photoSorterScript from "./views/photo-sorter.js?raw";
+import twentyQuestionsBody from "./views/twenty-questions.html?raw";
+import twentyQuestionsScript from "./views/twenty-questions.js?raw";
 
 import charadesCss from "./views/charades.css?raw";
 import consoleCss from "./views/console.css?raw";
+import photoSorterCss from "./views/photo-sorter.css?raw";
+import twentyQuestionsCss from "./views/twenty-questions.css?raw";
 
 interface McpView {
 	data: unknown;
@@ -83,6 +101,46 @@ const VIEWS: readonly McpView[] = [
 			prefersBorder: false,
 		},
 		uri: MCP_VIEW_URIS.charades,
+	},
+	{
+		data: {
+			flags: PHOTO_SORTER_FLAGS,
+			keeperLevels: PHOTO_SORTER_KEEPER_LEVELS,
+			limits: PHOTO_SORTER_LIMITS,
+			presets: PHOTO_SORTER_PRESETS,
+		},
+		description:
+			"Name your piles, tip out up to 80 photos and watch each one get filed, with faces, text, blur and screenshots flagged.",
+		name: "photo-sorter",
+		template: {
+			body: photoSorterBody,
+			css: photoSorterCss,
+			script: photoSorterScript,
+			title: "Photo Sorter",
+		},
+		title: "Photo Sorter",
+		ui: { csp: SELF_CONTAINED, prefersBorder: false },
+		uri: MCP_VIEW_URIS.photoSorter,
+	},
+	{
+		data: {
+			categories: TWENTY_QUESTIONS_CATEGORIES.map(({ hint, id, label }) => ({ hint, id, label })),
+			maxQuestions: TWENTY_QUESTIONS_MAX_QUESTIONS,
+			questionLength: TWENTY_QUESTIONS_QUESTION_LENGTH,
+			warmthSteps: TWENTY_QUESTIONS_WARMTH_LEVELS.map((level) => level.split(":")[0]),
+		},
+		description:
+			"Something is sealed on the server. Ask yes or no questions and every answer comes back as a probability.",
+		name: "twenty-questions",
+		template: {
+			body: twentyQuestionsBody,
+			css: twentyQuestionsCss,
+			script: twentyQuestionsScript,
+			title: "Twenty Questions",
+		},
+		title: "Twenty Questions",
+		ui: { csp: SELF_CONTAINED, prefersBorder: false },
+		uri: MCP_VIEW_URIS.twentyQuestions,
 	},
 ];
 

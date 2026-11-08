@@ -56,3 +56,35 @@ test("the MCP endpoint lists app views and serves one", async ({ request }) => {
 	expect(content.text).toContain("<!doctype html>");
 	expect(content.text).toContain("--magenta");
 });
+
+test("every Polychat app tool opens with no input on a view that resolves", async ({ request }) => {
+	const listed = await rpc(request, 1, "tools/list");
+	const tools: {
+		_meta?: { "app.polychat/app"?: { name?: string }; ui?: { resourceUri: string } };
+		annotations: { readOnlyHint: boolean };
+		inputSchema: { required?: string[] };
+		name: string;
+	}[] = listed.result.tools;
+
+	for (const tool of tools) {
+		expect(tool.annotations.readOnlyHint, tool.name).toBe(true);
+	}
+
+	const apps = tools.filter((tool) => tool._meta?.["app.polychat/app"]);
+
+	expect(apps.map((tool) => tool.name)).toEqual(
+		expect.arrayContaining([
+			"pashi_play_charades",
+			"pashi_play_photo_sorter",
+			"pashi_play_twenty_questions",
+		]),
+	);
+
+	for (const app of apps) {
+		expect(app.inputSchema.required, app.name).toBeUndefined();
+
+		const read = await rpc(request, 2, "resources/read", { uri: app._meta?.ui?.resourceUri });
+
+		expect(read.result.contents[0].text, app.name).toContain("PashiBridge");
+	}
+});

@@ -1,0 +1,78 @@
+<main class="view questions" id="questions">
+	<header class="view-head">
+		<div>
+			<p class="eyebrow">Pashi party</p>
+			<h1 class="view-title">Twenty Questions</h1>
+		</div>
+	</header>
+
+	<section class="picker" id="screen-picker">
+		<p class="picker-lede">I am thinking of something.</p>
+		<p class="muted">
+			The secret is sealed on the server. Ask yes or no questions and every answer comes back as a
+			probability, so “probably not” is a clue rather than a shrug.
+		</p>
+		<div class="category-grid" id="category-grid"></div>
+		<p class="alert" id="picker-error" role="alert" hidden></p>
+	</section>
+
+	<section class="game" id="screen-game" hidden>
+		<div class="game-side">
+			<div class="reading" id="reading">
+				<span class="reading-status" id="status"></span>
+				<svg class="dial" viewBox="0 0 100 58" aria-hidden="true">
+					<path class="dial-track" id="dial-track" />
+					<path class="dial-fill" id="dial-fill" />
+					<g id="dial-ticks"></g>
+					<g class="dial-needle" id="dial-needle">
+						<line x1="50" y1="50" x2="50" y2="14" />
+					</g>
+					<circle class="dial-hub" cx="50" cy="50" r="2.6" />
+				</svg>
+				<span class="dial-value" id="dial-value">··</span>
+				<p class="reading-verdict" id="verdict">Ask away</p>
+				<p class="reading-question" id="verdict-question">
+					Start broad. “Is it alive?” is a classic for a reason.
+				</p>
+			</div>
+
+			<div class="ending" id="ending" aria-live="polite" hidden>
+				<span class="reading-status" id="ending-status"></span>
+				<p class="ending-intro">It was</p>
+				<p class="ending-secret" id="ending-secret"></p>
+				<p class="muted" id="ending-quip"></p>
+				<button type="button" class="button button-primary" id="again">Think of another</button>
+			</div>
+
+			<div class="gauges">
+				<div class="pips" id="pips"></div>
+				<div class="thermometer">
+					<div class="thermometer-bar">
+						<span class="thermometer-marker" id="thermometer-marker" hidden></span>
+					</div>
+					<div class="thermometer-scale">
+						<span id="warmth-low"></span>
+						<span class="thermometer-now" id="warmth-now">—</span>
+						<span id="warmth-high"></span>
+					</div>
+				</div>
+			</div>
+
+			<form class="ask" id="ask">
+				<input
+					id="question"
+					autocomplete="off"
+					aria-label="Your yes or no question"
+					placeholder="Is it bigger than a breadbox?"
+				/>
+				<button type="submit" class="button button-primary" id="ask-button" disabled>Ask</button>
+			</form>
+			<p class="alert" id="error" role="alert" hidden></p>
+			<button type="button" class="button button-loud give-up" id="give-up">
+				Give up and reveal
+			</button>
+		</div>
+
+		<ol class="transcript" id="transcript" aria-label="Questions asked"></ol>
+	</section>
+</main>
