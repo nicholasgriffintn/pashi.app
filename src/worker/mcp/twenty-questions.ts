@@ -31,18 +31,35 @@ const TOKEN_HEX_LENGTH = 64;
 const TOKEN_PATTERN = /^[0-9a-f]{64}$/;
 const MISSING_GAME = "That game has gone missing. Start a new one.";
 
-const ANSWER_QUESTIONS = {
+const WORDING_QUESTIONS = {
 	answerable: {
-		instructions: "Can `question` be answered with a plain yes or no?",
-		type: "noul",
-	},
-	correct: {
-		instructions:
-			"Does `question` name `secret` itself? Synonyms, plurals and close spellings count; broader categories do not.",
+		criteria: {
+			false:
+				"An open question, like 'What colour is it?' or 'How big is it?', or not a question at all",
+			true: "A closed question with a yes or no answer, like 'Is it alive?', 'Can it fly?' or 'Is it a dog?'",
+		},
+		instructions: "Is `question` worded as a yes-or-no question?",
 		type: "noul",
 	},
 	guess: {
-		instructions: "Is `question` a direct guess at one specific thing, like 'Is it a cat?'",
+		criteria: {
+			false:
+				"Asks about a property or a broad group, like 'Is it a mammal?', 'Can it fly?' or 'Is it bigger than a breadbox?'",
+			true: "Names one particular thing, like 'Is it a cat?' or 'Is it the Eiffel Tower?'",
+		},
+		instructions: "Does `question` guess one specific named thing?",
+		type: "noul",
+	},
+};
+
+const ANSWER_QUESTIONS = {
+	correct: {
+		criteria: {
+			false:
+				"`question` names something else, a broader group `secret` belongs to, or no specific thing",
+			true: "The thing named in `question` is `secret`, or a synonym, plural or close spelling of it",
+		},
+		instructions: "Does `question` name `secret` itself?",
 		type: "noul",
 	},
 	warmth: {
@@ -51,8 +68,11 @@ const ANSWER_QUESTIONS = {
 		type: "score",
 	},
 	yes: {
-		instructions:
-			"Answer `question` honestly about `secret`, using common knowledge. Is the true answer yes?",
+		criteria: {
+			false: "No: the answer to `question` is false of `secret`",
+			true: "Yes: the answer to `question` is true of `secret`",
+		},
+		instructions: "Using common knowledge about `secret`, what is the true answer to `question`?",
 		type: "noul",
 	},
 };
@@ -115,9 +135,10 @@ function remaining(game: GameRecord) {
 	return Math.max(0, TWENTY_QUESTIONS_MAX_QUESTIONS - game.asked);
 }
 
-function judge(response: unknown) {
-	const answers = readDecisionAnswers(response);
-	const isGuess = readDecisionNoul(answers.guess) >= 0.5;
+function judge(wordingResponse: unknown, answerResponse: unknown) {
+	const wording = readDecisionAnswers(wordingResponse);
+	const answers = readDecisionAnswers(answerResponse);
+	const isGuess = readDecisionNoul(wording.guess) >= 0.5;
 	const correct = readDecisionNoul(answers.correct);
 	const solved = isGuess && correct >= 0.5;
 	const warmthAnswer = readDecisionScore(answers.warmth);
@@ -128,7 +149,7 @@ function judge(response: unknown) {
 			: 0;
 	const kind: AnswerKind = isGuess
 		? "guess"
-		: readDecisionNoul(answers.answerable) < 0.4
+		: readDecisionNoul(wording.answerable) < 0.4
 			? "unanswerable"
 			: "question";
 
@@ -213,11 +234,17 @@ export async function askTwentyQuestions(
 		throw overBudget(`All ${TWENTY_QUESTIONS_MAX_QUESTIONS} questions have been asked.`);
 	}
 
-	const response = await createDecision(client.env, client.apiKey, {
-		questions: ANSWER_QUESTIONS,
-		state: { category: game.category, question, secret: game.secret },
-	});
-	const answer = judge(response);
+	const [wording, answers] = await Promise.all([
+		createDecision(client.env, client.apiKey, {
+			questions: WORDING_QUESTIONS,
+			state: { question },
+		}),
+		createDecision(client.env, client.apiKey, {
+			questions: ANSWER_QUESTIONS,
+			state: { question, secret: game.secret },
+		}),
+	]);
+	const answer = judge(wording, answers);
 	const asked = answer.kind === "unanswerable" ? game.asked : game.asked + 1;
 	const next: GameRecord = {
 		...game,
