@@ -42,6 +42,9 @@
 			}
 		]
 	},
+	"ai": {
+		"binding": "AI"
+	},
 	"kv_namespaces": [
 		{
 			"binding": "APPLICATIONS",
@@ -107,6 +110,6 @@
 	"assets": {
 		"directory": "./dist/client",
 		"not_found_handling": "single-page-application",
-		"run_worker_first": ["/api/*", "/mcp", "/og", "/sitemap.xml", "/export/*"]
+		"run_worker_first": ["/api/*", "/mcp", "/og", "/polis/*", "/sitemap.xml", "/export/*"]
 	}
 }

@@ -28,6 +28,29 @@ function readDesignTokens() {
 	}).join("\n");
 }
 
+export interface BundledView {
+	css: string;
+	script: string;
+	worker?: string;
+}
+
+function escapeScript(source: string) {
+	return source.replaceAll("</script", "<\\/script");
+}
+
+export function bundledViewTemplate(view: BundledView, title: string): ViewTemplate {
+	const worker = view.worker
+		? `\n<script type="text/plain" id="pashi-worker">${escapeScript(view.worker)}</script>`
+		: "";
+
+	return {
+		body: `<div id="root"></div>${worker}`,
+		css: view.css,
+		script: escapeScript(view.script),
+		title,
+	};
+}
+
 export function renderViewDocument(template: ViewTemplate, data: unknown) {
 	return [
 		"<!doctype html>",

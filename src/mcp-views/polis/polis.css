@@ -1,0 +1,916 @@
+.polis {
+	max-width: none;
+}
+
+.polis-stage {
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
+	display: flex;
+	height: calc(100vh - 2 * var(--space-4));
+	min-height: 28rem;
+}
+
+.polis-map {
+	background: var(--polis-ground);
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	position: relative;
+}
+
+.polis-canvas-host {
+	inset: 0;
+	position: absolute;
+}
+
+.polis-canvas {
+	cursor: grab;
+	display: block;
+	height: 100%;
+	touch-action: none;
+	width: 100%;
+}
+
+.polis-canvas:active {
+	cursor: grabbing;
+}
+
+.polis-side {
+	background: var(--panel-bg);
+	border-left: 2px solid var(--panel-border);
+	color: var(--panel-text);
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	width: 24rem;
+}
+
+.polis-side-body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--space-4);
+}
+
+.polis-tabs {
+	border-bottom: 2px solid var(--edge);
+	display: flex;
+}
+
+.polis-tab {
+	background: transparent;
+	border: 0;
+	border-bottom: 3px solid transparent;
+	color: var(--panel-muted);
+	cursor: pointer;
+	flex: 1;
+	font: inherit;
+	font-size: 0.78rem;
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	padding: var(--space-3) 0;
+	text-transform: uppercase;
+}
+
+.polis-tab[aria-selected="true"] {
+	border-bottom-color: var(--magenta);
+	color: var(--panel-text);
+}
+
+.polis-tab:hover,
+.polis-tab:focus-visible {
+	color: var(--cyan);
+	outline: 0;
+}
+
+.polis-cover {
+	align-items: center;
+	background: var(--polis-ground);
+	display: flex;
+	inset: 0;
+	justify-content: center;
+	padding: var(--space-4);
+	position: absolute;
+}
+
+.polis-cover-scroll {
+	align-items: flex-start;
+	overflow-y: auto;
+}
+
+.polis-card {
+	background: var(--panel-bg);
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
+	color: var(--panel-text);
+	display: grid;
+	gap: var(--space-3);
+	max-width: 26rem;
+	padding: var(--space-5);
+	width: 100%;
+}
+
+.polis-setup {
+	gap: var(--space-4);
+	margin: auto;
+}
+
+.polis-card-title {
+	font-family: var(--font-display);
+	font-size: 1.25rem;
+	letter-spacing: 0.02em;
+	line-height: 1.1;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.polis-card-title-large {
+	font-size: 2rem;
+}
+
+.polis-meter {
+	background: var(--edge);
+	height: 0.4rem;
+	overflow: hidden;
+}
+
+.polis-meter-fill {
+	background: var(--cyan);
+	height: 100%;
+}
+
+.polis-nameplate,
+.polis-modes,
+.polis-transport,
+.polis-playback,
+.polis-citizen {
+	background: var(--panel-bg);
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
+	color: var(--panel-text);
+}
+
+.polis-nameplate {
+	left: var(--space-3);
+	padding: var(--space-2) var(--space-4);
+	pointer-events: none;
+	position: absolute;
+	top: var(--space-3);
+}
+
+.polis-nameplate-name {
+	font-family: var(--font-display);
+	font-size: 1.5rem;
+	line-height: 1.1;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.polis-nameplate-time,
+.polis-mono {
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+}
+
+.polis-nameplate-time {
+	color: var(--panel-muted);
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.polis-mono {
+	font-size: 0.75rem;
+}
+
+.polis-modes {
+	display: flex;
+	padding: 2px;
+	position: absolute;
+	right: var(--space-3);
+	top: var(--space-3);
+}
+
+.polis-segments {
+	display: flex;
+}
+
+.polis-segment {
+	background: transparent;
+	border: 0;
+	color: var(--panel-muted);
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.72rem;
+	font-weight: 900;
+	letter-spacing: 0.08em;
+	padding: var(--space-2) var(--space-3);
+	text-transform: uppercase;
+}
+
+.polis-segment:hover,
+.polis-segment:focus-visible {
+	color: var(--cyan);
+	outline: 0;
+}
+
+.polis-segment[aria-pressed="true"] {
+	background: var(--cyan);
+	color: var(--on-accent);
+}
+
+.polis-segment-boxed {
+	border: 2px solid var(--edge);
+	font-family: var(--font-mono);
+	padding: var(--space-2) 0;
+}
+
+.polis-segment-boxed[aria-pressed="true"] {
+	border-color: var(--cyan);
+}
+
+.polis-populations {
+	display: grid;
+	gap: var(--space-1);
+	grid-template-columns: repeat(5, 1fr);
+}
+
+.polis-budgets {
+	display: grid;
+	gap: var(--space-1);
+	grid-template-columns: repeat(5, 1fr);
+}
+
+.polis-fieldset {
+	border: 0;
+	display: grid;
+	gap: var(--space-2);
+	margin: 0;
+	min-width: 0;
+	padding: 0;
+}
+
+.polis-transport {
+	align-items: center;
+	bottom: var(--space-3);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+	justify-content: center;
+	left: 50%;
+	max-width: calc(100% - var(--space-4));
+	padding: var(--space-1);
+	position: absolute;
+	transform: translateX(-50%);
+	width: max-content;
+}
+
+.polis-playback {
+	bottom: var(--space-3);
+	display: grid;
+	gap: var(--space-2);
+	left: var(--space-3);
+	padding: var(--space-2);
+	position: absolute;
+	right: var(--space-3);
+}
+
+.polis-playback-row {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+}
+
+.polis-playback-time {
+	color: var(--panel-muted);
+	flex: none;
+	font-family: var(--font-mono);
+	font-size: 0.72rem;
+}
+
+.polis-playback-exit {
+	display: flex;
+	gap: var(--space-1);
+	margin-left: auto;
+}
+
+.polis-timeline {
+	flex: 1;
+	min-width: 0;
+	padding-top: var(--space-3);
+	position: relative;
+}
+
+.polis-marks {
+	height: 0.75rem;
+	inset: 0 0 auto;
+	position: absolute;
+}
+
+.polis-mark {
+	border: 0;
+	cursor: pointer;
+	height: 0.75rem;
+	padding: 0;
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+	width: 0.4rem;
+	z-index: 1;
+}
+
+.polis-mark-law {
+	background: var(--cyan);
+}
+
+.polis-mark-scenario {
+	background: var(--magenta);
+}
+
+.polis-mark-parameters {
+	background: var(--panel-muted);
+}
+
+.polis-range {
+	accent-color: var(--cyan);
+	background: transparent;
+	border: 0;
+	display: block;
+	padding: 0;
+	width: 100%;
+}
+
+.polis-range:disabled {
+	opacity: 0.4;
+}
+
+.polis-citizen-slot {
+	left: var(--space-3);
+	position: absolute;
+	top: 5rem;
+}
+
+.polis-citizen {
+	display: grid;
+	gap: var(--space-2);
+	max-height: calc(100% - 9rem);
+	overflow-y: auto;
+	padding: var(--space-3);
+	width: 16rem;
+}
+
+.polis-facts {
+	display: grid;
+	font-size: 0.78rem;
+	gap: 2px var(--space-2);
+	grid-template-columns: 4.5rem 1fr;
+	margin: 0;
+}
+
+.polis-facts dt,
+.polis-faint {
+	color: var(--panel-muted);
+}
+
+.polis-facts dd {
+	margin: 0;
+}
+
+.polis-faint {
+	font-size: 0.7rem;
+	margin: 0;
+}
+
+.polis-stack {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.polis-stack > * {
+	margin-block: 0;
+}
+
+.polis-stack-wide {
+	gap: var(--space-5);
+}
+
+.polis-row {
+	align-items: flex-start;
+	display: flex;
+	gap: var(--space-2);
+	justify-content: space-between;
+}
+
+.polis-inline {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+}
+
+.polis-heading {
+	font-size: 0.78rem;
+	font-weight: 900;
+	letter-spacing: 0.1em;
+	margin: 0;
+	text-transform: uppercase;
+}
+
+.polis-small,
+.polis-small-text,
+.polis-small-strong {
+	font-size: 0.78rem;
+	margin: 0;
+}
+
+.polis-small {
+	color: var(--panel-muted);
+}
+
+.polis-small-strong {
+	font-weight: 800;
+}
+
+.polis-error {
+	border-left: 4px solid var(--magenta);
+	color: var(--magenta);
+	font-size: 0.78rem;
+	font-weight: 700;
+	margin: 0;
+	padding-left: var(--space-2);
+}
+
+.polis-right {
+	text-align: right;
+}
+
+.polis-truncate {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.polis-list {
+	display: grid;
+	gap: var(--space-1);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.polis-list-spaced {
+	gap: var(--space-2);
+}
+
+.polis-timelist {
+	display: grid;
+	font-size: 0.78rem;
+	gap: var(--space-1);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.polis-timelist li {
+	display: flex;
+	gap: var(--space-2);
+}
+
+.polis-timelist .polis-mono {
+	color: var(--panel-muted);
+	flex: none;
+}
+
+.polis-timelist-ruled {
+	border-top: 1px solid var(--edge);
+	padding-top: var(--space-2);
+}
+
+.polis-tiles {
+	display: grid;
+	gap: var(--space-2);
+	grid-template-columns: 1fr 1fr;
+}
+
+.polis-tile,
+.polis-fork,
+.polis-law {
+	border: 2px solid var(--edge);
+	padding: var(--space-2) var(--space-3);
+}
+
+.polis-tile p {
+	margin: 0;
+}
+
+.polis-tile-value {
+	font-family: var(--font-mono);
+	font-size: 1.1rem;
+	line-height: 1.2;
+}
+
+.polis-fork {
+	display: grid;
+	gap: var(--space-2);
+	justify-items: start;
+}
+
+.polis-fork-dashed {
+	border-style: dashed;
+}
+
+.polis-law {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.polis-draft {
+	border: 2px solid var(--cyan);
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+}
+
+.polis-poll {
+	background: rgb(var(--cyan-rgb) / 0.1);
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-2) var(--space-3);
+}
+
+.polis-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-1);
+}
+
+.polis-chip {
+	background: transparent;
+	border: 1px solid var(--edge);
+	color: var(--panel-muted);
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.7rem;
+	padding: 0.1rem var(--space-2);
+}
+
+.polis-chip:hover,
+.polis-chip:focus-visible {
+	border-color: var(--cyan);
+	color: var(--cyan);
+	outline: 0;
+}
+
+.polis-slider {
+	display: grid;
+	gap: 2px;
+}
+
+.polis-slider-head {
+	align-items: baseline;
+	display: flex;
+	font-size: 0.78rem;
+	justify-content: space-between;
+}
+
+.polis-slider-head .polis-mono {
+	color: var(--panel-muted);
+}
+
+.polis-presets {
+	display: grid;
+	gap: var(--space-2);
+	grid-template-columns: 1fr 1fr;
+}
+
+.polis-preset {
+	background: transparent;
+	border: 2px solid var(--edge);
+	color: var(--panel-text);
+	cursor: pointer;
+	display: grid;
+	font: inherit;
+	gap: var(--space-1);
+	justify-items: start;
+	padding: var(--space-2) var(--space-3);
+	text-align: left;
+}
+
+.polis-preset:hover,
+.polis-preset:focus-visible {
+	border-color: var(--cyan);
+	outline: 0;
+}
+
+.polis-preset .icon {
+	color: var(--panel-muted);
+}
+
+.polis-check {
+	align-items: flex-start;
+	display: flex;
+	font-size: 0.78rem;
+	gap: var(--space-2);
+}
+
+.polis-check input {
+	accent-color: var(--cyan);
+	flex: none;
+	margin-top: 0.15rem;
+	width: auto;
+}
+
+.polis-pairs {
+	display: grid;
+	font-size: 0.78rem;
+	gap: 2px var(--space-3);
+	grid-template-columns: 1fr auto;
+	margin: 0;
+}
+
+.polis-pairs dt {
+	color: var(--panel-muted);
+}
+
+.polis-pairs dd {
+	margin: 0;
+	min-width: 0;
+	text-align: right;
+}
+
+.polis-bar-row {
+	align-items: center;
+	display: grid;
+	font-size: 0.78rem;
+	gap: var(--space-2);
+}
+
+.polis-bar-row-actions {
+	grid-template-columns: 6.5rem 1fr 3rem;
+}
+
+.polis-bar-row-groups {
+	grid-template-columns: 5.5rem 1fr 2.5rem;
+}
+
+.polis-bar {
+	background: var(--edge);
+	display: block;
+	height: 0.4rem;
+	overflow: hidden;
+}
+
+.polis-bar-fill {
+	background: var(--cyan);
+	display: block;
+	height: 100%;
+}
+
+.polis-chart {
+	display: grid;
+	gap: var(--space-1);
+	margin: 0;
+}
+
+.polis-chart-head {
+	align-items: baseline;
+	display: flex;
+	gap: var(--space-2);
+	justify-content: space-between;
+}
+
+.polis-chart-title {
+	font-size: 0.78rem;
+	font-weight: 800;
+}
+
+.polis-chart-empty {
+	color: var(--panel-muted);
+	font-size: 0.78rem;
+	margin: 0;
+	padding: var(--space-4) 0;
+	text-align: center;
+}
+
+.polis-chart-svg {
+	width: 100%;
+}
+
+.polis-axis {
+	stroke: var(--edge);
+}
+
+.polis-axis-soft {
+	opacity: 0.5;
+}
+
+.polis-axis-label {
+	fill: var(--panel-muted);
+	font-size: 9px;
+}
+
+.polis-series-0 {
+	stroke: var(--cyan);
+}
+
+.polis-series-1 {
+	stroke: var(--magenta);
+}
+
+.polis-playhead {
+	stroke: var(--panel-text);
+}
+
+.polis-hoverline {
+	stroke: var(--panel-muted);
+}
+
+.polis-legend {
+	color: var(--panel-muted);
+	display: flex;
+	flex-wrap: wrap;
+	font-size: 0.78rem;
+	gap: var(--space-3);
+}
+
+.polis-legend-item {
+	align-items: center;
+	display: flex;
+	gap: var(--space-1);
+}
+
+.polis-swatch {
+	background: currentcolor;
+	display: block;
+	height: 3px;
+	width: 1rem;
+}
+
+.polis-swatch.polis-series-0 {
+	background: var(--cyan);
+}
+
+.polis-swatch.polis-series-1 {
+	background: var(--magenta);
+}
+
+.polis-past {
+	border-top: 1px solid var(--edge);
+	display: grid;
+	gap: var(--space-2);
+	padding-top: var(--space-4);
+}
+
+.polis-file {
+	align-items: center;
+	color: var(--panel-muted);
+	cursor: pointer;
+	display: flex;
+	font-size: 0.72rem;
+	gap: var(--space-1);
+}
+
+.polis-file:hover,
+.polis-file:focus-within {
+	color: var(--cyan);
+}
+
+.polis-towns {
+	display: grid;
+	gap: var(--space-1);
+	list-style: none;
+	margin: 0;
+	max-height: 10rem;
+	overflow-y: auto;
+	padding: 0;
+}
+
+.polis-town {
+	align-items: center;
+	display: flex;
+	gap: var(--space-1);
+}
+
+.polis-town-text {
+	display: grid;
+	flex: 1;
+	min-width: 0;
+}
+
+.polis-town-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.polis-town .polis-mono {
+	color: var(--panel-muted);
+	font-size: 0.68rem;
+}
+
+.polis-mono-input {
+	font-family: var(--font-mono);
+}
+
+.polis-share {
+	position: relative;
+}
+
+.polis-popover {
+	background: var(--panel-bg);
+	border: 2px solid var(--panel-border);
+	bottom: 3rem;
+	box-shadow: var(--shadow-hard);
+	color: var(--panel-text);
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+	position: absolute;
+	right: 0;
+	width: 20rem;
+	z-index: 5;
+}
+
+.polis-popover-head {
+	align-items: flex-start;
+	display: flex;
+	justify-content: space-between;
+}
+
+.button-small,
+.button-xs {
+	min-height: 2rem;
+	padding: 0 var(--space-3);
+}
+
+.button-xs {
+	font-size: 0.68rem;
+	min-height: 1.75rem;
+	padding: 0 var(--space-2);
+}
+
+.button-icon {
+	min-height: 2.25rem;
+	padding: 0;
+	width: 2.25rem;
+}
+
+.button-ghost {
+	border-color: transparent;
+	color: var(--panel-muted);
+}
+
+.button-busy {
+	animation: polis-busy 1s var(--ease) infinite;
+}
+
+.icon {
+	flex: none;
+}
+
+@keyframes polis-busy {
+	50% {
+		opacity: 0.5;
+	}
+}
+
+@media (max-width: 52rem) {
+	.polis-stage {
+		flex-direction: column;
+		height: auto;
+		max-height: none;
+	}
+
+	.polis-map {
+		flex: none;
+		height: max(28rem, calc(100vh - 2 * var(--space-4)));
+	}
+
+	.polis-side {
+		border-left: 0;
+		border-top: 2px solid var(--panel-border);
+		max-height: 32rem;
+		width: auto;
+	}
+
+	.polis-citizen-slot {
+		top: 4.5rem;
+	}
+}
+
+.polis-model {
+	align-items: center;
+	display: flex;
+	font-size: 0.78rem;
+	gap: var(--space-2);
+	justify-content: space-between;
+}
+
+.polis-model select {
+	font-size: 0.78rem;
+	padding: var(--space-1) var(--space-2);
+	width: auto;
+}

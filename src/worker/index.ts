@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 
+import { readSharedPolisTown } from "./mcp/polis-towns";
 import { createMcpResponse } from "./mcp/protocol";
 import { readMcpCallPolicies } from "./mcp/rate-policy";
+import { renderSharedPolisPage } from "./mcp/resources";
 import { apiCors } from "./middleware/cors";
 import { aiClientFor, requireAgentAccess, requirePolychat } from "./middleware/polychat-access";
 import { guard, type AppContext } from "./routes/context";
@@ -28,6 +30,7 @@ import { createSitemapResponse } from "./services/sitemap";
 import { readGeneratorBody } from "./utils/body";
 import { withCacheControl } from "./utils/cache";
 import { toErrorResponse } from "./utils/error-response";
+import { errorJson } from "./utils/http";
 
 assertUniqueToolIdentifiers();
 
@@ -65,12 +68,42 @@ app.all("/mcp", async (c) => {
 		return limited;
 	}
 
-	const response = await createMcpResponse(c.req.raw, c.env, aiClientFor(c));
+	const owner = c.get("polychat")?.subjectId ?? c.get("application")?.id;
+
+	if (!owner) {
+		return errorJson("Sign in to use Pashi over MCP.", 401, "unauthorised");
+	}
+
+	const response = await createMcpResponse(c.req.raw, c.env, {
+		ai: aiClientFor(c),
+		origin: new URL(c.req.url).origin,
+		owner,
+	});
 
 	recordEvent(c.env, { name: "mcp_call", outcome: response.ok ? "ok" : "error" });
 
 	return response;
 });
+
+app.get("/api/polis/shared/:token", async (c) => {
+	const limited = await guard(c, { policy: "read" });
+
+	if (limited) {
+		return limited;
+	}
+
+	const recording = await readSharedPolisTown(c.env, c.req.param("token"));
+
+	return recording
+		? Response.json(recording, { headers: { "Cache-Control": "no-store" } })
+		: errorJson("This town is not shared any more", 404, "not_found");
+});
+
+app.get("/polis/:token", (c) =>
+	c.html(renderSharedPolisPage(c.req.param("token"), new URL(c.req.url).origin), 200, {
+		"Cache-Control": "no-store",
+	}),
+);
 
 app.get("/sitemap.xml", (c) => createSitemapResponse(new URL(c.req.url).origin));
 

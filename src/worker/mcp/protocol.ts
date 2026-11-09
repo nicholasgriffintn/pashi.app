@@ -1,8 +1,7 @@
 import { isRecord } from "../../shared/records";
-import type { AiClient } from "../ai/run";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listMcpResources, readMcpResource } from "./resources";
-import { callMcpTool, listMcpTools } from "./tools";
+import { callMcpTool, listMcpTools, type McpCaller } from "./tools";
 
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18"]);
 const DEFAULT_PROTOCOL_VERSION = "2025-06-18";
@@ -37,11 +36,7 @@ function negotiateVersion(params: Record<string, unknown> | undefined) {
 	return SUPPORTED_PROTOCOL_VERSIONS.has(requested) ? requested : DEFAULT_PROTOCOL_VERSION;
 }
 
-async function handleRequest(
-	request: JsonRpcRequest,
-	env: ConversionEnv,
-	ai: AiClient | undefined,
-) {
+async function handleRequest(request: JsonRpcRequest, env: ConversionEnv, caller: McpCaller) {
 	if (request.method === "initialize") {
 		return result(request.id, {
 			capabilities: {
@@ -67,7 +62,7 @@ async function handleRequest(
 
 	if (request.method === "resources/read") {
 		const uri = typeof request.params?.uri === "string" ? request.params.uri : "";
-		const resource = readMcpResource(uri);
+		const resource = readMcpResource(uri, caller.origin);
 
 		return resource
 			? result(request.id, resource)
@@ -82,7 +77,7 @@ async function handleRequest(
 				: {};
 
 		try {
-			const value = await callMcpTool(name, argumentsValue, env, ai);
+			const value = await callMcpTool(name, argumentsValue, env, caller);
 
 			return result(request.id, {
 				content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
@@ -109,7 +104,7 @@ async function handleRequest(
 	return failure(request.id, -32601, `Unknown method: ${request.method}`);
 }
 
-export async function createMcpResponse(request: Request, env: ConversionEnv, ai?: AiClient) {
+export async function createMcpResponse(request: Request, env: ConversionEnv, caller: McpCaller) {
 	if (request.method !== "POST") {
 		return Response.json(failure(null, -32600, "Use POST for MCP requests."), { status: 405 });
 	}
@@ -131,7 +126,7 @@ export async function createMcpResponse(request: Request, env: ConversionEnv, ai
 
 	if (Array.isArray(body)) {
 		const responses = await Promise.all(
-			body.filter(isJsonRpcRequest).map((entry) => handleRequest(entry, env, ai)),
+			body.filter(isJsonRpcRequest).map((entry) => handleRequest(entry, env, caller)),
 		);
 
 		return Response.json(responses);
@@ -141,7 +136,7 @@ export async function createMcpResponse(request: Request, env: ConversionEnv, ai
 		return Response.json(failure(null, -32600, "Invalid request."), { status: 400 });
 	}
 
-	const response = await handleRequest(body, env, ai);
+	const response = await handleRequest(body, env, caller);
 
 	if (body.id === undefined) {
 		return new Response(null, { status: 202 });

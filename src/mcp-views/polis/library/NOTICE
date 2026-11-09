@@ -1,0 +1,4 @@
+This directory is a copy of @ngriffin_uk/polychat-library-polis (Apache-2.0) from
+nicholasgriffintn/ai-platform, packages/library-polis/src at commit
+d3437dcd55ec5bbac98051f6db24383a2cf04e16 (2026-11-08). Only the import path of its
+schema contracts (now src/shared/polis.ts) and formatting were changed.

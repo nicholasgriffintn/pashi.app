@@ -80,6 +80,7 @@
 	--edge-soft: rgb(var(--paper-rgb) / 0.16);
 	--ground-tint: rgb(var(--paper-rgb) / 0.08);
 	--ground-tint-strong: rgb(var(--paper-rgb) / 0.18);
+	--polis-ground: #6e8f5f;
 }
 
 :root[data-theme="light"] {

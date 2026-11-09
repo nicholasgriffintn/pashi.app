@@ -1,0 +1,155 @@
+.dial {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	margin: 0;
+}
+
+.dial svg {
+	width: 10rem;
+}
+
+.dial-sm svg {
+	width: 6rem;
+}
+
+.dial-track,
+.dial-fill {
+	fill: none;
+	stroke-linecap: round;
+}
+
+.dial-track {
+	stroke: var(--edge);
+}
+
+.dial-fill {
+	transition: d 0.7s var(--ease);
+}
+
+.dial-strong {
+	stroke: var(--green);
+}
+
+.dial-middling {
+	stroke: var(--yellow);
+}
+
+.dial-weak {
+	stroke: var(--magenta);
+}
+
+.dial-tick {
+	stroke: var(--edge);
+	stroke-width: 0.6;
+}
+
+.dial-needle {
+	transform-origin: 50px 50px;
+	transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dial-needle line {
+	stroke: var(--panel-text);
+	stroke-linecap: round;
+	stroke-width: 1.4;
+}
+
+.dial-hub {
+	fill: var(--panel-text);
+}
+
+.dial figcaption {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	margin-top: -0.25rem;
+}
+
+.dial-value {
+	color: var(--panel-muted);
+	font-family: var(--font-mono);
+	font-size: 0.86rem;
+}
+
+.dial-text-strong {
+	color: var(--green);
+}
+
+.dial-text-middling {
+	color: var(--yellow);
+}
+
+.dial-text-weak {
+	color: var(--magenta);
+}
+
+.dial-label {
+	color: var(--panel-muted);
+	font-size: 0.72rem;
+}
+
+.step-scale {
+	display: grid;
+	gap: var(--space-1);
+}
+
+.step-scale-head {
+	align-items: baseline;
+	display: flex;
+	font-size: 0.86rem;
+	gap: var(--space-3);
+	justify-content: space-between;
+}
+
+.step-scale-label {
+	color: var(--panel-muted);
+}
+
+.step-scale-value {
+	font-weight: 700;
+}
+
+.step-scale-track {
+	display: flex;
+	gap: 0.25rem;
+}
+
+.step {
+	background: var(--edge);
+	flex: 1;
+	height: 0.35rem;
+	transition: background var(--duration) var(--ease);
+}
+
+.step-past {
+	background: var(--edge-soft);
+}
+
+.step-active {
+	background: var(--cyan);
+}
+
+.readout {
+	background: var(--panel-bg);
+	min-width: 0;
+	padding: var(--space-3) var(--space-4);
+}
+
+.readout-value {
+	font-family: var(--font-mono);
+	font-size: 1.5rem;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.readout-label {
+	color: var(--panel-muted);
+	font-size: 0.68rem;
+	letter-spacing: 0.08em;
+	margin-top: var(--space-1);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-transform: uppercase;
+	white-space: nowrap;
+}

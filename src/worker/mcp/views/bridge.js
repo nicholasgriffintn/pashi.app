@@ -199,6 +199,7 @@
 		embedded,
 		on,
 		openLink: (url) => request("ui/open-link", { url }),
+		sendMessage: (text) => request("ui/message", { content: { text, type: "text" }, role: "user" }),
 		readToolValue,
 	};
 })();

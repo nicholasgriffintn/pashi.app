@@ -32,7 +32,10 @@ Pashi's views and games are [MCP Apps](https://modelcontextprotocol.io/specifica
 
 - `pashi_generate` and `pashi_convert` link `ui://pashi/generator` and `ui://pashi/converter`, which show the result with its options editable and run it again from the view.
 - `pashi_play_charades` links `ui://pashi/charades`. You act a card on camera for six seconds and an AI audience guesses it. The judging runs on the linked Polychat account, so it needs the link token rather than an API key.
-- A tool that opens an app on its own carries `_meta["app.polychat/app"]` (name, description, category, layout) next to its `_meta.ui.resourceUri`. It is read-only and needs no arguments, so a host can open the app by calling it with `{}`.
+- `pashi_open_strudel` links `ui://pashi/strudel`. You describe a groove, a model writes the Strudel pattern, and you live-code it in the Strudel editor and keep it in your pattern library on Pashi.
+- `pashi_open_verbatim` links `ui://pashi/verbatim`. Live transcription that listens twice: Workers AI transcribes each phrase, then a decision model on the linked Polychat account checks every word against the audio and strikes out what it cannot hear.
+- `pashi_open_polis` links `ui://pashi/polis`. You found a town of up to 50,000 people, pass laws in plain English and stage disasters, and residents decide through the linked Polychat account (Workers AI without a link). Shared towns replay at `/polis/<token>`.
+- A tool that opens an app on its own carries `_meta["app.polychat/app"]` (name, description, category, icon, theme, when, uses, produces, surface) next to its `_meta.ui.resourceUri`. It is read-only and needs no arguments, so a host can open the app by calling it with `{}`.
 
 To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps) with your token, then ask for a password, a Jira conversion or a game of Charades.
 

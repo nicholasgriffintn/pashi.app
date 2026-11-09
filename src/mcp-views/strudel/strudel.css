@@ -1,0 +1,257 @@
+.strudel {
+	max-width: 76rem;
+}
+
+.studio-grid,
+.editor-grid {
+	display: grid;
+	gap: var(--space-5);
+}
+
+@media (min-width: 64rem) {
+	.studio-grid {
+		grid-template-columns: minmax(0, 1fr) 23rem;
+	}
+
+	.editor-grid {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+	}
+}
+
+.studio-main,
+.studio-side {
+	align-content: start;
+	display: grid;
+	gap: var(--space-5);
+}
+
+.studio-options {
+	display: grid;
+	gap: var(--space-3);
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.strudel-player {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.strudel-deck {
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
+	overflow: hidden;
+}
+
+.strudel-deck-bar {
+	align-items: center;
+	background: var(--chrome-bg);
+	border-bottom: 2px solid var(--edge);
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	padding: var(--space-2) var(--space-3);
+}
+
+.strudel-deck-label {
+	color: var(--body-muted);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.strudel-deck-status {
+	color: var(--green);
+	flex: 1;
+	font-size: 0.75rem;
+	text-align: right;
+}
+
+.strudel-deck-controls {
+	align-items: center;
+	display: flex;
+	gap: var(--space-2);
+}
+
+.strudel-deck-controls .button {
+	min-height: 2rem;
+}
+
+.strudel-live {
+	animation: strudel-pulse 1.4s var(--ease) infinite;
+	border: 1px solid var(--green);
+	color: var(--green);
+	font-size: 0.65rem;
+	font-weight: 900;
+	letter-spacing: 0.12em;
+	padding: 0.05rem var(--space-2);
+	text-transform: uppercase;
+}
+
+.strudel-editor {
+	min-height: 20rem;
+	width: 100%;
+}
+
+.strudel-editor {
+	position: relative;
+}
+
+.strudel-blocked {
+	border-left: 6px solid var(--magenta);
+	color: var(--panel-text);
+	font-weight: 700;
+	inset: var(--space-4) var(--space-4) auto;
+	margin: 0;
+	padding: var(--space-3) var(--space-4);
+	position: absolute;
+}
+
+.strudel-editor .cm-editor {
+	min-height: 20rem;
+}
+
+.strudel-error {
+	border-top: 2px solid var(--magenta);
+	color: var(--magenta);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	margin: 0;
+	padding: var(--space-2) var(--space-3);
+}
+
+.example-list {
+	display: grid;
+	gap: var(--space-2);
+	max-height: 22rem;
+	overflow-y: auto;
+}
+
+.example {
+	align-items: center;
+	background: transparent;
+	border: 2px dashed var(--edge);
+	color: var(--panel-text);
+	cursor: pointer;
+	display: flex;
+	font: inherit;
+	gap: var(--space-3);
+	justify-content: space-between;
+	padding: var(--space-2) var(--space-3);
+	text-align: left;
+}
+
+.example:hover,
+.example:focus-visible,
+.example[aria-pressed="true"] {
+	border-color: var(--cyan);
+	outline: 0;
+}
+
+.example-text {
+	display: grid;
+}
+
+.example-name {
+	font-weight: 800;
+}
+
+.example-description {
+	color: var(--panel-muted);
+	display: -webkit-box;
+	font-size: 0.8rem;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+}
+
+.editor-form {
+	align-content: start;
+}
+
+.editor-actions {
+	display: flex;
+	gap: var(--space-2);
+}
+
+.editor-actions .button-primary {
+	flex: 1;
+}
+
+.pattern-library {
+	display: grid;
+	gap: var(--space-4);
+}
+
+.pattern-library-actions {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.pattern-grid {
+	display: grid;
+	gap: var(--space-4);
+	grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.pattern-card {
+	background: var(--panel-bg);
+	border: 2px solid var(--panel-border);
+	box-shadow: var(--shadow-hard);
+	color: var(--panel-text);
+	cursor: pointer;
+	display: grid;
+	font: inherit;
+	gap: var(--space-3);
+	height: 100%;
+	padding: var(--space-4);
+	text-align: left;
+	transition: translate var(--duration) var(--ease);
+	width: 100%;
+}
+
+.pattern-card:hover,
+.pattern-card:focus-visible {
+	box-shadow: var(--shadow-pop);
+	outline: 0;
+	translate: 0 -0.2rem;
+}
+
+.pattern-card-head {
+	align-items: center;
+	display: flex;
+	gap: var(--space-3);
+}
+
+.pattern-card-name {
+	display: block;
+	font-weight: 800;
+}
+
+.pattern-card-date,
+.pattern-card-description {
+	color: var(--panel-muted);
+	display: block;
+	font-size: 0.8rem;
+}
+
+.pattern-card-code {
+	background: var(--console-field-bg);
+	color: var(--panel-muted);
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	margin: 0;
+	max-height: 10rem;
+	overflow: hidden;
+	padding: var(--space-3);
+	white-space: pre-wrap;
+}
+
+@keyframes strudel-pulse {
+	50% {
+		opacity: 0.4;
+	}
+}

@@ -7,7 +7,10 @@ export const MCP_VIEW_URIS = {
 	converter: "ui://pashi/converter",
 	generator: "ui://pashi/generator",
 	photoSorter: "ui://pashi/photo-sorter",
+	polis: "ui://pashi/polis",
+	strudel: "ui://pashi/strudel",
 	twentyQuestions: "ui://pashi/twenty-questions",
+	verbatim: "ui://pashi/verbatim",
 } as const;
 
 export type McpViewUri = (typeof MCP_VIEW_URIS)[keyof typeof MCP_VIEW_URIS];
@@ -16,6 +19,7 @@ type McpAppPermission = Record<string, never>;
 
 export interface McpAppUiMeta {
 	csp: {
+		allowEval?: boolean;
 		connectDomains: string[];
 		resourceDomains: string[];
 	};
@@ -32,8 +36,23 @@ export interface McpToolUiMeta {
 }
 
 export interface PolychatAppMeta {
-	category?: string;
-	description?: string;
-	layout?: "contained" | "workspace";
-	name?: string;
+	category: "Creative" | "Decisions" | "Models" | "Play" | "Tools";
+	description: string;
+	icon: string;
+	name: string;
+	produces: string;
+	surface: "contained" | "workspace";
+	theme:
+		| "amber"
+		| "blue"
+		| "cyan"
+		| "emerald"
+		| "indigo"
+		| "pink"
+		| "rose"
+		| "sky"
+		| "slate"
+		| "violet";
+	uses: string;
+	when: string;
 }

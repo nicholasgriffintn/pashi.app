@@ -1,3 +1,4 @@
+import { POLIS_DRAFT_LENGTH, POLIS_MAX_BUCKETS_PER_REQUEST } from "../../shared/polis";
 import type { AiClient } from "../ai/run";
 import type { PolicyName } from "../security/policies";
 import { listConverterTools } from "../services/converters/catalogue";
@@ -16,6 +17,23 @@ import { CHARADES_DECKS, setUpCharades } from "./charades";
 import { judgeCharadesClip } from "./charades-judge";
 import { describeTool } from "./describe";
 import { PHOTO_SORTER_LIMITS, setUpPhotoSorter, sortPhoto } from "./photo-sorter";
+import { decidePolisBuckets, draftPolisLaw, draftPolisScenario, setUpPolis } from "./polis";
+import {
+	deletePolisTown,
+	getPolisTown,
+	listPolisTowns,
+	savePolisTown,
+	sharePolisTown,
+	stopSharingPolisTown,
+} from "./polis-towns";
+import { generateStrudelPattern, setUpStrudel, STRUDEL_LIMITS } from "./strudel";
+import {
+	deleteStrudelPattern,
+	listStrudelPatterns,
+	saveStrudelPattern,
+	STRUDEL_PATTERN_LIMITS,
+} from "./strudel-patterns";
+import { STRUDEL_COMPLEXITIES, STRUDEL_STYLES } from "./strudel-prompts";
 import {
 	askTwentyQuestions,
 	revealTwentyQuestions,
@@ -24,10 +42,16 @@ import {
 	TWENTY_QUESTIONS_QUESTION_LENGTH,
 } from "./twenty-questions";
 import { TWENTY_QUESTIONS_CATEGORIES } from "./twenty-questions-secrets";
+import {
+	checkVerbatimSegment,
+	setUpVerbatim,
+	transcribeVerbatimSegment,
+	VERBATIM_LIMITS,
+} from "./verbatim";
 
 export interface McpToolDefinition {
 	_meta?: { [POLYCHAT_APP_META_KEY]?: PolychatAppMeta; ui: McpToolUiMeta };
-	annotations: { readOnlyHint: boolean };
+	annotations: { destructiveHint?: boolean; readOnlyHint: boolean };
 	description: string;
 	inputSchema: Record<string, unknown>;
 	name: string;
@@ -119,9 +143,15 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 	{
 		_meta: {
 			[POLYCHAT_APP_META_KEY]: {
-				category: "play",
+				category: "Play",
 				description: "Act out a card on camera for six seconds and an AI audience guesses it.",
+				icon: "drama",
 				name: "Charades",
+				produces: "A round of guesses. Nothing is saved.",
+				surface: "workspace",
+				theme: "rose",
+				uses: "Your camera. A decision model on your Polychat plan watches a six second clip and guesses.",
+				when: "You want a party game on one screen.",
 			},
 			ui: { resourceUri: MCP_VIEW_URIS.charades },
 		},
@@ -162,9 +192,16 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 	{
 		_meta: {
 			[POLYCHAT_APP_META_KEY]: {
-				category: "play",
+				category: "Play",
 				description: "Name your piles, tip out up to 80 photos and an AI files each one.",
+				icon: "images",
 				name: "Photo Sorter",
+				produces:
+					"Your photos filed into piles, with faces, text, blur and screenshots flagged. Nothing is kept.",
+				surface: "workspace",
+				theme: "amber",
+				uses: "Up to 80 photos you pick. A decision model on your Polychat plan looks at each one.",
+				when: "You have a pile of photos to file into groups you name.",
 			},
 			ui: { resourceUri: MCP_VIEW_URIS.photoSorter },
 		},
@@ -211,9 +248,15 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 	{
 		_meta: {
 			[POLYCHAT_APP_META_KEY]: {
-				category: "play",
+				category: "Play",
 				description: "An AI thinks of something. Twenty yes or no questions to find it.",
+				icon: "message-circle-question",
 				name: "Twenty Questions",
+				produces: "One game of up to twenty questions. Nothing is saved.",
+				surface: "workspace",
+				theme: "violet",
+				uses: "A secret sealed on Pashi. A decision model on your Polychat plan answers each question.",
+				when: "You want a guessing game against the machine.",
 			},
 			ui: { resourceUri: MCP_VIEW_URIS.twentyQuestions },
 		},
@@ -287,6 +330,307 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_reveal_twenty_questions",
 		ratePolicy: "read",
 	},
+	{
+		_meta: {
+			[POLYCHAT_APP_META_KEY]: {
+				category: "Creative",
+				description:
+					"Create and generate music patterns with AI using Strudel's code-based live coding.",
+				icon: "music",
+				name: "Strudel",
+				produces: "Strudel patterns you can play, edit and keep in your pattern library on Pashi.",
+				surface: "workspace",
+				theme: "pink",
+				uses: "The Strudel runtime in your browser, and a text model on your Polychat plan to write patterns.",
+				when: "You want to make music by describing it or live-coding it.",
+			},
+			ui: { resourceUri: MCP_VIEW_URIS.strudel },
+		},
+		annotations: { readOnlyHint: true },
+		description:
+			"Open Strudel Music Patterns: generate a Strudel pattern from a description, live-code it in the browser and keep a library of patterns. Opens a studio view.",
+		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
+		name: "pashi_open_strudel",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Write a Strudel music pattern from a description. Returns the code; nothing is saved. Called by the Strudel view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				complexity: { enum: [...STRUDEL_COMPLEXITIES], type: "string" },
+				prompt: {
+					description: "What the music should sound like.",
+					maxLength: STRUDEL_LIMITS.promptLength,
+					type: "string",
+				},
+				style: { enum: [...STRUDEL_STYLES], type: "string" },
+				tempo: {
+					maximum: STRUDEL_LIMITS.tempo.max,
+					minimum: STRUDEL_LIMITS.tempo.min,
+					type: "integer",
+				},
+			},
+			required: ["prompt"],
+			type: "object",
+		},
+		name: "pashi_generate_strudel",
+		ratePolicy: "expensive",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description: "List the Strudel patterns in your library on Pashi, newest first.",
+		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
+		name: "pashi_list_strudel_patterns",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: false },
+		description:
+			"Save a Strudel pattern to your library on Pashi. Pass an id to update an existing pattern.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				code: { maxLength: STRUDEL_PATTERN_LIMITS.codeLength, type: "string" },
+				description: { maxLength: STRUDEL_PATTERN_LIMITS.descriptionLength, type: "string" },
+				id: { description: "The pattern to update. Leave out to create one.", type: "string" },
+				name: { maxLength: STRUDEL_PATTERN_LIMITS.nameLength, type: "string" },
+				tags: {
+					items: { maxLength: STRUDEL_PATTERN_LIMITS.tagLength, type: "string" },
+					maxItems: STRUDEL_PATTERN_LIMITS.maxTags,
+					type: "array",
+				},
+			},
+			required: ["code"],
+			type: "object",
+		},
+		name: "pashi_save_strudel_pattern",
+		ratePolicy: "write",
+	},
+	{
+		annotations: { destructiveHint: true, readOnlyHint: false },
+		description: "Delete one Strudel pattern from your library on Pashi.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: { id: { type: "string" } },
+			required: ["id"],
+			type: "object",
+		},
+		name: "pashi_delete_strudel_pattern",
+		ratePolicy: "write",
+	},
+	{
+		_meta: {
+			[POLYCHAT_APP_META_KEY]: {
+				category: "Tools",
+				description:
+					"Live transcription that listens twice: every word is checked against the audio and anything it cannot hear is struck out.",
+				icon: "audio-lines",
+				name: "Verbatim",
+				produces: "A transcript you can copy. Nothing is saved.",
+				surface: "workspace",
+				theme: "cyan",
+				uses: "Your microphone. Workers AI transcribes each phrase and a decision model on your Polychat plan re-listens to every word.",
+				when: "You want an exact, word-for-word transcript of what you say.",
+			},
+			ui: { resourceUri: MCP_VIEW_URIS.verbatim },
+		},
+		annotations: { readOnlyHint: true },
+		description:
+			"Open Verbatim: live transcription where every phrase is transcribed, then checked word by word against the audio, and anything the checker cannot hear is struck out. Opens a recording view.",
+		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
+		name: "pashi_open_verbatim",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Transcribe one spoken phrase with Workers AI. Called by the Verbatim view with a short WAV clip; nothing is stored.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				audio: {
+					description: `A base64 audio/wav data URL of at most ${VERBATIM_LIMITS.segmentMaxBytes / 1024 / 1024} MiB.`,
+					type: "string",
+				},
+			},
+			required: ["audio"],
+			type: "object",
+		},
+		name: "pashi_transcribe_verbatim",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Check a transcribed phrase word by word against its audio and strike out words that are not spoken. Called by the Verbatim view; nothing is stored.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				audio: { description: "The same audio/wav data URL that was transcribed.", type: "string" },
+				context: {
+					description: "The end of the transcript so far.",
+					maxLength: VERBATIM_LIMITS.contextLength,
+					type: "string",
+				},
+				transcribeMs: { minimum: 0, type: "number" },
+				transcript: { maxLength: VERBATIM_LIMITS.transcriptLength, type: "string" },
+			},
+			required: ["audio", "transcript"],
+			type: "object",
+		},
+		name: "pashi_check_verbatim",
+		ratePolicy: "read",
+	},
+	{
+		_meta: {
+			[POLYCHAT_APP_META_KEY]: {
+				category: "Play",
+				description:
+					"Run a town of up to 50,000 people, pass laws in plain English, throw disasters at it and watch how everyone reacts.",
+				icon: "landmark",
+				name: "Polis",
+				produces: "A simulated town you can save, replay and share from Pashi.",
+				surface: "workspace",
+				theme: "emerald",
+				uses: "A town simulation in your browser. A decision model on your Polychat plan decides how residents react and drafts your laws.",
+				when: "You want to see who cheers when you change the rules.",
+			},
+			ui: { resourceUri: MCP_VIEW_URIS.polis },
+		},
+		annotations: { readOnlyHint: true },
+		description:
+			"Open Polis: found a town of up to 50,000 residents, pass laws in plain English, stage disasters, poll the town and watch everyone react. Opens a simulation view.",
+		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
+		name: "pashi_open_polis",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Ask how groups of Polis residents feel and what they would do under the current laws, and optionally whether they would vote for a proposal. Called by the Polis view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				buckets: { maxItems: POLIS_MAX_BUCKETS_PER_REQUEST, minItems: 1, type: "array" },
+				laws: { items: { type: "string" }, type: "array" },
+				proposal: { type: "string" },
+			},
+			required: ["buckets", "laws"],
+			type: "object",
+		},
+		name: "pashi_polis_decide",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Draft a plain-English proposal into a law the Polis town can enforce. Nothing is enacted. Called by the Polis view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				parameters: { description: "The town's current parameters.", type: "object" },
+				text: {
+					maxLength: POLIS_DRAFT_LENGTH.max,
+					minLength: POLIS_DRAFT_LENGTH.min,
+					type: "string",
+				},
+			},
+			required: ["text"],
+			type: "object",
+		},
+		name: "pashi_polis_draft_law",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Turn a described event into a scenario the Polis town can stage. Nothing happens until the player lets it. Called by the Polis view.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				text: {
+					maxLength: POLIS_DRAFT_LENGTH.max,
+					minLength: POLIS_DRAFT_LENGTH.min,
+					type: "string",
+				},
+			},
+			required: ["text"],
+			type: "object",
+		},
+		name: "pashi_polis_draft_scenario",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description: "List the Polis towns you have saved on Pashi, newest first.",
+		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
+		name: "pashi_list_polis_towns",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description: "Load one saved Polis town recording from Pashi.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: { id: { type: "string" } },
+			required: ["id"],
+			type: "object",
+		},
+		name: "pashi_get_polis_town",
+		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: false },
+		description: "Save a Polis town recording to your towns on Pashi.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: { recording: { type: "object" } },
+			required: ["recording"],
+			type: "object",
+		},
+		name: "pashi_save_polis_town",
+		ratePolicy: "write",
+	},
+	{
+		annotations: { destructiveHint: true, readOnlyHint: false },
+		description: "Delete a saved Polis town from Pashi, and its public link if it has one.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: { id: { type: "string" } },
+			required: ["id"],
+			type: "object",
+		},
+		name: "pashi_delete_polis_town",
+		ratePolicy: "write",
+	},
+	{
+		annotations: { readOnlyHint: false },
+		description:
+			"Publish a Polis town recording at a public link on pashi.app so anyone can watch it back.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: { recording: { type: "object" } },
+			required: ["recording"],
+			type: "object",
+		},
+		name: "pashi_share_polis_town",
+		ratePolicy: "write",
+	},
+	{
+		annotations: { destructiveHint: true, readOnlyHint: false },
+		description: "Take down the public link for a shared Polis town.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: { id: { type: "string" } },
+			required: ["id"],
+			type: "object",
+		},
+		name: "pashi_stop_sharing_polis_town",
+		ratePolicy: "write",
+	},
 ];
 
 export function listMcpTools() {
@@ -356,11 +700,17 @@ function listTools(argumentsValue: Record<string, unknown>) {
 	return { count: tools.length, tools };
 }
 
+export interface McpCaller {
+	ai?: AiClient;
+	origin: string;
+	owner: string;
+}
+
 export async function callMcpTool(
 	name: string,
 	argumentsValue: Record<string, unknown>,
 	env: ConversionEnv,
-	ai?: AiClient,
+	{ ai, owner }: McpCaller,
 ): Promise<unknown> {
 	if (name === "pashi_list_tools") {
 		return listTools(argumentsValue);
@@ -380,6 +730,78 @@ export async function callMcpTool(
 
 	if (name === "pashi_sort_photo") {
 		return sortPhoto(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_open_strudel") {
+		return setUpStrudel();
+	}
+
+	if (name === "pashi_generate_strudel") {
+		return generateStrudelPattern(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_list_strudel_patterns") {
+		return listStrudelPatterns(env, owner);
+	}
+
+	if (name === "pashi_save_strudel_pattern") {
+		return saveStrudelPattern(argumentsValue, env, owner);
+	}
+
+	if (name === "pashi_delete_strudel_pattern") {
+		return deleteStrudelPattern(argumentsValue, env, owner);
+	}
+
+	if (name === "pashi_open_verbatim") {
+		return setUpVerbatim();
+	}
+
+	if (name === "pashi_transcribe_verbatim") {
+		return transcribeVerbatimSegment(argumentsValue, env);
+	}
+
+	if (name === "pashi_check_verbatim") {
+		return checkVerbatimSegment(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_open_polis") {
+		return setUpPolis();
+	}
+
+	if (name === "pashi_polis_decide") {
+		return decidePolisBuckets(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_polis_draft_law") {
+		return draftPolisLaw(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_polis_draft_scenario") {
+		return draftPolisScenario(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_list_polis_towns") {
+		return listPolisTowns(env, owner);
+	}
+
+	if (name === "pashi_get_polis_town") {
+		return getPolisTown(argumentsValue, env, owner);
+	}
+
+	if (name === "pashi_save_polis_town") {
+		return savePolisTown(argumentsValue, env, owner);
+	}
+
+	if (name === "pashi_delete_polis_town") {
+		return deletePolisTown(argumentsValue, env, owner);
+	}
+
+	if (name === "pashi_share_polis_town") {
+		return sharePolisTown(argumentsValue, env, owner);
+	}
+
+	if (name === "pashi_stop_sharing_polis_town") {
+		return stopSharingPolisTown(argumentsValue, env, owner);
 	}
 
 	if (name === "pashi_play_twenty_questions") {

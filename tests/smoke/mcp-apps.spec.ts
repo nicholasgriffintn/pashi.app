@@ -60,16 +60,11 @@ test("the MCP endpoint lists app views and serves one", async ({ request }) => {
 test("every Polychat app tool opens with no input on a view that resolves", async ({ request }) => {
 	const listed = await rpc(request, 1, "tools/list");
 	const tools: {
-		_meta?: { "app.polychat/app"?: { name?: string }; ui?: { resourceUri: string } };
+		_meta?: { "app.polychat/app"?: Record<string, string>; ui?: { resourceUri: string } };
 		annotations: { readOnlyHint: boolean };
 		inputSchema: { required?: string[] };
 		name: string;
 	}[] = listed.result.tools;
-
-	for (const tool of tools) {
-		expect(tool.annotations.readOnlyHint, tool.name).toBe(true);
-	}
-
 	const apps = tools.filter((tool) => tool._meta?.["app.polychat/app"]);
 
 	expect(apps.map((tool) => tool.name)).toEqual(
@@ -77,16 +72,65 @@ test("every Polychat app tool opens with no input on a view that resolves", asyn
 			"pashi_play_charades",
 			"pashi_play_photo_sorter",
 			"pashi_play_twenty_questions",
+			"pashi_open_strudel",
+			"pashi_open_verbatim",
+			"pashi_open_polis",
 		]),
 	);
 
 	for (const app of apps) {
+		expect(app.annotations.readOnlyHint, app.name).toBe(true);
 		expect(app.inputSchema.required, app.name).toBeUndefined();
+		expect(Object.keys(app._meta?.["app.polychat/app"] ?? {}).toSorted(), app.name).toEqual([
+			"category",
+			"description",
+			"icon",
+			"name",
+			"produces",
+			"surface",
+			"theme",
+			"uses",
+			"when",
+		]);
 
 		const read = await rpc(request, 2, "resources/read", { uri: app._meta?.ui?.resourceUri });
+		const [content] = read.result.contents;
 
-		expect(read.result.contents[0].text, app.name).toContain("PashiBridge");
+		expect(content.mimeType, app.name).toBe("text/html;profile=mcp-app");
+		expect(content.text, app.name).toContain("PashiBridge");
+		expect(content.text, app.name).not.toContain("failed to build");
+		expect(content.text.length, app.name).toBeLessThan(1024 * 1024);
 	}
+});
+
+test("tools that change saved state are not marked read-only", async ({ request }) => {
+	const listed = await rpc(request, 1, "tools/list");
+	const tools: { annotations: { readOnlyHint: boolean }; name: string }[] = listed.result.tools;
+	const writes = tools.filter((tool) => /^pashi_(save|delete|share|stop_sharing)_/.test(tool.name));
+
+	expect(writes.length).toBeGreaterThan(0);
+
+	for (const tool of writes) {
+		expect(tool.annotations.readOnlyHint, tool.name).toBe(false);
+	}
+});
+
+test("the resource list includes the new app views", async ({ request }) => {
+	const listed = await rpc(request, 1, "resources/list");
+	const uris = listed.result.resources.map((resource: { uri: string }) => resource.uri);
+
+	expect(uris).toEqual(
+		expect.arrayContaining(["ui://pashi/strudel", "ui://pashi/verbatim", "ui://pashi/polis"]),
+	);
+
+	const evaluating = listed.result.resources
+		.filter(
+			(resource: { _meta: { ui: { csp: { allowEval?: boolean } } } }) =>
+				resource._meta.ui.csp.allowEval,
+		)
+		.map((resource: { uri: string }) => resource.uri);
+
+	expect(evaluating).toEqual(["ui://pashi/strudel"]);
 });
 
 test("handshake and discovery traffic from a host is not rate limited", async ({ request }) => {

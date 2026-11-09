@@ -50,3 +50,11 @@ export function serialiseJsonForHtml(value: unknown) {
 		.replace(/\u2028/g, "\\u2028")
 		.replace(/\u2029/g, "\\u2029");
 }
+
+export function splitWords(value: string) {
+	return value.split(/\s+/).filter(Boolean);
+}
+
+export function capitaliseFirst(value: string) {
+	return value ? `${value[0].toUpperCase()}${value.slice(1)}` : value;
+}

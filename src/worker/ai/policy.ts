@@ -1,7 +1,7 @@
 import type { PolychatModelTier } from "../services/polychat/client";
 import { EXPLANATION_SCHEMA, TOOL_ROUTE_SCHEMA, type OutputSchema } from "./schemas";
 
-export type AiFeature = "explain" | "generate" | "route";
+export type AiFeature = "explain" | "generate" | "polis" | "route" | "strudel";
 
 export interface AiPolicy {
 	maxTokens: number;
@@ -25,6 +25,20 @@ const POLICIES: Record<AiFeature, AiPolicy> = {
 		temperature: 0.7,
 		tier: "medium",
 		timeoutMs: 25_000,
+	},
+	polis: {
+		maxTokens: 1200,
+		schema: undefined,
+		temperature: 0.2,
+		tier: "low",
+		timeoutMs: 30_000,
+	},
+	strudel: {
+		maxTokens: 2000,
+		schema: undefined,
+		temperature: 0.8,
+		tier: "medium",
+		timeoutMs: 45_000,
 	},
 	route: {
 		maxTokens: 400,
