@@ -5,6 +5,10 @@
 	"compatibility_date": "2025-10-08",
 	"workers_dev": false,
 	"preview_urls": false,
+	"routes": [
+		{ "pattern": "pashi.app", "custom_domain": true },
+		{ "pattern": "apps.pashi.app", "custom_domain": true }
+	],
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
 		"ENABLE_AI": "true",
