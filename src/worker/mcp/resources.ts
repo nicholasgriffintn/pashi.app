@@ -213,6 +213,12 @@ export function renderSharedPolisPage(token: string, origin: string) {
 	});
 }
 
+export function renderMcpViewPage(name: string, origin: string) {
+	const view = VIEWS.find((entry) => entry.name === name);
+
+	return view ? renderViewDocument(view.template, viewData(view, origin)) : undefined;
+}
+
 export function listMcpResources() {
 	return VIEWS.map((view) => ({
 		_meta: { ui: view.ui },

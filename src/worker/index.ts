@@ -6,6 +6,7 @@ import { readMcpCallPolicies } from "./mcp/rate-policy";
 import { renderSharedPolisPage } from "./mcp/resources";
 import { apiCors } from "./middleware/cors";
 import { aiClientFor, requireAgentAccess, requirePolychat } from "./middleware/polychat-access";
+import { serveAppView } from "./routes/app-views";
 import { guard, type AppContext } from "./routes/context";
 import { createLabsRoutes } from "./routes/labs";
 import { createPolychatRoutes } from "./routes/polychat";
@@ -104,6 +105,8 @@ app.get("/polis/:token", (c) =>
 		"Cache-Control": "no-store",
 	}),
 );
+
+app.get("/view/:name", serveAppView);
 
 app.get("/sitemap.xml", (c) => createSitemapResponse(new URL(c.req.url).origin));
 
