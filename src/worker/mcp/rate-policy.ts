@@ -3,12 +3,15 @@ import type { PolicyName } from "../security/policies";
 import { MCP_MAX_BATCH } from "./protocol";
 import { mcpToolRatePolicy } from "./tools";
 
-function toolCallName(message: unknown) {
+function toolCallPolicy(message: unknown) {
 	if (!isRecord(message) || message.method !== "tools/call" || !isRecord(message.params)) {
 		return undefined;
 	}
 
-	return typeof message.params.name === "string" ? message.params.name : "";
+	return mcpToolRatePolicy(
+		typeof message.params.name === "string" ? message.params.name : "",
+		isRecord(message.params.arguments) ? message.params.arguments : {},
+	);
 }
 
 export async function readMcpCallPolicies(request: Request): Promise<PolicyName[]> {
@@ -27,8 +30,8 @@ export async function readMcpCallPolicies(request: Request): Promise<PolicyName[
 	}
 
 	return messages.flatMap((message) => {
-		const name = toolCallName(message);
+		const policy = toolCallPolicy(message);
 
-		return name === undefined ? [] : [mcpToolRatePolicy(name)];
+		return policy === undefined ? [] : [policy];
 	});
 }

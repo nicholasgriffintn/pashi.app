@@ -1,6 +1,7 @@
 import { isRecord } from "../../shared/records";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listMcpResources, readMcpResource } from "./resources";
+import { errorToolResult } from "./tool-result";
 import { callMcpTool, listMcpTools, type McpCaller } from "./tools";
 
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18"]);
@@ -71,29 +72,12 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv, caller
 
 	if (request.method === "tools/call") {
 		const name = typeof request.params?.name === "string" ? request.params.name : "";
-		const argumentsValue =
-			typeof request.params?.arguments === "object" && request.params.arguments !== null
-				? (request.params.arguments as Record<string, unknown>)
-				: {};
+		const argumentsValue = isRecord(request.params?.arguments) ? request.params.arguments : {};
 
 		try {
-			const value = await callMcpTool(name, argumentsValue, env, caller);
-
-			return result(request.id, {
-				content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
-				isError: false,
-				...(isRecord(value) ? { structuredContent: value } : {}),
-			});
+			return result(request.id, await callMcpTool(name, argumentsValue, env, caller));
 		} catch (error) {
-			return result(request.id, {
-				content: [
-					{
-						text: error instanceof Error ? error.message : "The tool call failed.",
-						type: "text",
-					},
-				],
-				isError: true,
-			});
+			return result(request.id, errorToolResult(error));
 		}
 	}
 

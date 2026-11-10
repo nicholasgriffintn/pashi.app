@@ -4,14 +4,11 @@ import type { AiClient } from "../ai/run";
 import type { PolicyName } from "../security/policies";
 import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
-import { createConverterResponse } from "../services/converters/response";
 import { listGeneratorTools } from "../services/generators/catalogue";
-import { createGeneratorRequest } from "../services/generators/request";
-import { createGeneratorResponse } from "../services/generators/response";
 import { MCP_VIEW_URIS, type McpToolUiMeta, type PolychatAppMeta } from "./apps";
 import { CHARADES_DECKS, setUpCharades } from "./charades";
 import { judgeCharadesClip } from "./charades-judge";
-import { describeTool } from "./describe";
+import { DESCRIBED_TOOL_OUTPUT_SCHEMA, describeTool } from "./describe";
 import { PHOTO_SORTER_LIMITS, setUpPhotoSorter, sortPhoto } from "./photo-sorter";
 import { decidePolisBuckets, draftPolisLaw, draftPolisScenario, setUpPolis } from "./polis";
 import {
@@ -30,6 +27,14 @@ import {
 	STRUDEL_PATTERN_LIMITS,
 } from "./strudel-patterns";
 import { STRUDEL_COMPLEXITIES, STRUDEL_STYLES } from "./strudel-prompts";
+import { jsonToolResult, type McpToolResult } from "./tool-result";
+import {
+	converterRatePolicy,
+	generatorRatePolicy,
+	requireToolId,
+	runConverter,
+	runGenerator,
+} from "./toolkit";
 import {
 	askTwentyQuestions,
 	revealTwentyQuestions,
@@ -51,7 +56,8 @@ export interface McpToolDefinition {
 	description: string;
 	inputSchema: Record<string, unknown>;
 	name: string;
-	ratePolicy: PolicyName;
+	outputSchema?: Record<string, unknown>;
+	ratePolicy: PolicyName | ((argumentsValue: Record<string, unknown>) => PolicyName);
 }
 
 const MCP_TOOLS: readonly McpToolDefinition[] = [
@@ -75,13 +81,37 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_list_tools",
+		outputSchema: {
+			additionalProperties: false,
+			properties: {
+				count: { type: "integer" },
+				tools: {
+					items: {
+						additionalProperties: false,
+						properties: {
+							category: { type: "string" },
+							description: { type: "string" },
+							fields: { items: { type: "string" }, type: "array" },
+							id: { type: "string" },
+							kind: { enum: ["converter", "generator"], type: "string" },
+							label: { type: "string" },
+						},
+						required: ["category", "description", "fields", "id", "kind", "label"],
+						type: "object",
+					},
+					type: "array",
+				},
+			},
+			required: ["count", "tools"],
+			type: "object",
+		},
 		ratePolicy: "read",
 	},
 	{
 		_meta: { ui: { resourceUri: MCP_VIEW_URIS.generator } },
 		annotations: { readOnlyHint: true },
 		description:
-			"Run a Pashi generator, such as uuid, password, dice or colour. Returns the generated result as JSON.",
+			"Run a Pashi generator, such as uuid, password, dice or colour. Returns the result as JSON, or as an image for image generators such as qr.",
 		inputSchema: {
 			additionalProperties: false,
 			properties: {
@@ -97,7 +127,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_generate",
-		ratePolicy: "expensive",
+		ratePolicy: generatorRatePolicy,
 	},
 	{
 		_meta: { ui: { resourceUri: MCP_VIEW_URIS.converter } },
@@ -119,7 +149,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_convert",
-		ratePolicy: "expensive",
+		ratePolicy: converterRatePolicy,
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -134,6 +164,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_describe_tool",
+		outputSchema: DESCRIBED_TOOL_OUTPUT_SCHEMA,
 		ratePolicy: "read",
 	},
 	{
@@ -630,27 +661,23 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 ];
 
 export function listMcpTools() {
-	return MCP_TOOLS.map(({ _meta, annotations, description, inputSchema, name }) => ({
+	return MCP_TOOLS.map(({ _meta, annotations, description, inputSchema, name, outputSchema }) => ({
 		_meta,
 		annotations,
 		description,
 		inputSchema,
 		name,
+		outputSchema,
 	}));
 }
 
-export function mcpToolRatePolicy(name: string): PolicyName {
-	return MCP_TOOLS.find((tool) => tool.name === name)?.ratePolicy ?? "expensive";
-}
+export function mcpToolRatePolicy(
+	name: string,
+	argumentsValue: Record<string, unknown>,
+): PolicyName {
+	const ratePolicy = MCP_TOOLS.find((tool) => tool.name === name)?.ratePolicy ?? "expensive";
 
-function stringFields(value: unknown): Record<string, string> {
-	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		return {};
-	}
-
-	return Object.fromEntries(
-		Object.entries(value).flatMap(([key, item]) => (typeof item === "string" ? [[key, item]] : [])),
-	);
+	return typeof ratePolicy === "function" ? ratePolicy(argumentsValue) : ratePolicy;
 }
 
 function matchesSearch(haystack: string, search: string) {
@@ -702,7 +729,7 @@ export interface McpCaller {
 	owner: string;
 }
 
-export async function callMcpTool(
+async function callJsonTool(
 	name: string,
 	argumentsValue: Record<string, unknown>,
 	env: ConversionEnv,
@@ -710,6 +737,10 @@ export async function callMcpTool(
 ): Promise<unknown> {
 	if (name === "pashi_list_tools") {
 		return listTools(argumentsValue);
+	}
+
+	if (name === "pashi_describe_tool") {
+		return describeTool(requireToolId(argumentsValue));
 	}
 
 	if (name === "pashi_play_charades") {
@@ -816,44 +847,22 @@ export async function callMcpTool(
 		return revealTwentyQuestions(argumentsValue, env, ai);
 	}
 
-	const type = typeof argumentsValue.type === "string" ? argumentsValue.type : "";
-	const input = typeof argumentsValue.input === "string" ? argumentsValue.input : "";
-	const fields = stringFields(argumentsValue.fields);
+	throw new Error(`Unknown tool: ${name}`);
+}
 
-	if (!type) {
-		throw new Error("A tool id is required.");
-	}
-
-	if (name === "pashi_describe_tool") {
-		return describeTool(type);
-	}
-
+export async function callMcpTool(
+	name: string,
+	argumentsValue: Record<string, unknown>,
+	env: ConversionEnv,
+	caller: McpCaller,
+): Promise<McpToolResult> {
 	if (name === "pashi_generate") {
-		const response = await createGeneratorResponse(
-			type,
-			createGeneratorRequest(input, fields),
-			new URLSearchParams(),
-			env,
-		);
-
-		return response.json();
+		return runGenerator(argumentsValue, env, caller.ai);
 	}
 
 	if (name === "pashi_convert") {
-		const converter = listConverterTools().find((tool) => tool.id === type);
-
-		if (converter?.runtime === "container") {
-			throw new Error("Media and document conversion is not available over MCP.");
-		}
-
-		const response = await createConverterResponse(
-			type,
-			createGeneratorRequest(input, fields),
-			env,
-		);
-
-		return response.json();
+		return runConverter(argumentsValue, env);
 	}
 
-	throw new Error(`Unknown tool: ${name}`);
+	return jsonToolResult(await callJsonTool(name, argumentsValue, env, caller));
 }
