@@ -1,5 +1,5 @@
 import { isRecord } from "../../../shared/records";
-import type { ErrorCode } from "../../utils/http";
+import { readJsonBody, type ErrorCode } from "../../utils/http";
 
 const CLIENT_ID = "pashi";
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -83,14 +83,6 @@ async function send(
 	}
 }
 
-async function readBody(response: Response): Promise<unknown> {
-	try {
-		return await response.json();
-	} catch {
-		return undefined;
-	}
-}
-
 function readErrorMessage(body: unknown) {
 	if (!isRecord(body)) {
 		return undefined;
@@ -106,7 +98,7 @@ function readErrorMessage(body: unknown) {
 }
 
 async function requireOk(response: Response) {
-	const body = await readBody(response);
+	const body = await readJsonBody(response);
 
 	if (response.ok) {
 		return body;
