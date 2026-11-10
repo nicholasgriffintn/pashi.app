@@ -115,6 +115,13 @@ export function CommandPalette() {
 			},
 			{
 				group: "Go",
+				id: "go-apps",
+				label: "Apps",
+				run: go("/labs/apps"),
+				search: "apps mcp games charades polis strudel verbatim photo sorter twenty questions",
+			},
+			{
+				group: "Go",
 				id: "go-ask",
 				label: "Ask Pashi",
 				run: go("/labs/ask"),

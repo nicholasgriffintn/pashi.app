@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 import { lastToolPath, rememberLastToolPath } from "../lib/last-tool";
+import { KEEP_SCROLL_STATE } from "../lib/scroll-reset";
 
 interface ToolModeTabsProps {
 	mode: "convert" | "generate";
@@ -15,7 +16,7 @@ export function ToolModeTabs({ mode }: ToolModeTabsProps) {
 		}
 
 		rememberLastToolPath(mode, window.location.pathname);
-		void navigate(lastToolPath(nextMode));
+		void navigate(lastToolPath(nextMode), { state: KEEP_SCROLL_STATE });
 	}
 
 	return (

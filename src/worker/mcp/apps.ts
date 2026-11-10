@@ -1,5 +1,4 @@
 export const MCP_APP_MIME_TYPE = "text/html;profile=mcp-app";
-export const POLYCHAT_APP_META_KEY = "app.polychat/app";
 export const PASHI_SITE_URL = "https://pashi.app";
 
 export const MCP_VIEW_URIS = {

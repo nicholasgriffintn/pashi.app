@@ -3,7 +3,10 @@
 }
 
 html {
-	background: var(--page-ground);
+	background:
+		radial-gradient(var(--page-tone) 1.2px, transparent 1.7px) 0 0 / 14px 14px,
+		radial-gradient(var(--page-tone) 1.2px, transparent 1.7px) 7px 7px / 14px 14px,
+		var(--page-ground);
 	color: var(--body-text);
 	font-family: var(--font-body);
 	line-height: 1.5;
@@ -20,7 +23,20 @@ html {
 
 body {
 	margin: 0;
+	min-width: 0;
+	overflow-wrap: break-word;
 	padding: var(--space-4);
+}
+
+img,
+svg,
+video,
+canvas {
+	max-width: 100%;
+}
+
+button {
+	font-family: inherit;
 }
 
 [hidden] {
@@ -54,11 +70,17 @@ body {
 }
 
 .eyebrow {
-	color: var(--cyan);
-	font-size: 0.72rem;
+	background: var(--yellow);
+	border: 2px solid var(--ink-shade);
+	color: var(--on-accent);
+	display: inline-block;
+	font-size: 0.68rem;
 	font-weight: 900;
-	letter-spacing: 0.14em;
-	margin: 0;
+	letter-spacing: 0.06em;
+	line-height: 1;
+	margin: 0 0 var(--space-2);
+	padding: 0.2rem 0.4rem;
+	rotate: -2deg;
 	text-transform: uppercase;
 }
 
@@ -102,15 +124,15 @@ body {
 .button {
 	align-items: center;
 	background: transparent;
-	border: 2px solid var(--cyan);
-	color: var(--cyan);
+	border: 2px solid var(--body-text);
+	color: var(--body-text);
 	cursor: pointer;
 	display: inline-flex;
-	font-size: 0.78rem;
+	font-size: 0.8rem;
 	font-weight: 900;
 	gap: 0.4rem;
 	justify-content: center;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.04em;
 	min-height: 2.5rem;
 	padding: 0 0.95rem;
 	text-transform: uppercase;
@@ -123,7 +145,8 @@ body {
 
 .button:hover:not(:disabled),
 .button:focus-visible {
-	background: var(--cyan);
+	background: var(--yellow);
+	border-color: var(--ink-shade);
 	box-shadow: 3px 3px 0 var(--magenta);
 	color: var(--on-accent);
 	outline: 0;
@@ -136,8 +159,10 @@ body {
 }
 
 .button-primary {
-	background: var(--cyan);
-	color: var(--on-accent);
+	background: var(--paper);
+	border-color: var(--ink-shade);
+	box-shadow: 3px 3px 0 var(--ink-shade);
+	color: var(--ink);
 }
 
 .button-loud {
@@ -148,7 +173,8 @@ body {
 .button-loud:hover:not(:disabled),
 .button-loud:focus-visible {
 	background: var(--magenta);
-	box-shadow: 3px 3px 0 var(--cyan);
+	border-color: var(--ink-shade);
+	box-shadow: 3px 3px 0 var(--ink-shade);
 	color: var(--paper);
 }
 
@@ -161,7 +187,7 @@ body {
 	color: var(--panel-muted);
 	font-size: 0.72rem;
 	font-weight: 900;
-	letter-spacing: 0.12em;
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
 }
 
@@ -197,11 +223,12 @@ textarea:focus-visible {
 }
 
 .alert {
-	border-left: 6px solid var(--magenta);
-	color: var(--magenta);
+	background: rgb(var(--magenta-rgb) / 0.1);
+	border: 2px solid var(--magenta);
+	color: var(--body-text);
 	font-weight: 700;
 	margin: 0;
-	padding-left: var(--space-3);
+	padding: var(--space-2) var(--space-3);
 }
 
 @media (prefers-reduced-motion: reduce) {

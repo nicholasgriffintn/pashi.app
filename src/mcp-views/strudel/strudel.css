@@ -83,7 +83,7 @@
 	color: var(--green);
 	font-size: 0.65rem;
 	font-weight: 900;
-	letter-spacing: 0.12em;
+	letter-spacing: 0.06em;
 	padding: 0.05rem var(--space-2);
 	text-transform: uppercase;
 }
@@ -98,7 +98,8 @@
 }
 
 .strudel-blocked {
-	border-left: 6px solid var(--magenta);
+	background: var(--panel-bg);
+	border: 2px solid var(--magenta);
 	color: var(--panel-text);
 	font-weight: 700;
 	inset: var(--space-4) var(--space-4) auto;

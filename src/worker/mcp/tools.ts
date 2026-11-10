@@ -1,3 +1,4 @@
+import { POLYCHAT_APP_META_KEY } from "../../shared/mcp-apps";
 import { POLIS_DRAFT_LENGTH, POLIS_MAX_BUCKETS_PER_REQUEST } from "../../shared/polis";
 import type { AiClient } from "../ai/run";
 import type { PolicyName } from "../security/policies";
@@ -7,12 +8,7 @@ import { createConverterResponse } from "../services/converters/response";
 import { listGeneratorTools } from "../services/generators/catalogue";
 import { createGeneratorRequest } from "../services/generators/request";
 import { createGeneratorResponse } from "../services/generators/response";
-import {
-	MCP_VIEW_URIS,
-	POLYCHAT_APP_META_KEY,
-	type McpToolUiMeta,
-	type PolychatAppMeta,
-} from "./apps";
+import { MCP_VIEW_URIS, type McpToolUiMeta, type PolychatAppMeta } from "./apps";
 import { CHARADES_DECKS, setUpCharades } from "./charades";
 import { judgeCharadesClip } from "./charades-judge";
 import { describeTool } from "./describe";

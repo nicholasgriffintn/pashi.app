@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 export type Theme = "dark" | "light";
 
@@ -20,6 +20,22 @@ function preferredTheme(): Theme {
 
 export function applyTheme(theme: Theme) {
 	document.documentElement.dataset.theme = theme;
+}
+
+function readAppliedTheme(): Theme {
+	return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function subscribeToAppliedTheme(onChange: () => void) {
+	const observer = new MutationObserver(onChange);
+
+	observer.observe(document.documentElement, { attributeFilter: ["data-theme"] });
+
+	return () => observer.disconnect();
+}
+
+export function useAppliedTheme() {
+	return useSyncExternalStore(subscribeToAppliedTheme, readAppliedTheme);
 }
 
 export function initialTheme(): Theme {

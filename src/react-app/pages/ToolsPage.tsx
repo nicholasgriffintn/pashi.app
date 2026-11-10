@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ConverterConsole } from "../components/ConverterConsole";
 import { GeneratorConsole } from "../components/GeneratorConsole";
 import { ToolModeTabs } from "../components/ToolModeTabs";
+import { KEEP_SCROLL_STATE } from "../lib/scroll-reset";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
 interface ToolsPageProps {
@@ -16,14 +17,20 @@ export function ToolsPage({ mode }: ToolsPageProps) {
 
 	const navigateToGenerator = useCallback(
 		(nextToolId: string, options?: { replace?: boolean }) => {
-			void navigate(`/tools/${nextToolId}`, { replace: options?.replace });
+			void navigate(`/tools/${nextToolId}`, {
+				replace: options?.replace,
+				state: KEEP_SCROLL_STATE,
+			});
 		},
 		[navigate],
 	);
 
 	const navigateToConverter = useCallback(
 		(nextToolId: string, options?: { replace?: boolean }) => {
-			void navigate(`/tools/convert/${nextToolId}`, { replace: options?.replace });
+			void navigate(`/tools/convert/${nextToolId}`, {
+				replace: options?.replace,
+				state: KEEP_SCROLL_STATE,
+			});
 		},
 		[navigate],
 	);

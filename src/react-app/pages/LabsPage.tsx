@@ -29,8 +29,9 @@ const EXPERIMENTS: readonly Experiment[] = [
 	},
 	{
 		blurb:
-			"Pashi's games and tool views are MCP Apps. Add https://pashi.app/mcp as an MCP server in Polychat or any host that renders apps, and results arrive as interactive views. Charades, Photo Sorter, Twenty Questions, Strudel, Verbatim and Polis open on their own.",
+			"Pashi's games and tool views are MCP Apps. Play Charades, Photo Sorter, Twenty Questions, Strudel, Verbatim and Polis here, or add https://pashi.app/mcp as an MCP server in Polychat or any host that renders apps.",
 		id: "mcp-apps",
+		path: "/labs/apps",
 		state: "live",
 		title: "MCP Apps",
 	},

@@ -68,7 +68,8 @@
 
 .notice {
 	align-items: center;
-	border-left: 6px solid var(--cyan);
+	background: var(--ground-tint);
+	border: 2px solid var(--edge);
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--space-3);
@@ -86,17 +87,18 @@
 }
 
 .toast {
-	background: var(--panel-bg);
-	border: 2px solid var(--cyan);
-	box-shadow: var(--shadow-hard);
-	color: var(--panel-text);
+	background: var(--paper);
+	border: 2px solid var(--ink-shade);
+	box-shadow: 4px 4px 0 var(--magenta);
+	color: var(--ink);
 	font-weight: 700;
 	margin: 0;
 	padding: var(--space-2) var(--space-4);
+	rotate: -1.5deg;
 }
 
 .toast-error {
-	border-color: var(--magenta);
+	background: var(--rose);
 }
 
 kbd {

@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { CommandPalette } from "./components/CommandPalette";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ScrollReset } from "./components/ScrollReset";
 import { SiteFooter } from "./components/SiteFooter";
 import { SiteHeader } from "./components/SiteHeader";
 import { queryClient } from "./lib/query-client";
@@ -17,6 +18,12 @@ const AboutPage = lazy(() =>
 );
 const ApiDocsPage = lazy(() =>
 	import("./pages/ApiDocsPage").then((module) => ({ default: module.ApiDocsPage })),
+);
+const AppPage = lazy(() =>
+	import("./pages/AppPage").then((module) => ({ default: module.AppPage })),
+);
+const AppsPage = lazy(() =>
+	import("./pages/AppsPage").then((module) => ({ default: module.AppsPage })),
 );
 const AskPage = lazy(() =>
 	import("./pages/AskPage").then((module) => ({ default: module.AskPage })),
@@ -44,6 +51,7 @@ function App() {
 		<QueryClientProvider client={queryClient}>
 			<BrowserRouter>
 				<ErrorBoundary label="Pashi">
+					<ScrollReset />
 					<CommandPalette />
 					<SiteHeader />
 					<Suspense fallback={<RouteFallback />}>
@@ -53,6 +61,8 @@ function App() {
 							<Route element={<ToolsPage mode="convert" />} path="/tools/convert/:toolId" />
 							<Route element={<ToolsPage mode="generate" />} path="/tools/:toolId" />
 							<Route element={<LabsPage />} path="/labs" />
+							<Route element={<AppsPage />} path="/labs/apps" />
+							<Route element={<AppPage />} path="/labs/apps/:appId" />
 							<Route element={<AskPage />} path="/labs/ask" />
 							<Route element={<ExplainPage />} path="/labs/explain" />
 							<Route element={<SignInPage />} path="/sign-in" />

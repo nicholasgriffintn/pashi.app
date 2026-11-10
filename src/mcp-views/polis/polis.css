@@ -12,6 +12,7 @@
 
 .polis-map {
 	background: var(--polis-ground);
+	container-type: inline-size;
 	flex: 1;
 	min-width: 0;
 	overflow: hidden;
@@ -67,7 +68,7 @@
 	font: inherit;
 	font-size: 0.78rem;
 	font-weight: 900;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.06em;
 	padding: var(--space-3) 0;
 	text-transform: uppercase;
 }
@@ -79,7 +80,7 @@
 
 .polis-tab:hover,
 .polis-tab:focus-visible {
-	color: var(--cyan);
+	color: var(--panel-text);
 	outline: 0;
 }
 
@@ -209,15 +210,15 @@
 	text-transform: uppercase;
 }
 
-.polis-segment:hover,
-.polis-segment:focus-visible {
-	color: var(--cyan);
+.polis-segment:hover:not([aria-pressed="true"]),
+.polis-segment:focus-visible:not([aria-pressed="true"]) {
+	color: var(--panel-text);
 	outline: 0;
 }
 
 .polis-segment[aria-pressed="true"] {
-	background: var(--cyan);
-	color: var(--on-accent);
+	background: var(--panel-text);
+	color: var(--panel-bg);
 }
 
 .polis-segment-boxed {
@@ -227,7 +228,7 @@
 }
 
 .polis-segment-boxed[aria-pressed="true"] {
-	border-color: var(--cyan);
+	border-color: var(--panel-text);
 }
 
 .polis-populations {
@@ -352,6 +353,28 @@
 	top: 5rem;
 }
 
+.polis-citizen-slot > .button {
+	background: var(--panel-bg);
+	box-shadow: var(--shadow-hard);
+}
+
+@container (max-width: 34rem) {
+	.polis-modes {
+		left: var(--space-3);
+		right: auto;
+		top: 5rem;
+	}
+
+	.polis-citizen-slot {
+		top: 8.25rem;
+	}
+
+	.polis-citizen {
+		max-height: calc(100% - 15rem);
+		max-width: calc(100% - var(--space-5));
+	}
+}
+
 .polis-citizen {
 	display: grid;
 	gap: var(--space-2);
@@ -413,7 +436,7 @@
 .polis-heading {
 	font-size: 0.78rem;
 	font-weight: 900;
-	letter-spacing: 0.1em;
+	letter-spacing: 0.06em;
 	margin: 0;
 	text-transform: uppercase;
 }
@@ -528,14 +551,14 @@
 }
 
 .polis-draft {
-	border: 2px solid var(--cyan);
+	border: 2px solid var(--panel-text);
 	display: grid;
 	gap: var(--space-2);
 	padding: var(--space-3);
 }
 
 .polis-poll {
-	background: rgb(var(--cyan-rgb) / 0.1);
+	background: var(--ground-tint);
 	display: grid;
 	gap: var(--space-2);
 	padding: var(--space-2) var(--space-3);
@@ -894,10 +917,6 @@
 		border-top: 2px solid var(--panel-border);
 		max-height: 32rem;
 		width: auto;
-	}
-
-	.polis-citizen-slot {
-		top: 4.5rem;
 	}
 }
 

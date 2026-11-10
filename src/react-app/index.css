@@ -2,15 +2,24 @@
 	--ink: #11142e;
 	--ink-deep: #0d1024;
 	--ink-void: #080b21;
-	--ink-plum: #151326;
-	--ink-ember: #250f18;
+	--ink-lift: #181c3d;
+	--ink-line: #3b4070;
+	--ink-shade: #04050f;
 	--paper: #fff7d7;
 	--paper-warm: #f0d9bb;
 	--paper-bright: #ffffff;
-	--cyan: #25ffe6;
-	--magenta: #ff2f78;
-	--yellow: #ffd14c;
-	--green: #2fff82;
+	--sky: #86d3ee;
+	--rose: #ff4d73;
+	--gold: #ffc83a;
+	--leaf: #7ee08a;
+	--sky-deep: #14688a;
+	--rose-deep: #c81a5c;
+	--gold-deep: #a86a00;
+	--leaf-deep: #1f7a3a;
+	--cyan: var(--sky);
+	--magenta: var(--rose);
+	--yellow: var(--gold);
+	--green: var(--leaf);
 
 	--ink-rgb: 17 20 46;
 	--ink-deep-rgb: 13 16 36;
@@ -18,20 +27,13 @@
 	--paper-rgb: 255 247 215;
 	--paper-warm-rgb: 240 217 187;
 	--paper-bright-rgb: 255 255 255;
-	--cyan-rgb: 37 255 230;
-	--magenta-rgb: 255 47 120;
-	--yellow-rgb: 255 209 76;
+	--cyan-rgb: 134 211 238;
+	--magenta-rgb: 255 77 115;
+	--yellow-rgb: 255 200 58;
 
-	--surface: var(--ink);
-	--surface-deep: var(--ink-deep);
 	--surface-paper: var(--paper);
-	--text: var(--paper);
-	--text-accent: var(--cyan);
-	--text-warn: var(--yellow);
 	--border-loud: 2px solid var(--ink);
-	--border-accent: 2px solid var(--cyan);
-	--shadow-hard: 4px 4px 0 var(--ink);
-	--shadow-hard-lg: 8px 8px 0 var(--ink);
+	--shadow-hard: 4px 4px 0 var(--ink-shade);
 	--shadow-pop: 6px 6px 0 var(--magenta);
 
 	--space-1: 0.25rem;
@@ -54,27 +56,19 @@
 	--font-body: "Trebuchet MS", "Gill Sans", "Avenir Next Condensed", system-ui, sans-serif;
 	--font-mono: "SFMono-Regular", Menlo, Consolas, monospace;
 
-	--page-ground: linear-gradient(
-		135deg,
-		var(--ink-deep) 0%,
-		var(--ink-plum) 43%,
-		var(--ink-ember) 100%
-	);
-	--page-grid: rgb(var(--paper-bright-rgb) / 0.035);
-	--page-grid-soft: rgb(var(--paper-bright-rgb) / 0.03);
-	--page-glow: rgb(var(--magenta-rgb) / 0.24);
-	--scanline: rgb(var(--paper-rgb) / 0.02);
-	--vignette: rgb(var(--ink-void-rgb) / 0.24);
+	--page-ground: var(--ink-deep);
+	--page-tone: rgb(var(--paper-rgb) / 0.055);
+	--page-burst: rgb(var(--magenta-rgb) / 0.5);
 	--scrollbar-track: var(--ink);
-	--panel-bg: rgb(var(--ink-rgb) / 0.86);
-	--panel-border: var(--paper-warm);
+	--panel-bg: var(--ink-lift);
+	--panel-border: var(--ink-line);
 	--panel-text: var(--paper);
 	--panel-muted: var(--paper-warm);
 	--body-text: var(--paper);
 	--body-muted: var(--paper-warm);
-	--console-bg: rgb(var(--ink-void-rgb) / 0.8);
+	--console-bg: var(--ink-void);
 	--console-field-bg: rgb(var(--paper-rgb) / 0.08);
-	--chrome-bg: rgb(var(--ink-void-rgb) / 0.72);
+	--chrome-bg: var(--ink-deep);
 	--on-accent: var(--ink);
 	--edge: rgb(var(--paper-rgb) / 0.3);
 	--edge-soft: rgb(var(--paper-rgb) / 0.16);
@@ -84,33 +78,32 @@
 }
 
 :root[data-theme="light"] {
-	--cyan: #0a7d70;
-	--magenta: #c81a5c;
-	--yellow: #a86a00;
+	--cyan: var(--sky-deep);
+	--magenta: var(--rose-deep);
+	--yellow: var(--gold-deep);
+	--green: var(--leaf-deep);
+	--ink-shade: #1a1436;
 
-	--cyan-rgb: 10 125 112;
+	--cyan-rgb: 20 104 138;
 	--magenta-rgb: 200 26 92;
 	--yellow-rgb: 168 106 0;
 
 	--body-text: #1a1436;
 	--body-muted: #4a4166;
-	--console-bg: rgb(255 255 255 / 0.84);
+	--console-bg: #fffaf0;
 	--console-field-bg: rgb(26 20 54 / 0.06);
-	--chrome-bg: rgb(255 255 255 / 0.84);
-	--on-accent: #fff7d7;
+	--chrome-bg: #fbf1dc;
+	--on-accent: var(--paper);
 	--edge: rgb(26 20 54 / 0.35);
 	--edge-soft: rgb(26 20 54 / 0.16);
 	--ground-tint: rgb(26 20 54 / 0.06);
 	--ground-tint-strong: rgb(26 20 54 / 0.14);
 
-	--page-ground: linear-gradient(135deg, #fdf6e3 0%, #f7ecd8 46%, #f6e4e8 100%);
-	--page-grid: rgb(26 20 54 / 0.05);
-	--page-grid-soft: rgb(26 20 54 / 0.04);
-	--page-glow: rgb(200 26 92 / 0.1);
-	--scanline: rgb(26 20 54 / 0.02);
-	--vignette: rgb(26 20 54 / 0.08);
+	--page-ground: #fbf1dc;
+	--page-tone: rgb(26 20 54 / 0.07);
+	--page-burst: rgb(200 26 92 / 0.32);
 	--scrollbar-track: #e8dcc0;
-	--panel-bg: rgb(255 255 255 / 0.78);
+	--panel-bg: #fffaf0;
 	--panel-border: #1a1436;
 	--panel-text: #1a1436;
 	--panel-muted: #4a4166;
@@ -123,14 +116,9 @@
 	font-weight: 400;
 	color: var(--body-text);
 	background:
-		linear-gradient(90deg, var(--page-grid) 1px, transparent 1px),
-		linear-gradient(var(--page-grid-soft) 1px, transparent 1px),
-		radial-gradient(circle at 72% 18%, var(--page-glow), transparent 25rem), var(--page-ground);
-	background-size:
-		42px 42px,
-		42px 42px,
-		auto,
-		auto;
+		radial-gradient(var(--page-tone) 1.2px, transparent 1.7px) 0 0 / 14px 14px,
+		radial-gradient(var(--page-tone) 1.2px, transparent 1.7px) 7px 7px / 14px 14px,
+		var(--page-ground);
 
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
@@ -143,8 +131,21 @@
 }
 
 ::selection {
-	background: var(--cyan);
-	color: var(--ink-deep);
+	background: var(--magenta);
+	color: var(--on-accent);
+}
+
+body::before {
+	background: radial-gradient(var(--page-burst) 2.4px, transparent 2.9px) 0 0 / 11px 11px;
+	content: "";
+	height: min(34rem, 80vh);
+	mask-image: radial-gradient(ellipse at 100% 0%, black 0%, transparent 68%);
+	pointer-events: none;
+	position: fixed;
+	right: 0;
+	top: 0;
+	width: min(44rem, 90vw);
+	z-index: -1;
 }
 
 body {
