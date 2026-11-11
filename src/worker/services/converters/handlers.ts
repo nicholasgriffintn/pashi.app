@@ -53,6 +53,7 @@ import {
 } from "./text-file-conversion.ts";
 import {
 	isTimestampTransformFormat,
+	TIMESTAMP_JSON_FORMATS,
 	TIMESTAMP_TRANSFORM_FORMATS,
 	TimestampTransformError,
 	transformTimestamp,
@@ -64,6 +65,12 @@ import {
 	URL_TRANSFORM_FORMATS,
 	UrlTransformError,
 } from "./url-transform.ts";
+import {
+	calculateWorkingDays,
+	isWorkingDaysFormat,
+	WORKING_DAYS_FORMATS,
+	WorkingDaysError,
+} from "./working-days.ts";
 
 export class ConverterRequestError extends Error {
 	readonly status: number;
@@ -168,6 +175,12 @@ function timestampTransformFormat(value: string | undefined) {
 	const format = value || "readable";
 
 	return isTimestampTransformFormat(format) ? format : undefined;
+}
+
+function workingDaysFormat(value: string | undefined) {
+	const format = value || "add";
+
+	return isWorkingDaysFormat(format) ? format : undefined;
 }
 
 function urlTransformFormat(value: string | undefined) {
@@ -467,15 +480,14 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				transformTimestamp(input, outputFormat, fields),
 				`Timestamp transformed with ${outputFormat}.`,
 				{
-					mimeType:
-						outputFormat === "difference"
-							? "application/json;charset=utf-8"
-							: "text/plain;charset=utf-8",
+					mimeType: TIMESTAMP_JSON_FORMATS.includes(outputFormat)
+						? "application/json;charset=utf-8"
+						: "text/plain;charset=utf-8",
 				},
 			);
 		} catch (error) {
 			if (error instanceof TimestampTransformError) {
-				throw new ConverterRequestError(error.message);
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;
@@ -507,6 +519,32 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 		} catch (error) {
 			if (error instanceof UrlTransformError) {
 				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
+	},
+	"working-days": ({ fields, input }) => {
+		const outputFormat = workingDaysFormat(fields.outputFormat || fields.format);
+
+		if (!outputFormat) {
+			throw new ConverterRequestError(
+				`Choose a supported working days mode: ${WORKING_DAYS_FORMATS.join(", ")}.`,
+			);
+		}
+
+		try {
+			return textResult(
+				"working-days",
+				"Working days",
+				input,
+				calculateWorkingDays(input, outputFormat, fields),
+				`Working days calculated with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof WorkingDaysError) {
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;
