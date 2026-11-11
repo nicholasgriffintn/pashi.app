@@ -1,3 +1,4 @@
+import { JWT_SECRET_ENCODINGS } from "../../utils/jwt.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
 import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
@@ -573,10 +574,15 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			"colour-contrast-checker",
 			"color-contrast-checker",
 			"cron-explainer",
+			"cron-next-run",
+			"cron-validator",
 			"file-signature-inspector",
+			"hash-identifier",
 			"jwt-decoder",
 			"jwt-inspector",
+			"jwt-verifier",
 			"mime-inspector",
+			"user-agent-parser",
 			"uuid-decoder",
 			"uuid-inspector",
 		],
@@ -586,16 +592,50 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				{
 					body: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature",
 					contentType: "text/plain",
-					description: "Decode a JWT header and payload without verifying the signature.",
+					description: "Decode a JWT header and payload and report expiry and not-before status.",
 					method: "POST",
 					url: "/api/developer-inspect?outputFormat=jwt",
 				},
 				{
-					body: "#111827 #ffffff",
+					body: JSON.stringify({
+						input:
+							"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMifQ.OKK_YSNg047hZnofrPwr85kQlxLQOrokuqTbP1sE2bs",
+						outputFormat: "jwt",
+						secret: "pashi-test-secret",
+					}),
+					contentType: "application/json",
+					description:
+						"Verify an HS256 signature with a secret sent in the request body. Use publicKey for RS256, RS384 and RS512.",
+					method: "POST",
+					url: "/api/developer-inspect",
+				},
+				{
+					body: "*/15 9-17 * * MON-FRI",
 					contentType: "text/plain",
-					description: "Check WCAG contrast for foreground and background colours.",
+					description: "Validate a cron expression and list its next five run times in UTC.",
+					method: "POST",
+					url: "/api/developer-inspect?outputFormat=cron",
+				},
+				{
+					body: "rgb(17, 24, 39) white",
+					contentType: "text/plain",
+					description:
+						"Check WCAG contrast for two colours given as hex, rgb(), hsl() or CSS colour names.",
 					method: "POST",
 					url: "/api/developer-inspect?outputFormat=colour-contrast",
+				},
+				{
+					description: "Suggest the likely algorithm behind a hash from its length and alphabet.",
+					method: "GET",
+					url: "/api/developer-inspect?outputFormat=hash-type&input=5d41402abc4b2a76b9719d911017c592",
+				},
+				{
+					body: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+					contentType: "text/plain",
+					description:
+						"Parse a user-agent string into browser, engine, operating system, device class and bot flag.",
+					method: "POST",
+					url: "/api/developer-inspect?outputFormat=user-agent",
 				},
 			],
 			fields: [
@@ -606,12 +646,28 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: DEVELOPER_INSPECT_FORMATS,
 				},
 				{
-					description: "Foreground colour for contrast checks.",
+					description: "Foreground colour for contrast checks: hex, rgb(), hsl() or a CSS name.",
 					id: "foreground",
 				},
 				{
-					description: "Background colour for contrast checks.",
+					description: "Background colour for contrast checks: hex, rgb(), hsl() or a CSS name.",
 					id: "background",
+				},
+				{
+					description:
+						"Secret for verifying HS256, HS384 and HS512 JWT signatures. Send it in a POST body, not a query string.",
+					id: "secret",
+				},
+				{
+					defaultValue: "utf8",
+					description: "How the JWT secret is encoded.",
+					id: "secretEncoding",
+					values: JWT_SECRET_ENCODINGS,
+				},
+				{
+					description: "PEM public key for verifying RS256, RS384 and RS512 JWT signatures.",
+					display: { width: "full" },
+					id: "publicKey",
 				},
 			],
 			methods: ["GET", "POST"],
@@ -619,11 +675,16 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		},
 		audience: "Documents",
 		description:
-			"Decode JWTs, inspect UUIDs, explain cron expressions, check colour contrast, and identify common file signatures.",
+			"Decode and verify JWTs, inspect UUIDs, validate cron expressions and list their next runs, check colour contrast, identify likely hash types, parse user agents, and identify common file signatures.",
 		display: {
 			actionLabel: "Inspect value",
 			category: "Developer",
-			examples: ["0 9 * * 1", "018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00"],
+			examples: [
+				"0 9 * * 1",
+				"018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00",
+				"5d41402abc4b2a76b9719d911017c592",
+				"rgb(17, 24, 39) white",
+			],
 		},
 		endpoint: "/api/developer-inspect",
 		id: "developer-inspect",

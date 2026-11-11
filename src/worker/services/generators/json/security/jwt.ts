@@ -6,20 +6,22 @@ import {
 import {
 	bytesToBase64Url,
 	parseBoolean,
-	parseChoice,
 	parseCount,
 	parseInteger,
 	randomBytes,
 	singleOrList,
 } from "../../../../utils/generation";
+import {
+	type JwtAlgorithm,
+	jwtRsaKeyAlgorithm,
+	parseJwtAlgorithm,
+	signJwtHmac,
+	signJwtRsa,
+} from "../../../../utils/jwt";
 import type { GeneratorRequest } from "../../request";
 
-const JWT_ALGORITHMS = ["HS256", "HS384", "HS512", "RS256", "RS384", "RS512"] as const;
-
-type JwtAlgorithm = (typeof JWT_ALGORITHMS)[number];
-
 export async function createJwtTokens(request: GeneratorRequest) {
-	const algorithm = parseChoice(request.fields.algorithm, JWT_ALGORITHMS, "HS256");
+	const algorithm = parseJwtAlgorithm(request.fields.algorithm, "HS256");
 	const count = parseCount(request.fields.count ?? "", 1, 10);
 	const tokens = await Promise.all(
 		Array.from({ length: count }, () => createJwtToken(request, algorithm)),
@@ -75,16 +77,15 @@ async function createSigner(algorithm: JwtAlgorithm): Promise<{
 			material: {
 				secret: bytesToBase64Url(secret),
 			},
-			sign: (tokenBody) => signHmac(tokenBody, secret, algorithm),
+			sign: (tokenBody) => signJwtHmac(tokenBody, secret, algorithm),
 		};
 	}
 
 	const keyPair = requireCryptoKeyPair(
 		await crypto.subtle.generateKey(
 			{
-				hash: hashNameFor(algorithm),
+				...jwtRsaKeyAlgorithm(algorithm),
 				modulusLength: 2048,
-				name: "RSASSA-PKCS1-v1_5",
 				publicExponent: new Uint8Array([1, 0, 1]),
 			},
 			true,
@@ -101,7 +102,7 @@ async function createSigner(algorithm: JwtAlgorithm): Promise<{
 			privateKey: arrayBufferToPem("PRIVATE KEY", requireArrayBuffer(privateKey)),
 			publicKey: arrayBufferToPem("PUBLIC KEY", requireArrayBuffer(publicKey)),
 		},
-		sign: (tokenBody) => signRsa(tokenBody, keyPair.privateKey),
+		sign: (tokenBody) => signJwtRsa(tokenBody, keyPair.privateKey),
 	};
 }
 
@@ -141,41 +142,4 @@ function sanitizeClaimObject(value: Record<string, unknown>) {
 
 function base64UrlJson(value: unknown) {
 	return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(value)));
-}
-
-async function signHmac(value: string, secret: Uint8Array, algorithm: JwtAlgorithm) {
-	const key = await crypto.subtle.importKey(
-		"raw",
-		secret,
-		{ hash: hashNameFor(algorithm), name: "HMAC" },
-		false,
-		["sign"],
-	);
-	const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value));
-
-	return bytesToBase64Url(new Uint8Array(signature));
-}
-
-async function signRsa(value: string, privateKey: CryptoKey) {
-	const signature = await crypto.subtle.sign(
-		"RSASSA-PKCS1-v1_5",
-		privateKey,
-		new TextEncoder().encode(value),
-	);
-
-	return bytesToBase64Url(new Uint8Array(signature));
-}
-
-function hashNameFor(algorithm: JwtAlgorithm) {
-	switch (algorithm) {
-		case "HS384":
-		case "RS384":
-			return "SHA-384";
-		case "HS512":
-		case "RS512":
-			return "SHA-512";
-		case "HS256":
-		case "RS256":
-			return "SHA-256";
-	}
 }

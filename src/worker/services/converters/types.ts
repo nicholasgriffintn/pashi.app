@@ -85,4 +85,6 @@ export interface ConverterRequest {
 	input: string;
 }
 
-export type ConverterHandler = (request: ConverterRequest) => ConverterResult;
+export type ConverterHandler = (
+	request: ConverterRequest,
+) => ConverterResult | Promise<ConverterResult>;

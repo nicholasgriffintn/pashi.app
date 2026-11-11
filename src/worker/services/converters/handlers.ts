@@ -64,7 +64,12 @@ import {
 } from "./url-transform.ts";
 
 export class ConverterRequestError extends Error {
-	status = 400;
+	readonly status: number;
+
+	constructor(message: string, status = 400) {
+		super(message);
+		this.status = status;
+	}
 }
 
 function textResult(
@@ -192,7 +197,7 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			throw error;
 		}
 	},
-	"developer-inspect": ({ fields, input }) => {
+	"developer-inspect": async ({ fields, input }) => {
 		const outputFormat = developerInspectFormat(fields.outputFormat || fields.format);
 
 		if (!outputFormat) {
@@ -206,13 +211,13 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				"developer-inspect",
 				"Developer inspection",
 				input,
-				inspectDeveloperText(input, outputFormat, fields),
+				await inspectDeveloperText(input, outputFormat, fields),
 				`Developer text inspected with ${outputFormat}.`,
 				{ mimeType: "application/json;charset=utf-8" },
 			);
 		} catch (error) {
 			if (error instanceof DeveloperInspectError) {
-				throw new ConverterRequestError(error.message);
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;

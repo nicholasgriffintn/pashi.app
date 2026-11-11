@@ -1,4 +1,5 @@
 import {
+	base64ToBytes,
 	bytesToBase64,
 	bytesToBase64Url,
 	randomBytes,
@@ -16,6 +17,28 @@ export function arrayBufferToPem(label: string, value: ArrayBuffer) {
 	const lines = base64.match(/.{1,64}/g) ?? [];
 
 	return `-----BEGIN ${label}-----\n${lines.join("\n")}\n-----END ${label}-----`;
+}
+
+export function pemToBytes(label: string, pem: string) {
+	const text = pem.trim();
+	const header = `-----BEGIN ${label}-----`;
+	const footer = `-----END ${label}-----`;
+
+	if (
+		text.length <= header.length + footer.length ||
+		!text.startsWith(header) ||
+		!text.endsWith(footer)
+	) {
+		return undefined;
+	}
+
+	const base64 = text.slice(header.length, text.length - footer.length).replace(/\s+/g, "");
+
+	if (base64.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) {
+		return undefined;
+	}
+
+	return base64ToBytes(base64);
 }
 
 export function requireCryptoKeyPair(value: CryptoKey | CryptoKeyPair): CryptoKeyPair {
