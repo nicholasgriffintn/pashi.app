@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 
 import { jsonQueryOptions } from "../lib/query-client";
 import { searchTools, type SearchableTool } from "../lib/tool-search";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 interface ApiField {
 	id: string;
@@ -28,10 +28,7 @@ interface ApiInfo {
 export function ApiDocsPage() {
 	const [query, setQuery] = useState("");
 
-	useDocumentMetadata(
-		"API",
-		"Every Pashi tool as a URL. Generators, converters and export formats.",
-	);
+	useStaticPageMetadata("/api");
 	const { data, error, isPending } = useQuery(jsonQueryOptions<ApiInfo>("/api/info"));
 
 	const matches = useMemo(() => {

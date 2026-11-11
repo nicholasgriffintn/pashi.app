@@ -30,11 +30,12 @@ import {
 } from "./services/generators/request";
 import { createOgImageResponse } from "./services/og-image";
 import { createOpenApiDocument } from "./services/openapi";
+import { createLlmsTextResponse, createRobotsResponse, renderPage } from "./services/pages";
 import { createSitemapResponse } from "./services/sitemap";
 import { readGeneratorBody } from "./utils/body";
 import { withCacheControl } from "./utils/cache";
 import { toErrorResponse } from "./utils/error-response";
-import { errorJson } from "./utils/http";
+import { errorJson, mediaTypeOf } from "./utils/http";
 
 assertUniqueToolIdentifiers();
 assertCatalogueExamples();
@@ -160,6 +161,19 @@ app.on(["GET", "POST"], "/export/:type/:format", async (c) => {
 });
 
 app.route("/api", createToolRoutes());
+
+app.get("/robots.txt", (c) => createRobotsResponse(new URL(c.req.url).origin));
+
+app.get("/llms.txt", (c) => createLlmsTextResponse(new URL(c.req.url).origin));
+
+app.get("*", async (c) => {
+	const response = await c.env.ASSETS.fetch(c.req.raw);
+	const url = new URL(c.req.url);
+
+	return response.ok && mediaTypeOf(response.headers) === "text/html"
+		? renderPage(response, url.origin, url.pathname)
+		: response;
+});
 
 export { ConversionContainer };
 

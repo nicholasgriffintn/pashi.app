@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 export function AboutPage() {
-	useDocumentMetadata("About", "What Pashi is, and how it runs on Cloudflare.");
+	useStaticPageMetadata("/about");
 
 	return (
 		<main className="page">

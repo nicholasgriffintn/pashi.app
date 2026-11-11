@@ -7,7 +7,7 @@ import { McpAccessNotice } from "../components/McpAccessNotice";
 import { useApiKey } from "../lib/api-key-context";
 import { appPreviewsQueryOptions, isAccessDenied } from "../lib/app-previews";
 import { mcpAppsQueryOptions } from "../lib/mcp-apps";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 export function AppsPage() {
 	const { apiKey } = useApiKey();
@@ -15,7 +15,7 @@ export function AppsPage() {
 	const signedOut = isAccessDenied(apps.error);
 	const previews = useQuery({ ...appPreviewsQueryOptions, enabled: signedOut });
 
-	useDocumentMetadata("Apps", "Pashi's MCP Apps, playable in the browser.");
+	useStaticPageMetadata("/labs/apps");
 
 	return (
 		<main className="page">

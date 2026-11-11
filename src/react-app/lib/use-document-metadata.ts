@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 
-const DEFAULT_DESCRIPTION =
-	"Pashi is the home for side projects: generators, converters and AI experiments.";
+import {
+	DEFAULT_PAGE_DESCRIPTION,
+	fullPageTitle,
+	STATIC_PAGES,
+	type StaticPagePath,
+} from "../../shared/pages";
 
 function setMetaContent(selector: string, attribute: string, name: string, content: string) {
 	let element = document.head.querySelector<HTMLMetaElement>(selector);
@@ -27,9 +31,9 @@ function setCanonical(href: string) {
 	link.href = href;
 }
 
-export function useDocumentMetadata(title: string, description = DEFAULT_DESCRIPTION) {
+export function useDocumentMetadata(title: string, description = DEFAULT_PAGE_DESCRIPTION) {
 	useEffect(() => {
-		const fullTitle = title === "Pashi" ? "Pashi" : `${title} · Pashi`;
+		const fullTitle = fullPageTitle(title);
 
 		document.title = fullTitle;
 		setMetaContent('meta[name="description"]', "name", "description", description);
@@ -49,4 +53,8 @@ export function useDocumentMetadata(title: string, description = DEFAULT_DESCRIP
 		);
 		setCanonical(`${window.location.origin}${window.location.pathname}`);
 	}, [description, title]);
+}
+
+export function useStaticPageMetadata(path: StaticPagePath) {
+	useDocumentMetadata(STATIC_PAGES[path].title, STATIC_PAGES[path].description);
 }
