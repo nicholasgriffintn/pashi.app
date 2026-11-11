@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 interface Experiment {
 	blurb: string;
@@ -46,10 +46,7 @@ const EXPERIMENTS: readonly Experiment[] = [
 ];
 
 export function LabsPage() {
-	useDocumentMetadata(
-		"Labs",
-		"AI experiments in Pashi: plain English tool routing, format explainers, typed decisions and MCP Apps.",
-	);
+	useStaticPageMetadata("/labs");
 
 	return (
 		<main className="page">

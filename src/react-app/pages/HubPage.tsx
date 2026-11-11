@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import { PashiLogoButton } from "../components/PashiLogoButton";
 import { PROJECTS, STATUS_LABELS, type Project, type ProjectKind } from "../lib/projects";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 const SECTIONS: { kind: ProjectKind; title: string }[] = [
 	{ kind: "project", title: "Projects" },
@@ -47,7 +47,7 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export function HubPage() {
-	useDocumentMetadata("Pashi");
+	useStaticPageMetadata("/");
 
 	return (
 		<main className="hub">

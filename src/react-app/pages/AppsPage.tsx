@@ -4,13 +4,13 @@ import { Link } from "react-router-dom";
 import { McpAccessNotice } from "../components/McpAccessNotice";
 import { useApiKey } from "../lib/api-key-context";
 import { mcpAppsQueryOptions } from "../lib/mcp-apps";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 export function AppsPage() {
 	const { apiKey } = useApiKey();
 	const apps = useQuery(mcpAppsQueryOptions(apiKey));
 
-	useDocumentMetadata("Apps", "Pashi's MCP Apps, playable in the browser.");
+	useStaticPageMetadata("/labs/apps");
 
 	return (
 		<main className="page">

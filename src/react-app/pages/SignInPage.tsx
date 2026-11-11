@@ -3,14 +3,14 @@ import { Link } from "react-router-dom";
 import { ApiKeyControl } from "../components/ApiKeyControl";
 import { PolychatConnect } from "../components/PolychatConnect";
 import { useApiKey } from "../lib/api-key-context";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 const DEV_KEY = import.meta.env.VITE_PASHI_DEV_API_KEY;
 
 export function SignInPage() {
 	const { apiKey, setApiKey } = useApiKey();
 
-	useDocumentMetadata("Sign in", "Connect Polychat to use AI and media conversion in Pashi.");
+	useStaticPageMetadata("/sign-in");
 
 	return (
 		<main className="page sign-in">

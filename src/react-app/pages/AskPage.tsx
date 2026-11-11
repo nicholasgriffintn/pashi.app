@@ -5,15 +5,12 @@ import { AskAnswer } from "../components/AskAnswer";
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
 import { askPashi } from "../lib/ask-api";
 import { ASK_EXAMPLES } from "../lib/labs-examples";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 export function AskPage() {
 	const [request, setRequest] = useState("");
 
-	useDocumentMetadata(
-		"Ask Pashi",
-		"Describe what you need and Pashi picks the tool, runs it when it is simple and otherwise opens it with the form filled in.",
-	);
+	useStaticPageMetadata("/labs/ask");
 
 	const { data, error, isPending, mutate } = useMutation({ mutationFn: askPashi });
 

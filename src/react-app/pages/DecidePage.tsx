@@ -7,16 +7,13 @@ import { DecideSubjectFields } from "../components/DecideSubjectFields";
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
 import { DECIDE_EXAMPLES } from "../lib/decide-examples";
 import { useDecide } from "../lib/use-decide";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 export function DecidePage() {
 	const decide = useDecide();
 	const { form } = decide;
 
-	useDocumentMetadata(
-		"Decide",
-		"Ask a decision model typed questions about some text or an image: yes or no, choices and scores.",
-	);
+	useStaticPageMetadata("/labs/decide");
 
 	function handleSubmit(event: FormEvent) {
 		event.preventDefault();

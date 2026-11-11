@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
 import { EXPLAIN_EXAMPLES, type ExplainExample, type ExplainSubject } from "../lib/labs-examples";
 import { fetchJson } from "../lib/query-client";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useStaticPageMetadata } from "../lib/use-document-metadata";
 
 interface Explanation {
 	parts: { detail: string; piece: string }[];
@@ -32,10 +32,7 @@ export function ExplainPage() {
 	const [subject, setSubject] = useState<ExplainSubject>("regex");
 	const [input, setInput] = useState("");
 
-	useDocumentMetadata(
-		"Explainers",
-		"Plain English for regular expressions, cron schedules, JWTs, curl commands and SQL.",
-	);
+	useStaticPageMetadata("/labs/explain");
 
 	const active = SUBJECTS.find((entry) => entry.id === subject) ?? SUBJECTS[0];
 
