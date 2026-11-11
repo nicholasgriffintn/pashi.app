@@ -1,6 +1,9 @@
 import type { FormEvent } from "react";
 
+import type { ToolExample } from "../../shared/tool-examples";
 import type { GeneratorInfoTool, GeneratorInputField } from "../lib/generator-info";
+import { hasPrimaryInput, visibleGeneratorFields } from "../lib/generator-state";
+import { ToolExamples } from "./ToolExamples";
 import { ToolPicker } from "./ToolPicker";
 
 type GenerationMode = "ai" | "standard";
@@ -12,43 +15,13 @@ interface GeneratorFormProps {
 	generationMode: GenerationMode;
 	input: string;
 	isLoading: boolean;
+	onApplyExample: (example: ToolExample) => void;
 	onFieldChange: (fieldId: string, value: string) => void;
 	onGenerationModeChange: (mode: GenerationMode) => void;
 	onInputChange: (value: string) => void;
 	onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 	onToolChange: (toolId: string) => void;
 	tools: GeneratorInfoTool[];
-}
-
-function applyExample(
-	tool: GeneratorInfoTool,
-	example: string,
-	onInputChange: (value: string) => void,
-	onFieldChange: (fieldId: string, value: string) => void,
-) {
-	const firstField = tool.input.fields?.[0];
-
-	if (!firstField) {
-		onInputChange(example);
-
-		return;
-	}
-
-	onFieldChange(firstField.id, example);
-}
-
-function shouldShowField(toolId: string, fieldId: string, fieldValues: Record<string, string>) {
-	if (toolId !== "uuid") {
-		return true;
-	}
-
-	if (fieldId !== "name" && fieldId !== "namespace") {
-		return true;
-	}
-
-	const format = fieldValues.format || "v4";
-
-	return format === "v3" || format === "v5";
 }
 
 export function GeneratorForm({
@@ -58,6 +31,7 @@ export function GeneratorForm({
 	generationMode,
 	input,
 	isLoading,
+	onApplyExample,
 	onFieldChange,
 	onGenerationModeChange,
 	onInputChange,
@@ -65,12 +39,7 @@ export function GeneratorForm({
 	onToolChange,
 	tools,
 }: GeneratorFormProps) {
-	const hasFields = Boolean(activeTool.input.fields?.length);
-	const hasPrimaryInput = !hasFields && activeTool.input.mode !== "none";
-	const visibleExamples = activeTool.input.mode === "none" ? [] : activeTool.display.examples;
-	const visibleFields = activeTool.input.fields?.filter((field) =>
-		shouldShowField(activeTool.id, field.id, fieldValues),
-	);
+	const visibleFields = visibleGeneratorFields(activeTool, fieldValues);
 	const supportsAiMode = activeTool.modes?.includes("ai") ?? false;
 
 	return (
@@ -87,9 +56,9 @@ export function GeneratorForm({
 
 				<p className="tool-description">{activeTool.description}</p>
 
-				{hasFields ? (
+				{visibleFields.length > 0 ? (
 					<div className="field-grid">
-						{visibleFields?.map((field) => (
+						{visibleFields.map((field) => (
 							<label className="field-control" key={field.id}>
 								<span>{field.label}</span>
 								<FieldInput
@@ -100,7 +69,7 @@ export function GeneratorForm({
 							</label>
 						))}
 					</div>
-				) : hasPrimaryInput ? (
+				) : hasPrimaryInput(activeTool) ? (
 					<>
 						<label htmlFor="generate-input">{activeTool.input.label}</label>
 						<div className="input-row">
@@ -116,20 +85,11 @@ export function GeneratorForm({
 					</>
 				) : null}
 
-				{visibleExamples.length > 0 ? (
-					<div className="examples" aria-label="Examples">
-						<span>Try</span>
-						{visibleExamples.map((example) => (
-							<button
-								key={example}
-								onClick={() => applyExample(activeTool, example, onInputChange, onFieldChange)}
-								type="button"
-							>
-								{example}
-							</button>
-						))}
-					</div>
-				) : null}
+				<ToolExamples
+					examples={activeTool.display.examples}
+					label="Try"
+					onApply={onApplyExample}
+				/>
 			</div>
 
 			<div className="generate-actions">

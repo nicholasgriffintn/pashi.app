@@ -1,5 +1,7 @@
-import type { GeneratorInfoTool } from "./generator-info";
+import { isFieldVisible, type ToolExample } from "../../shared/tool-examples";
+import type { GeneratorInfoTool, GeneratorInputField } from "./generator-info";
 import { pushAppPath } from "./navigation";
+import { readFieldParams, type ToolValueField, visibleFieldValues } from "./tool-values";
 
 export interface GeneratorValues {
 	fields: Record<string, string>;
@@ -44,35 +46,57 @@ export function createImageResult(
 	};
 }
 
-export function getDefaultInput(tool: GeneratorInfoTool) {
-	if (tool.input.mode === "none" || tool.input.fields?.length) {
-		return "";
-	}
-
-	return tool.input.required ? (tool.display.examples[0] ?? tool.placeholder) : "";
+function toValueField(field: GeneratorInputField): ToolValueField {
+	return { allowed: field.options, id: field.id, visibleWhen: field.visibleWhen };
 }
 
-export function getDefaultFieldValues(tool: GeneratorInfoTool) {
-	return Object.fromEntries(
-		(tool.input.fields ?? []).map((field) => [field.id, field.placeholder]),
-	);
+function generatorFields(tool: GeneratorInfoTool) {
+	return tool.input.fields ?? [];
+}
+
+export function hasPrimaryInput(tool: GeneratorInfoTool) {
+	return tool.input.mode !== "none" && generatorFields(tool).length === 0;
+}
+
+function defaultFieldValues(tool: GeneratorInfoTool) {
+	return Object.fromEntries(generatorFields(tool).map((field) => [field.id, field.placeholder]));
+}
+
+export function generatorValuesFromExample(
+	tool: GeneratorInfoTool,
+	example: ToolExample | undefined,
+): GeneratorValues {
+	const fallbackInput = tool.input.required ? tool.placeholder : "";
+
+	return {
+		fields: { ...defaultFieldValues(tool), ...example?.fields },
+		input: hasPrimaryInput(tool) ? (example?.input ?? fallbackInput) : "",
+	};
+}
+
+export function getDefaultGeneratorValues(tool: GeneratorInfoTool) {
+	return generatorValuesFromExample(tool, tool.display.examples[0]);
 }
 
 export function getInitialValues(tool: GeneratorInfoTool): GeneratorValues {
 	const params = new URLSearchParams(window.location.search);
-	const input = params.get("input") ?? getDefaultInput(tool);
-	const fields = {
-		...getDefaultFieldValues(tool),
-		...Object.fromEntries(
-			(tool.input.fields ?? []).flatMap((field) => {
-				const value = params.get(field.id);
+	const values = getDefaultGeneratorValues(tool);
 
-				return value === null ? [] : [[field.id, value]];
-			}),
-		),
+	return {
+		fields: {
+			...values.fields,
+			...readFieldParams(params, generatorFields(tool).map(toValueField)),
+		},
+		input: params.get("input") ?? values.input,
 	};
+}
 
-	return { fields, input };
+export function visibleGeneratorFields(tool: GeneratorInfoTool, fields: Record<string, string>) {
+	return generatorFields(tool).filter((field) => isFieldVisible(field.visibleWhen, fields));
+}
+
+export function generatorRequestFields(tool: GeneratorInfoTool, fields: Record<string, string>) {
+	return visibleFieldValues(generatorFields(tool).map(toValueField), fields);
 }
 
 export function getRouteToolId() {

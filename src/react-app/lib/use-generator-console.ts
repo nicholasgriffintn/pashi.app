@@ -1,13 +1,15 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { ToolExample } from "../../shared/tool-examples";
 import { useApiKey } from "./api-key-context";
 import { generateThing } from "./generate-api";
 import { fetchGeneratorInfo, type GeneratorInfoTool } from "./generator-info";
 import {
 	createImageResult,
 	findToolByRoute,
-	getDefaultFieldValues,
-	getDefaultInput,
+	generatorRequestFields,
+	generatorValuesFromExample,
+	getDefaultGeneratorValues,
 	getInitialValues,
 	type GeneratorValues,
 } from "./generator-state";
@@ -20,7 +22,7 @@ import { useNotification } from "./use-notification";
 
 function createInitialResult(tool: GeneratorInfoTool, values: GeneratorValues, generateId: number) {
 	return tool.result.kind === "image"
-		? createImageResult(tool, values.input, values.fields, generateId)
+		? createImageResult(tool, values.input, generatorRequestFields(tool, values.fields), generateId)
 		: undefined;
 }
 
@@ -56,6 +58,10 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	const activeTool = useMemo(
 		() => tools.find((tool) => tool.id === activeToolId),
 		[activeToolId, tools],
+	);
+	const requestFields = useMemo(
+		() => (activeTool ? generatorRequestFields(activeTool, fieldValues) : {}),
+		[activeTool, fieldValues],
 	);
 
 	const applyToolValues = useCallback((nextTool: GeneratorInfoTool, values: GeneratorValues) => {
@@ -188,8 +194,8 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 
 			setGenerateId(nextGenerateId);
 			setResultMode("standard");
-			setResult(createImageResult(activeTool, input, fieldValues, nextGenerateId));
-			replaceAppSearch(buildShareSearch(input, fieldValues));
+			setResult(createImageResult(activeTool, input, requestFields, nextGenerateId));
+			replaceAppSearch(buildShareSearch(input, requestFields));
 
 			return;
 		}
@@ -198,7 +204,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			const nextResult = await generateThing(
 				activeTool.endpoint,
 				input,
-				aiMode ? { ...fieldValues, mode: "ai" } : fieldValues,
+				aiMode ? { ...requestFields, mode: "ai" } : requestFields,
 				apiKey,
 				controller.signal,
 			);
@@ -212,7 +218,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			setResult(nextResult);
 			setResultMode(aiMode ? "ai" : "standard");
 			setIsLoading(false);
-			replaceAppSearch(buildShareSearch(input, fieldValues));
+			replaceAppSearch(buildShareSearch(input, requestFields));
 		} catch (caught) {
 			if (controller.signal.aborted) {
 				return;
@@ -235,11 +241,20 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 			return;
 		}
 
-		applyToolValues(nextTool, {
-			fields: getDefaultFieldValues(nextTool),
-			input: getDefaultInput(nextTool),
-		});
+		applyToolValues(nextTool, getDefaultGeneratorValues(nextTool));
 		navigateToTool(nextTool.id);
+	}
+
+	function applyExample(example: ToolExample) {
+		if (!activeTool) {
+			return;
+		}
+
+		const values = generatorValuesFromExample(activeTool, example);
+
+		setInput(values.input);
+		setFieldValues(values.fields);
+		setError("");
 	}
 
 	function handleFieldChange(fieldId: string, value: string) {
@@ -276,6 +291,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 	return {
 		activeTool,
 		activeToolId,
+		applyExample,
 		clearResult,
 		error,
 		exportFormats,
@@ -291,6 +307,7 @@ export function useGeneratorConsole({ navigateToTool, routeToolId }: ToolConsole
 		isLoading,
 		notification,
 		notify,
+		requestFields,
 		result,
 		resultHistory,
 		resultMode,
