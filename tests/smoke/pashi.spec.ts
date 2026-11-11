@@ -79,9 +79,12 @@ test("the tool picker opens with a keyboard shortcut and filters", async ({ page
 test("the explainers page offers every subject", async ({ page }) => {
 	await page.goto("/labs/explain");
 
-	await expect(page.getByRole("button", { name: "Regex" })).toHaveAttribute("aria-pressed", "true");
+	await expect(page.getByRole("button", { exact: true, name: "Regex" })).toHaveAttribute(
+		"aria-pressed",
+		"true",
+	);
 
-	await page.getByRole("button", { name: "Cron" }).click();
+	await page.getByRole("button", { exact: true, name: "Cron" }).click();
 
 	await expect(page.getByLabel("Cron to explain")).toBeVisible();
 });

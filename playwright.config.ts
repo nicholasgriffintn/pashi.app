@@ -16,6 +16,7 @@ export default defineConfig({
 	},
 	webServer: {
 		command: `node scripts/seed-dev-key.mjs && pnpm exec vite preview --port ${PORT} --strictPort`,
+		env: { PASHI_REMOTE_BINDINGS: "off" },
 		reuseExistingServer: !process.env.CI,
 		timeout: 180_000,
 		url: `http://localhost:${PORT}`,
