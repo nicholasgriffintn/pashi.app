@@ -234,7 +234,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		annotations: { readOnlyHint: true },
 		appAccess: "polychat-pro",
 		description:
-			"Open Charades:act out a card on camera for six seconds and an AI audience guesses which card it was. Opens a game view; the player does the acting.",
+			"Open Charades: act out a card on camera for six seconds and an AI audience guesses which card it was. Opens a game view; the player does the acting.",
 		inputSchema: {
 			additionalProperties: false,
 			properties: {
@@ -285,7 +285,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		annotations: { readOnlyHint: true },
 		appAccess: "polychat-pro",
 		description:
-			"Open Photo Sorter:the player names some piles, drops in up to 80 photos and an AI files each one, flagging faces, text, blur and screenshots. Opens a sorting view; the photos stay with the player.",
+			"Open Photo Sorter: the player names some piles, drops in up to 80 photos and an AI files each one, flagging faces, text, blur and screenshots. Opens a sorting view; the photos stay with the player.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_play_photo_sorter",
 		ratePolicy: "read",
@@ -341,7 +341,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		annotations: { readOnlyHint: true },
 		appAccess: "polychat-pro",
 		description:
-			"Open Twenty Questions:an AI thinks of something and the player has twenty yes or no questions to find it. Opens a game view; the player asks the questions.",
+			"Open Twenty Questions: an AI thinks of something and the player has twenty yes or no questions to find it. Opens a game view; the player asks the questions.",
 		inputSchema: {
 			additionalProperties: false,
 			properties: {
@@ -428,7 +428,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		annotations: { readOnlyHint: true },
 		appAccess: "account",
 		description:
-			"Open Strudel Music Patterns:generate a Strudel pattern from a description, live-code it in the browser and keep a library of patterns. Opens a studio view.",
+			"Open Strudel Music Patterns: generate a Strudel pattern from a description, live-code it in the browser and keep a library of patterns. Opens a studio view.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_open_strudel",
 		ratePolicy: "read",
@@ -520,7 +520,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		annotations: { readOnlyHint: true },
 		appAccess: "polychat-pro",
 		description:
-			"Open Verbatim:live transcription where every phrase is transcribed, then checked word by word against the audio, and anything the checker cannot hear is struck out. Opens a recording view.",
+			"Open Verbatim: live transcription where every phrase is transcribed, then checked word by word against the audio, and anything the checker cannot hear is struck out. Opens a recording view.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_open_verbatim",
 		ratePolicy: "read",
@@ -584,7 +584,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		annotations: { readOnlyHint: true },
 		appAccess: "api-key-or-pro",
 		description:
-			"Open Polis:found a town of up to 50,000 residents, pass laws in plain English, stage disasters, poll the town and watch everyone react. Opens a simulation view.",
+			"Open Polis: found a town of up to 50,000 residents, pass laws in plain English, stage disasters, poll the town and watch everyone react. Opens a simulation view.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_open_polis",
 		ratePolicy: "read",
