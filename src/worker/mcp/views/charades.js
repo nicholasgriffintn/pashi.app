@@ -10,6 +10,8 @@
 	const TILTS = ["-3deg", "2deg", "-1deg", "3deg"];
 	const SHOWN_GUESSES = 5;
 	const BASE64_CHUNK = 0x8000;
+	const CONTEXT_ROUNDS = 6;
+	const CONTEXT_LABEL_LENGTH = 60;
 	const state = {
 		cardIndex: 0,
 		deck: null,
@@ -42,6 +44,53 @@
 	function setError(message) {
 		byId("error").textContent = message || "";
 		byId("error").hidden = !message;
+	}
+
+	function contextLabel(text) {
+		return bridge.clipText(String(text), CONTEXT_LABEL_LENGTH);
+	}
+
+	function describeRound(round, number) {
+		const { verdict } = round;
+		const outcome = verdict.correct
+			? "correct"
+			: `wrong, the card ranked ${verdict.secretRank} of ${verdict.guesses.length} at ${percent(verdict.secretProbability)}`;
+		const talking = verdict.caughtTalking ? ", words heard so points halved" : "";
+
+		return `${number}. Card “${contextLabel(round.card)}”: audience guessed “${contextLabel(verdict.topGuess)}” (${outcome}), ${verdict.points} points${talking}`;
+	}
+
+	function describeState() {
+		const lines = ["Pashi Charades state:"];
+
+		if (!state.deck) {
+			return [...lines, "No deck chosen. The player is picking a deck."].join("\n");
+		}
+
+		const score = state.rounds.reduce((sum, round) => sum + round.verdict.points, 0);
+		const skipped = Math.max(0, state.rounds.length - CONTEXT_ROUNDS);
+		const card = contextLabel(state.deck.cards[state.cardIndex]);
+
+		lines.push(
+			`Deck: ${contextLabel(state.deck.name)}`,
+			`Current card: “${card}” (${state.verdict ? "performed and judged" : "not yet performed"})`,
+			`Score: ${score} points over ${state.rounds.length} judged rounds`,
+		);
+
+		if (state.rounds.length > 0) {
+			lines.push(
+				skipped > 0 ? `Rounds (latest ${CONTEXT_ROUNDS}, ${skipped} earlier omitted):` : "Rounds:",
+				...state.rounds
+					.slice(skipped)
+					.map((round, index) => describeRound(round, skipped + index + 1)),
+			);
+		}
+
+		return lines.join("\n");
+	}
+
+	function shareState() {
+		bridge.updateModelContext(describeState());
 	}
 
 	function drawIndex(deck) {
@@ -206,6 +255,7 @@
 		renderCard();
 		renderRounds();
 		render();
+		shareState();
 	}
 
 	function stopStream() {
@@ -349,6 +399,7 @@
 			state.verdict = verdict;
 			state.rounds.push({ card: verdict.card, verdict });
 			renderRounds();
+			shareState();
 		} catch (error) {
 			setError(error instanceof Error ? error.message : "The judges have wandered off.");
 		} finally {
@@ -363,6 +414,7 @@
 		state.cardIndex = drawIndex(state.deck);
 		renderCard();
 		render();
+		shareState();
 	}
 
 	function leaveDeck() {
@@ -372,6 +424,7 @@
 		state.verdict = null;
 		setError("");
 		renderPicker();
+		shareState();
 	}
 
 	byId("open-camera").addEventListener("click", () => {

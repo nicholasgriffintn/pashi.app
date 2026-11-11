@@ -8,6 +8,7 @@ import {
 	type PolisStatus,
 } from "./engine/protocol";
 import { formatMoment } from "./format";
+import { FullscreenControl } from "./FullscreenControl";
 import type { PolisEngine } from "./usePolisEngine";
 
 const UNIT_LABELS: Record<PolisPlaybackUnit, string> = {
@@ -123,6 +124,7 @@ export function PlaybackBar({
 						</button>
 					))}
 				</div>
+				<FullscreenControl />
 				{engine.viewOnly ? null : (
 					<div className="polis-playback-exit">
 						<Button

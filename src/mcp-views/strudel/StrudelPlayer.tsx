@@ -15,9 +15,10 @@ interface StrudelPlayerProps {
 	code: string;
 	config: StrudelConfig;
 	onChange: (code: string) => void;
+	onPlay: (code: string) => void;
 }
 
-export function StrudelPlayer({ code, config, onChange }: StrudelPlayerProps) {
+export function StrudelPlayer({ code, config, onChange, onPlay }: StrudelPlayerProps) {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -29,11 +30,13 @@ export function StrudelPlayer({ code, config, onChange }: StrudelPlayerProps) {
 	const evalFailedRef = useRef(false);
 	const latestCodeRef = useRef(code);
 	const onChangeRef = useRef(onChange);
+	const onPlayRef = useRef(onPlay);
 
 	useEffect(() => {
 		latestCodeRef.current = code;
 		onChangeRef.current = onChange;
-	}, [code, onChange]);
+		onPlayRef.current = onPlay;
+	}, [code, onChange, onPlay]);
 
 	const createEditor = useCallback(async () => {
 		if (editorRef.current) {
@@ -148,6 +151,7 @@ export function StrudelPlayer({ code, config, onChange }: StrudelPlayerProps) {
 			if (!evalFailedRef.current) {
 				setIsPlaying(true);
 				setError(null);
+				onPlayRef.current(latestCodeRef.current);
 			}
 		} catch (evalError) {
 			setError(errorMessage(evalError, "Evaluation error"));

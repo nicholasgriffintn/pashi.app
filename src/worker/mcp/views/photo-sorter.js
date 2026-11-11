@@ -4,6 +4,9 @@
 	const config = bridge.data();
 	const limits = config.limits;
 	const JPEG_QUALITY = 0.82;
+	const CONTEXT_FLAGGED = 12;
+	const CONTEXT_NAME_LENGTH = 48;
+	const CONTEXT_PILE_LENGTH = 40;
 	const state = {
 		active: 0,
 		generation: 0,
@@ -57,6 +60,54 @@
 
 	function isDeveloping(item) {
 		return item.state === "queued" || item.state === "sorting";
+	}
+
+	function pileName(pile, index) {
+		return bridge.clipText(pile.label.trim() || `Pile ${index + 1}`, CONTEXT_PILE_LENGTH);
+	}
+
+	function describeFlagged(item) {
+		const flags = item.result.flags.map((flag) => config.flags[flag]?.label ?? flag).join(", ");
+
+		return `- ${bridge.clipText(item.name, CONTEXT_NAME_LENGTH)}: ${flags}`;
+	}
+
+	function describeState() {
+		const pileIds = new Set(state.piles.map((pile) => pile.id));
+		const sorted = state.items.filter((item) => item.state === "sorted");
+		const flagged = sorted.filter((item) => item.result.flags.length > 0);
+		const piles = state.piles.map((pile, index) => {
+			const count = sorted.filter((item) => placedPileId(item) === pile.id).length;
+
+			return `${pileName(pile, index)}: ${count}`;
+		});
+		const lines = ["Pashi Photo Sorter state:"];
+
+		if (state.items.length === 0) {
+			return [...lines, "No photos on the table.", `Pile counts: ${piles.join("; ")}`].join("\n");
+		}
+
+		lines.push(
+			`Photos: ${state.items.length} on the table, ${sorted.length} sorted, ${state.items.filter(isDeveloping).length} still sorting, ${state.items.filter((item) => item.state === "failed").length} failed`,
+			`Awaiting the user's decision (no confident pile): ${sorted.filter((item) => !pileIds.has(placedPileId(item))).length}`,
+			`Moved by the user: ${sorted.filter((item) => item.manualPileId).length}`,
+			`Pile counts: ${piles.join("; ")}`,
+		);
+
+		if (flagged.length > 0) {
+			lines.push(
+				flagged.length > CONTEXT_FLAGGED
+					? `Flagged photos (first ${CONTEXT_FLAGGED} of ${flagged.length}):`
+					: "Flagged photos:",
+				...flagged.slice(0, CONTEXT_FLAGGED).map(describeFlagged),
+			);
+		}
+
+		return lines.join("\n");
+	}
+
+	function shareState() {
+		bridge.updateModelContext(describeState());
 	}
 
 	function pump() {
@@ -132,6 +183,7 @@
 
 				if (generation === state.generation) {
 					patch(item.id, { manualPileId: undefined, result, state: "sorted" });
+					shareState();
 				}
 			} catch (error) {
 				if (generation === state.generation) {
@@ -139,6 +191,7 @@
 
 					setError(message);
 					patch(item.id, { error: message, state: "failed" });
+					shareState();
 				}
 			}
 		});
@@ -172,6 +225,10 @@
 		}
 
 		renderTable();
+
+		if (accepted.length > 0) {
+			shareState();
+		}
 	}
 
 	function resortAll() {
@@ -202,6 +259,7 @@
 
 	function moveTo(id, pileId) {
 		patch(id, { manualPileId: pileId });
+		shareState();
 	}
 
 	function printFor(item) {
@@ -379,6 +437,7 @@
 				remove.setAttribute("aria-label", `Remove ${input.value}`);
 				renderTable();
 			});
+			input.addEventListener("change", shareState);
 			remove.type = "button";
 			remove.hidden = state.piles.length <= limits.minPiles;
 			remove.setAttribute("aria-label", `Remove ${pile.label}`);
@@ -386,6 +445,7 @@
 				state.piles = state.piles.filter((entry) => entry.id !== pile.id);
 				renderChips();
 				renderTable();
+				shareState();
 			});
 			chip.append(input, remove);
 			chips.append(chip);
@@ -403,6 +463,7 @@
 				];
 				renderChips();
 				renderTable();
+				shareState();
 				chips.querySelectorAll("input")[state.piles.length - 1]?.select();
 			}
 		});
@@ -421,6 +482,7 @@
 					state.piles = createPiles(preset);
 					renderChips();
 					renderTable();
+					shareState();
 				});
 
 				return button;
@@ -456,7 +518,10 @@
 		event.target.value = "";
 	});
 	byId("resort").addEventListener("click", resortAll);
-	byId("clear").addEventListener("click", clearTable);
+	byId("clear").addEventListener("click", () => {
+		clearTable();
+		shareState();
+	});
 	document.addEventListener("dragover", (event) => event.preventDefault());
 	document.addEventListener("drop", (event) => event.preventDefault());
 	bridge.on("ui/resource-teardown", clearTable);

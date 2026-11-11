@@ -6,6 +6,7 @@ import { parseCommaSeparatedTags } from "../shared/text";
 import type { ToastTone } from "../shared/Toast";
 import type { StrudelConfig, StrudelPattern } from "./config";
 import { defaultCode, examplePatterns, type PatternExample } from "./examples";
+import { sharePattern } from "./pattern-context";
 import { needsPolychatSignIn, SignInState } from "./SignInState";
 import { StrudelStudio, type StudioState } from "./StrudelStudio";
 import type { PatternDraft, StrudelLibrary } from "./useStrudelLibrary";
@@ -53,10 +54,10 @@ export function CreateStudio({ config, library, notify, onSaved }: CreateStudioP
 				tempo: state.tempo ? Number(state.tempo) : undefined,
 			});
 
-			update({
-				code: result.code,
-				name: state.name.trim() ? state.name : state.prompt.slice(0, 64),
-			});
+			const name = state.name.trim() ? state.name : state.prompt.slice(0, 64);
+
+			update({ code: result.code, name });
+			sharePattern({ code: result.code, event: "generated from a prompt", title: name });
 			notify("Generated a new Strudel pattern");
 		} catch (error) {
 			const message = errorMessage(error, "Unable to generate pattern");
@@ -88,6 +89,7 @@ export function CreateStudio({ config, library, notify, onSaved }: CreateStudioP
 			const pattern = await library.save(draft);
 
 			notify("Pattern saved");
+			sharePattern({ code: pattern.code, event: "saved to the library", title: pattern.name });
 			onSaved(pattern);
 		} catch (error) {
 			const message = errorMessage(error, "Failed to save pattern");
@@ -101,8 +103,11 @@ export function CreateStudio({ config, library, notify, onSaved }: CreateStudioP
 	};
 
 	const loadExample = (example: PatternExample) => {
+		const name = state.name.trim() ? state.name : example.name;
+
 		setSelectedExampleId(example.id);
-		update({ code: example.code, name: state.name.trim() ? state.name : example.name });
+		update({ code: example.code, name });
+		sharePattern({ code: example.code, event: "loaded from an example", title: name });
 		notify(`Loaded ${example.name}`);
 	};
 
@@ -128,6 +133,7 @@ export function CreateStudio({ config, library, notify, onSaved }: CreateStudioP
 				isSaving={isSaving}
 				onChange={update}
 				onGenerate={() => void generate()}
+				onPlay={(code) => sharePattern({ code, event: "played", title: state.name })}
 				onSave={() => void save()}
 				onSelectExample={loadExample}
 				parsedTags={parsedTags}

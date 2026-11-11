@@ -88,6 +88,7 @@ const ICONS = {
 		</>
 	),
 	landmark: <path d="M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M3 10l9-7 9 7z" />,
+	maximise: <path d="M8 3H3v5M21 8V3h-5M3 16v5h5M16 21h5v-5" />,
 	merge: (
 		<>
 			<circle cx="6" cy="19" r="2" />
@@ -95,6 +96,7 @@ const ICONS = {
 			<path d="M6 3v14M8 5c4 0 8 3 8 7" />
 		</>
 	),
+	minimise: <path d="M8 3v5H3M21 8h-5V3M3 16h5v5M16 21v-5h5" />,
 	pause: <path d="M8 4v16M16 4v16" />,
 	plane: <path d="M2 14 22 4l-7 17-3-7z" />,
 	play: <path d="M6 4v16l14-8z" />,
