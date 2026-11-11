@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 
+import { readMcpMessages, summariseMcpCalls } from "./mcp/messages";
 import { readSharedPolisTown } from "./mcp/polis-towns";
 import { createMcpResponse } from "./mcp/protocol";
-import { readMcpCallPolicies } from "./mcp/rate-policy";
+import { mcpCallPolicies } from "./mcp/rate-policy";
 import { renderSharedPolisPage } from "./mcp/resources";
 import { apiCors } from "./middleware/cors";
 import { aiClientFor, requirePolychat, resolveAgentAccess } from "./middleware/polychat-access";
@@ -61,8 +62,9 @@ app.all("/mcp", async (c) => {
 	}
 
 	const owner = c.get("polychat")?.subjectId ?? c.get("application")?.id;
+	const messages = await readMcpMessages(c.req.raw);
 	const outcomes = await Promise.all(
-		(await readMcpCallPolicies(c.req.raw, !owner)).map((policy) => guard(c, { policy })),
+		mcpCallPolicies(messages, !owner).map((policy) => guard(c, { policy })),
 	);
 	const limited = outcomes.find((outcome) => outcome !== undefined);
 
@@ -77,7 +79,11 @@ app.all("/mcp", async (c) => {
 		owner ? { ai: aiClientFor(c), origin, owner } : { origin },
 	);
 
-	recordEvent(c.env, { name: "mcp_call", outcome: response.ok ? "ok" : "error" });
+	const outcome = response.ok ? "ok" : "error";
+
+	for (const call of summariseMcpCalls(messages)) {
+		recordEvent(c.env, { ...call, name: "mcp_call", outcome });
+	}
 
 	return response;
 });
