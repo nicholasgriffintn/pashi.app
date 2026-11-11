@@ -19,8 +19,16 @@ export function hasQueuedConversionServices(env: FeatureEnv | undefined) {
 	);
 }
 
+export function isAiBindingAvailable(env: FeatureEnv | undefined) {
+	return Boolean(env?.AI && createFeatureStatus(env).ai.enabled);
+}
+
 export function isConverterAvailable(tool: ConverterTool, env: FeatureEnv | undefined) {
 	if (!isConverterFeatureEnabled(env)) {
+		return false;
+	}
+
+	if (tool.capabilities?.usesAiBinding && !isAiBindingAvailable(env)) {
 		return false;
 	}
 

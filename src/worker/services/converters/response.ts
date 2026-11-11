@@ -1,5 +1,9 @@
-import { json } from "../../utils/http";
-import { hasQueuedConversionServices, isConverterFeatureEnabled } from "./availability";
+import { errorCodeForStatus, errorJson, json } from "../../utils/http";
+import {
+	hasQueuedConversionServices,
+	isAiBindingAvailable,
+	isConverterFeatureEnabled,
+} from "./availability";
 import { findConverterTool } from "./catalogue";
 import {
 	createQueuedConversionLookupResponse,
@@ -10,7 +14,7 @@ import {
 import { ConverterRequestError, converterHandlers } from "./handlers";
 import { createImageFormatResponse } from "./image";
 import { applyConverterPresetFields } from "./presets";
-import type { ConverterRequest } from "./types";
+import type { ConverterRequest, ConverterTool } from "./types";
 
 export async function createConverterResponse(
 	type: string,
@@ -75,8 +79,14 @@ export async function createConverterResponse(
 		return json({ error: `${tool.label} conversion needs an API-backed implementation.` }, 501);
 	}
 
-	if (tool.input.required && !requestWithPresets.input.trim()) {
-		return json({ error: `Paste ${tool.input.label.toLowerCase()} to convert.` }, 400);
+	if (tool.capabilities?.usesAiBinding && !isAiBindingAvailable(env)) {
+		return errorJson(`${tool.label} conversion is not available.`, 503, "unavailable");
+	}
+
+	if (tool.input.required && !hasConverterInput(tool, requestWithPresets)) {
+		const action = tool.capabilities?.binaryInput ? "Upload a" : "Paste";
+
+		return json({ error: `${action} ${tool.input.label.toLowerCase()} to convert.` }, 400);
 	}
 
 	const handler = converterHandlers[tool.id];
@@ -86,14 +96,20 @@ export async function createConverterResponse(
 	}
 
 	try {
-		return json(await handler(requestWithPresets));
+		return json(await handler(requestWithPresets, { env }));
 	} catch (error) {
 		if (error instanceof ConverterRequestError) {
-			return json({ error: error.message }, error.status);
+			return errorJson(error.message, error.status, errorCodeForStatus(error.status));
 		}
 
 		throw error;
 	}
+}
+
+function hasConverterInput(tool: ConverterTool, request: ConverterRequest) {
+	return tool.capabilities?.binaryInput
+		? Boolean(request.file?.bytes.byteLength)
+		: Boolean(request.input.trim());
 }
 
 async function createConverterPresetResponse(

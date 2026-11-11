@@ -30,6 +30,7 @@ export interface PolicyInput {
 	isExpensiveGenerator: boolean;
 	isUpload: boolean;
 	method: string;
+	usesAiBinding?: boolean;
 }
 
 const COMBINATORIAL_GENERATOR_IDS = new Set([
@@ -45,7 +46,13 @@ export function isExpensiveGeneratorId(id: string) {
 }
 
 export function policyFor(input: PolicyInput): PolicyName {
-	if (input.isAiMode || input.isContainerRuntime || input.isUpload || input.isExpensiveGenerator) {
+	if (
+		input.isAiMode ||
+		input.isContainerRuntime ||
+		input.isUpload ||
+		input.isExpensiveGenerator ||
+		input.usesAiBinding
+	) {
 		return "expensive";
 	}
 

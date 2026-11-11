@@ -3,6 +3,7 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { ToolExample } from "../../shared/tool-examples";
 import { useApiKey } from "./api-key-context";
 import {
+	convertFileThing,
 	convertImageThing,
 	convertThing,
 	convertQueuedThing,
@@ -508,13 +509,21 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 						return;
 					}
 
-					const nextResult = await convertThing(
-						activeTool.endpoint,
-						await selectedFile.text(),
-						fields,
-						apiKey,
-						controller.signal,
-					);
+					const nextResult = activeTool.capabilities?.binaryInput
+						? await convertFileThing(
+								activeTool.endpoint,
+								selectedFile,
+								fields,
+								apiKey,
+								controller.signal,
+							)
+						: await convertThing(
+								activeTool.endpoint,
+								await selectedFile.text(),
+								fields,
+								apiKey,
+								controller.signal,
+							);
 
 					if (controller.signal.aborted) {
 						return;

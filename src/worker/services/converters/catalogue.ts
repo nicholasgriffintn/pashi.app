@@ -6,6 +6,11 @@ import { UK_BANK_HOLIDAY_LICENCE } from "../generators/data/uk-bank-holidays.ts"
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
 import { DEVELOPER_INSPECT_FORMATS } from "./developer-inspect.ts";
 import { DEVELOPER_TEXT_FORMATS } from "./developer-text.ts";
+import {
+	DOCUMENT_MARKDOWN_EXTENSIONS,
+	DOCUMENT_MARKDOWN_FORMATS,
+	DOCUMENT_MARKDOWN_MIME_TYPES,
+} from "./document-markdown.ts";
 import { HTML_TRANSFORM_FORMATS } from "./html-transform.ts";
 import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
 import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
@@ -2478,6 +2483,74 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		outputs: DOCUMENT_FORMAT_OUTPUTS,
 		placeholder: "DOCX, ODT, RTF, EPUB, HTML, Markdown, or TXT",
 		runtime: "container",
+		status: "available",
+	},
+	{
+		aliases: [
+			"pdf-to-markdown",
+			"pdf-to-text",
+			"word-to-markdown",
+			"html-to-markdown-file",
+			"document-to-text",
+		],
+		api: {
+			accepts: ["application/octet-stream", "multipart/form-data"],
+			examples: [
+				{
+					body: "file=@report.pdf; outputFormat=markdown",
+					contentType: "multipart/form-data",
+					description: "Upload a document with a file field and get Markdown back.",
+					method: "POST",
+					url: "/api/document-to-markdown",
+				},
+				{
+					body: "<raw bytes of notes.csv>",
+					contentType: "application/octet-stream",
+					description: "Post raw file bytes and name the file with sourceName.",
+					method: "POST",
+					url: "/api/document-to-markdown?sourceName=notes.csv&outputFormat=text",
+				},
+			],
+			fields: [
+				{
+					description: "Markdown keeps headings, lists and tables. Text returns plain text.",
+					id: "outputFormat",
+					required: true,
+					values: DOCUMENT_MARKDOWN_FORMATS,
+				},
+				{
+					description:
+						"Source filename with its extension. Needed for raw uploads; multipart uploads use the file name.",
+					id: "sourceName",
+				},
+			],
+			methods: ["POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { binaryInput: true, usesAiBinding: true },
+		description:
+			"Convert PDF, Word (DOCX), CSV, HTML and XML files to Markdown or plain text. Uploads are capped at 5 MiB. Images, SVG and scanned PDFs are refused, because they need paid image models or OCR.",
+		display: {
+			actionLabel: "Convert to Markdown",
+			category: "Documents",
+			examples: [
+				{ fields: { outputFormat: "markdown" }, label: "To Markdown" },
+				{ fields: { outputFormat: "text" }, label: "To plain text" },
+			],
+		},
+		endpoint: "/api/document-to-markdown",
+		id: "document-to-markdown",
+		input: {
+			accept: [...DOCUMENT_MARKDOWN_MIME_TYPES, ...DOCUMENT_MARKDOWN_EXTENSIONS],
+			label: "Document file",
+			kind: "file",
+			required: true,
+		},
+		label: "Documents to Markdown",
+		outputs: DOCUMENT_MARKDOWN_FORMATS,
+		placeholder: "PDF, DOCX, CSV, HTML, or XML",
+		runtime: "worker",
 		status: "available",
 	},
 	{

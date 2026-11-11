@@ -1,5 +1,6 @@
 import { isConverterAvailable } from "./converters/availability";
 import { listConverterTools } from "./converters/catalogue";
+import type { ConverterTool } from "./converters/types";
 import { listExportFormats } from "./export-formats";
 import type { FeatureEnv } from "./features";
 import { listGeneratorTools } from "./generators/catalogue";
@@ -58,6 +59,23 @@ function fieldParameters(fields: readonly { description?: string; id: string }[]
 	}));
 }
 
+function converterRequestContent(tool: ConverterTool) {
+	if (!tool.capabilities?.binaryInput) {
+		return { "text/plain": { schema: { type: "string" } } };
+	}
+
+	return {
+		"application/octet-stream": { schema: { format: "binary", type: "string" } },
+		"multipart/form-data": {
+			schema: {
+				properties: { file: { format: "binary", type: "string" } },
+				required: ["file"],
+				type: "object",
+			},
+		},
+	};
+}
+
 export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 	const paths: Record<string, unknown> = {};
 
@@ -96,7 +114,7 @@ export function createOpenApiDocument(origin: string, env: FeatureEnv) {
 				operationId: `convert_${tool.id.replaceAll("-", "_")}`,
 				parameters: fieldParameters(tool.api?.fields ?? []),
 				requestBody: {
-					content: { "text/plain": { schema: { type: "string" } } },
+					content: converterRequestContent(tool),
 					required: tool.input.required,
 				},
 				responses: {
