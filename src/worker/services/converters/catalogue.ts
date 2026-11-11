@@ -1,4 +1,5 @@
 import { JWT_SECRET_ENCODINGS } from "../../utils/jwt.ts";
+import { REGEX_DEFAULT_FLAGS } from "../../utils/regex-tester.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
 import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
@@ -465,7 +466,9 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			"json-base64",
 			"json-encode-decode",
 			"json-escape-unescape",
+			"json-query",
 			"json-stringify-parse",
+			"jsonpath-query",
 		],
 		api: {
 			accepts: TEXT_REQUEST_FORMATS,
@@ -477,6 +480,18 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					method: "POST",
 					url: "/api/json-transform?outputFormat=format",
 				},
+				{
+					body: JSON.stringify({
+						input: '{"users":[{"name":"Ada"},{"name":"Grace"}]}',
+						outputFormat: "query",
+						path: "$.users[*].name",
+					}),
+					contentType: "application/json",
+					description:
+						"Select values with a JSONPath-style path. Supports $, .key, ['key'], [0], [-1], .*, [*], ..key and ..*.",
+					method: "POST",
+					url: "/api/json-transform",
+				},
 			],
 			fields: [
 				{
@@ -485,12 +500,17 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					required: true,
 					values: JSON_TRANSFORM_FORMATS,
 				},
+				{
+					description: "JSONPath-style path for query mode, for example $.users[*].name.",
+					id: "path",
+				},
 			],
 			methods: ["GET", "POST"],
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Format, minify, sort, flatten, inspect, encode, and escape JSON text.",
+		description:
+			"Format, minify, sort, flatten, inspect, encode, and escape JSON text, or query it with a JSONPath-style path.",
 		display: {
 			actionLabel: "Transform JSON",
 			category: "JSON",
@@ -712,6 +732,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			"json-beautifier",
 			"json-diff-tool",
 			"json-minifier-tool",
+			"json-structural-diff",
 			"pretty-print",
 			"text-diff",
 			"xml-beautifier",
@@ -729,6 +750,18 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					url: "/api/developer-text?outputFormat=diff-lines",
 				},
 				{
+					body: JSON.stringify({
+						left: '{"name":"Ada","tags":["a"]}',
+						outputFormat: "diff-json",
+						right: '{"name":"Grace","tags":["a","b"]}',
+					}),
+					contentType: "application/json",
+					description:
+						"Compare two JSON documents structurally and list added, removed and changed paths.",
+					method: "POST",
+					url: "/api/developer-text",
+				},
+				{
 					body: "body{color:#111;background:#fff}",
 					contentType: "text/css",
 					description: "Pretty-print CSS without adding dependencies.",
@@ -744,12 +777,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: DEVELOPER_TEXT_FORMATS,
 				},
 				{
-					description: "Left-hand text for diff mode.",
+					description: "Left-hand text or JSON for the diff modes.",
 					display: { width: "full" },
 					id: "left",
 				},
 				{
-					description: "Right-hand text for diff mode.",
+					description: "Right-hand text or JSON for the diff modes.",
 					display: { width: "full" },
 					id: "right",
 				},
@@ -762,7 +795,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Diff text blocks and pretty-print or minify JSON, CSS, HTML, and XML snippets.",
+		description:
+			"Diff text blocks line by line, diff two JSON documents structurally, and pretty-print or minify JSON, CSS, HTML, and XML snippets.",
 		display: {
 			actionLabel: "Transform text",
 			category: "Developer",
@@ -778,6 +812,81 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "Developer text tools",
 		outputs: DEVELOPER_TEXT_FORMATS,
 		placeholder: "one\ntwo\n---\none\nthree",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: ["regex-match", "regex-replace", "regex-test", "regexp-tester"],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					body: JSON.stringify({
+						input: "Ada Lovelace, Grace Hopper",
+						pattern: "(?<first>\\w+) (?<last>\\w+)",
+					}),
+					contentType: "application/json",
+					description: "List every match with its index, numbered groups and named groups.",
+					method: "POST",
+					url: "/api/regex-tester",
+				},
+				{
+					body: JSON.stringify({
+						input: "Released 2026-11-11",
+						pattern: "(\\d{4})-(\\d{2})-(\\d{2})",
+						replacement: "$3/$2/$1",
+					}),
+					contentType: "application/json",
+					description:
+						"Preview a replacement. $1, $<name>, $& and $$ work as they do in String.prototype.replace.",
+					method: "POST",
+					url: "/api/regex-tester",
+				},
+				{
+					description: "Test a pattern supplied in the query string.",
+					method: "GET",
+					url: "/api/regex-tester?pattern=%5Cd%2B&input=Order%2042%20of%20317",
+				},
+			],
+			fields: [
+				{
+					description: "Regular expression pattern, without the surrounding slashes.",
+					display: { width: "full" },
+					id: "pattern",
+					required: true,
+				},
+				{
+					defaultValue: REGEX_DEFAULT_FLAGS,
+					description: "Flags: any of d, g, i, m, s, u, v and y.",
+					id: "flags",
+				},
+				{
+					description: "Replacement text for a replace preview. Leave it out to list matches only.",
+					display: { width: "full" },
+					id: "replacement",
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		description:
+			"Test a regular expression against text: list matches with their indexes and capture groups, and preview a replacement. Patterns that could backtrack catastrophically are rejected.",
+		display: {
+			actionLabel: "Test regex",
+			category: "Developer",
+			examples: ["Order 42 shipped on 2026-11-11", "ada@example.com, grace@example.org"],
+		},
+		endpoint: "/api/regex-tester",
+		id: "regex-tester",
+		input: {
+			label: "Test text",
+			kind: "text",
+			required: true,
+		},
+		label: "Regex tester",
+		outputs: ["json"],
+		placeholder: "Order 42 shipped on 2026-11-11",
 		runtime: "worker",
 		status: "available",
 	},

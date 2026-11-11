@@ -51,6 +51,10 @@ export function serialiseJsonForHtml(value: unknown) {
 		.replace(/\u2029/g, "\\u2029");
 }
 
+export function truncateText(value: string, limit: number) {
+	return value.length > limit ? value.slice(0, limit).replace(/[\uD800-\uDBFF]$/, "") : value;
+}
+
 export function splitWords(value: string) {
 	return value.split(/\s+/).filter(Boolean);
 }

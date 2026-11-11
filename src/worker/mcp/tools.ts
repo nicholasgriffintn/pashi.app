@@ -11,11 +11,14 @@ import type { PolicyName } from "../security/policies";
 import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listGeneratorTools } from "../services/generators/catalogue";
+import { ASK_REQUEST_MAX_LENGTH } from "../services/labs/ask";
 import { decide } from "../services/labs/decide";
+import { EXPLAIN_INPUT_MAX_LENGTH, EXPLAIN_SUBJECTS } from "../services/labs/explain";
 import { MCP_VIEW_URIS, type McpToolUiMeta, type PolychatAppMeta } from "./apps";
 import { CHARADES_DECKS, setUpCharades } from "./charades";
 import { judgeCharadesClip } from "./charades-judge";
 import { DESCRIBED_TOOL_OUTPUT_SCHEMA, describeTool } from "./describe";
+import { askPashiTool, explainTool } from "./labs";
 import { PHOTO_SORTER_LIMITS, setUpPhotoSorter, sortPhoto } from "./photo-sorter";
 import { decidePolisBuckets, draftPolisLaw, draftPolisScenario, setUpPolis } from "./polis";
 import {
@@ -242,6 +245,45 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		name: "pashi_decide",
+		ratePolicy: "expensive",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Route a plain English request to the right Pashi tool. Simple tools run straight away and their result comes back with the pick; otherwise you get the tool, its prefilled fields and a link to open it. Needs a Polychat link.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				request: {
+					description: "What the user needs, for example five uppercase v7 uuids.",
+					maxLength: ASK_REQUEST_MAX_LENGTH,
+					type: "string",
+				},
+			},
+			required: ["request"],
+			type: "object",
+		},
+		name: "pashi_ask",
+		ratePolicy: "expensive",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Explain a cron schedule, curl command, JWT, regular expression or SQL statement in plain English, grounded in Pashi's own parsers where one exists. Needs a Polychat link.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				input: {
+					description: "The text to explain.",
+					maxLength: EXPLAIN_INPUT_MAX_LENGTH,
+					type: "string",
+				},
+				subject: { enum: [...EXPLAIN_SUBJECTS], type: "string" },
+			},
+			required: ["subject", "input"],
+			type: "object",
+		},
+		name: "pashi_explain",
 		ratePolicy: "expensive",
 	},
 	{
@@ -844,6 +886,14 @@ async function callJsonTool(
 ): Promise<unknown> {
 	if (name === "pashi_decide") {
 		return decide(env, ai, argumentsValue);
+	}
+
+	if (name === "pashi_ask") {
+		return askPashiTool(argumentsValue, env, ai);
+	}
+
+	if (name === "pashi_explain") {
+		return explainTool(argumentsValue, env, ai);
 	}
 
 	if (name === "pashi_play_charades") {
