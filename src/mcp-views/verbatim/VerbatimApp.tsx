@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { formatProbabilityPercent } from "../shared/probability";
 import { Readout } from "../shared/Readout";
+import { useModelContext } from "../shared/useModelContext";
 import { LevelTrace } from "./LevelTrace";
 import { RecordOrb } from "./RecordOrb";
 import { SegmentInspector } from "./SegmentInspector";
 import { summariseTranscript } from "./stats";
+import { describeTranscript } from "./transcript-context";
 import { TranscriptView } from "./TranscriptView";
 import { transcriptText, useLiveTranscript } from "./useLiveTranscript";
 
@@ -58,9 +60,15 @@ export function VerbatimApp({ contextLength }: { contextLength: number }) {
 	const inspected = transcribed.find((item) => item.id === selectedId) ?? transcribed.at(-1);
 	const unchecked = transcript.entries.find((entry) => entry.state === "unchecked");
 	const listening = transcript.status === "listening";
+	const context = useMemo(
+		() => describeTranscript(transcript.entries, listening),
+		[transcript.entries, listening],
+	);
 	const pending = transcript.entries.filter(
 		(entry) => entry.state === "pending" || entry.state === "drafted",
 	).length;
+
+	useModelContext(context);
 
 	const copy = async () => {
 		await navigator.clipboard.writeText(transcriptText(transcript.entries));

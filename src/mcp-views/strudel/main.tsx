@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 
-import { host, readViewData } from "../shared/host";
+import { FULLSCREEN_CAPABILITIES, host, readViewData } from "../shared/host";
 
 import "../shared/view.css";
 import { isStrudelConfig } from "./config";
@@ -11,6 +11,6 @@ import "./strudel.css";
 const root = document.getElementById("root");
 
 if (root) {
-	void host.connect("pashi-strudel");
+	void host.connect("pashi-strudel", FULLSCREEN_CAPABILITIES);
 	createRoot(root).render(<StrudelApp config={readViewData(isStrudelConfig)} />);
 }
