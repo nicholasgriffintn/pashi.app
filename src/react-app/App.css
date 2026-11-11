@@ -4141,6 +4141,63 @@ pre.ask-output {
 	margin-top: 0;
 }
 
+.api-key-created {
+	border: 2px dashed var(--edge);
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+}
+
+.api-key-created-value {
+	font-family: var(--font-mono);
+	font-size: 0.86rem;
+	overflow-wrap: anywhere;
+	user-select: all;
+}
+
+.api-key-created-actions {
+	grid-template-columns: auto auto;
+	justify-content: start;
+}
+
+.api-key-list {
+	display: grid;
+	gap: var(--space-2);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.api-key-list li {
+	align-items: center;
+	border-top: 1px solid var(--edge-soft);
+	display: grid;
+	gap: var(--space-1) var(--space-3);
+	grid-template-columns: minmax(0, 1fr) auto;
+	padding-top: var(--space-2);
+}
+
+.api-key-list-name {
+	font-weight: 900;
+	overflow-wrap: anywhere;
+}
+
+.api-key-list-meta {
+	color: var(--body-muted);
+	font-family: var(--font-mono);
+	font-size: 0.72rem;
+	grid-column: 1;
+}
+
+.api-key-list .polychat-connect-action {
+	grid-column: 2;
+	grid-row: 1 / span 2;
+}
+
+.api-key-create {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .polychat-connect-title {
 	color: var(--panel-muted);
 	font-size: 0.74rem;
@@ -4260,4 +4317,54 @@ pre.ask-output {
 	display: block;
 	height: max(36rem, calc(100dvh - var(--header-height) - 9rem));
 	width: calc(100% - 4px);
+}
+
+.stat-table-wrap {
+	margin: 0 0 var(--space-4);
+	max-width: 48rem;
+	overflow-x: auto;
+}
+
+.stat-table {
+	border-collapse: collapse;
+	color: var(--body-text);
+	min-width: 100%;
+}
+
+.stat-table th,
+.stat-table td {
+	border-bottom: 1px solid var(--panel-border);
+	padding: var(--space-2) var(--space-3);
+	text-align: left;
+	vertical-align: middle;
+}
+
+.stat-table th {
+	color: var(--body-muted);
+	font-size: 0.78rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.stat-table td:nth-child(n + 2):not(:last-child),
+.stat-table th:nth-child(n + 2):not(:last-child) {
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.stat-table td:last-child {
+	width: 40%;
+}
+
+.stat-bar {
+	background: var(--panel-bg);
+	border: 1px solid var(--panel-border);
+	display: block;
+	height: 0.75rem;
+}
+
+.stat-bar-fill {
+	background: var(--magenta);
+	display: block;
+	height: 100%;
 }

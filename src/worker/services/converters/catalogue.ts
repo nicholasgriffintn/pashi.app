@@ -1,4 +1,5 @@
 import { SAMPLE_JWT, SAMPLE_JWT_SECRET } from "../../../shared/sample-jwt.ts";
+import { CURRENCY_CODES } from "../../utils/currency-rates.ts";
 import { JWT_SECRET_ENCODINGS } from "../../utils/jwt.ts";
 import { REGEX_DEFAULT_FLAGS } from "../../utils/regex-tester.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
@@ -10,6 +11,7 @@ import {
 	AUDIO_TRANSCRIPTION_MAX_BYTES,
 } from "./audio-transcription.ts";
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
+import { DESIGN_REFERENCE_FORMATS, ICON_LICENCE_FILTERS } from "./design-reference.ts";
 import { DEVELOPER_INSPECT_FORMATS } from "./developer-inspect.ts";
 import { DEVELOPER_TEXT_FORMATS } from "./developer-text.ts";
 import {
@@ -27,6 +29,11 @@ import {
 import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
 import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
 import {
+	NEWS_BRIEFING_FEEDS,
+	NEWS_BRIEFING_FORMATS,
+	NEWS_BRIEFING_WINDOWS,
+} from "./news-briefing.ts";
+import {
 	AUDIO_FORMAT_OUTPUTS,
 	DOCUMENT_FORMAT_OUTPUTS,
 	IMAGE_FORMAT_OUTPUTS,
@@ -39,7 +46,9 @@ import { SITE_INSPECT_FORMATS } from "./site-inspect.ts";
 import { TEXT_FILE_FORMATS } from "./text-file-conversion.ts";
 import { TIMESTAMP_MAX_OCCURRENCES, TIMESTAMP_TRANSFORM_FORMATS } from "./timestamp-transform.ts";
 import type { ConverterTool } from "./types";
+import { UK_LOOKUP_FORMATS } from "./uk-lookup.ts";
 import { URL_TRANSFORM_FORMATS } from "./url-transform.ts";
+import { WEB_PLATFORM_FORMATS } from "./web-platform.ts";
 import {
 	UK_BANK_HOLIDAY_FIRST_DATE,
 	UK_BANK_HOLIDAY_LAST_DATE,
@@ -116,6 +125,14 @@ const DOCUMENT_REQUEST_FORMATS = [
 	"text/markdown",
 	"text/plain",
 ] as const;
+
+function currencyExamples(covered: readonly string[]) {
+	return CURRENCY_CODES.filter((code) => !covered.includes(code)).map((code) => ({
+		fields: { outputFormat: code },
+		input: "100 gbp",
+		label: `Pounds to ${code.toUpperCase()}`,
+	}));
+}
 
 const CONVERTER_TOOLS: readonly ConverterTool[] = [
 	{
@@ -748,6 +765,99 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 	},
 	{
 		aliases: [
+			"baseline",
+			"caniuse",
+			"can-i-use",
+			"end-of-life",
+			"eol",
+			"browser-support",
+			"web-features",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					description: "Search web features and see their Baseline status and browser support.",
+					method: "GET",
+					url: "/api/web-platform?outputFormat=baseline&input=container%20queries",
+				},
+				{
+					description: "Read the full record for an exact web feature id.",
+					method: "GET",
+					url: "/api/web-platform?outputFormat=feature&input=anchor-positioning",
+				},
+				{
+					description: "List supported releases and end-of-life dates for a product.",
+					method: "GET",
+					url: "/api/web-platform?outputFormat=end-of-life&input=nodejs",
+				},
+				{
+					description: "Check the end-of-life dates for one release of a product.",
+					method: "GET",
+					url: "/api/web-platform?outputFormat=end-of-life&input=python%203.10",
+				},
+			],
+			fields: [
+				{
+					description: "Lookup mode.",
+					id: "outputFormat",
+					required: true,
+					values: WEB_PLATFORM_FORMATS,
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { fetchesNetwork: true },
+		description:
+			"Check whether a web platform feature is Baseline and which browsers support it, or look up end-of-life dates for runtimes and frameworks.",
+		display: {
+			actionLabel: "Look up",
+			category: "Web",
+			examples: [
+				{
+					fields: { outputFormat: "baseline" },
+					input: "container queries",
+					label: "Is container queries Baseline?",
+				},
+				{
+					fields: { outputFormat: "baseline" },
+					input: "view transitions",
+					label: "View transitions support",
+				},
+				{
+					fields: { outputFormat: "feature" },
+					input: "anchor-positioning",
+					label: "Anchor positioning record",
+				},
+				{
+					fields: { outputFormat: "end-of-life" },
+					input: "nodejs",
+					label: "Node.js release support",
+				},
+				{
+					fields: { outputFormat: "end-of-life" },
+					input: "python 3.10",
+					label: "Python 3.10 end of life",
+				},
+			],
+		},
+		endpoint: "/api/web-platform",
+		id: "web-platform",
+		input: {
+			label: "Feature, product or release",
+			kind: "text",
+			required: true,
+		},
+		label: "Web platform reference",
+		outputs: WEB_PLATFORM_FORMATS,
+		placeholder: "container queries",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
 			"link-preview",
 			"url-unfurl",
 			"security-headers",
@@ -846,6 +956,394 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "Site inspector",
 		outputs: SITE_INSPECT_FORMATS,
 		placeholder: "https://pashi.app",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"headlines",
+			"hacker-news",
+			"hn-top-stories",
+			"news-search",
+			"gdelt-search",
+			"on-this-day",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					description:
+						"List the top Hacker News stories with points, comments and discussion links.",
+					method: "GET",
+					url: "/api/news-briefing?outputFormat=hacker-news&feed=top&limit=10",
+				},
+				{
+					description: "Find recent English-language coverage of a topic, newest first.",
+					method: "GET",
+					url: "/api/news-briefing?outputFormat=search&input=climate%20summit&window=24h",
+				},
+				{
+					description: "List selected Wikipedia events for today, or pass a date as the input.",
+					method: "GET",
+					url: "/api/news-briefing?outputFormat=on-this-day&input=2026-07-20",
+				},
+			],
+			fields: [
+				{
+					description:
+						"Hacker News lists stories, search finds coverage of a topic, on-this-day lists Wikipedia events.",
+					id: "outputFormat",
+					required: true,
+					values: NEWS_BRIEFING_FORMATS,
+				},
+				{
+					defaultValue: "top",
+					description: "Hacker News story list.",
+					id: "feed",
+					values: NEWS_BRIEFING_FEEDS,
+					visibleWhen: { field: "outputFormat", values: ["hacker-news"] },
+				},
+				{
+					defaultValue: "24h",
+					description: "How far back to search.",
+					id: "window",
+					values: NEWS_BRIEFING_WINDOWS,
+					visibleWhen: { field: "outputFormat", values: ["search"] },
+				},
+				{
+					description:
+						"How many results to return. Caps are 30 for Hacker News, 25 for search and 20 for on-this-day.",
+					id: "limit",
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { fetchesNetwork: true },
+		description:
+			"Headlines and links only, never article text: Hacker News stories, recent coverage of a topic from GDELT, or Wikipedia's on this day events. Each result carries a source note, and upstream responses are cached for a few minutes (a day for on this day).",
+		display: {
+			actionLabel: "Get briefing",
+			category: "Web",
+			examples: [
+				{
+					fields: { feed: "top", outputFormat: "hacker-news" },
+					label: "Top Hacker News stories",
+				},
+				{
+					fields: { feed: "best", outputFormat: "hacker-news" },
+					label: "Best Hacker News stories",
+				},
+				{
+					fields: { outputFormat: "search", window: "24h" },
+					input: "climate summit",
+					label: "Coverage of a climate summit",
+				},
+				{
+					fields: { outputFormat: "search", window: "1w" },
+					input: "open source",
+					label: "A week of open source news",
+				},
+				{
+					fields: { outputFormat: "on-this-day" },
+					input: "today",
+					label: "On this day, today",
+				},
+				{
+					fields: { outputFormat: "on-this-day" },
+					input: "2026-07-20",
+					label: "On this day, 20 July",
+				},
+			],
+		},
+		endpoint: "/api/news-briefing",
+		id: "news-briefing",
+		input: {
+			label: "Topic or date",
+			kind: "text",
+			required: false,
+		},
+		label: "News briefing",
+		outputs: NEWS_BRIEFING_FORMATS,
+		placeholder: "climate summit, or 2026-07-20 for on this day",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"web-page-to-markdown",
+			"page-to-markdown",
+			"webpage-to-markdown",
+			"fetch-url-as-markdown",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					description: "Fetch a public page and get its Markdown, final URL and title.",
+					method: "GET",
+					url: "/api/url-to-markdown?input=https%3A%2F%2Fexample.com",
+				},
+			],
+			fields: [],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { fetchesNetwork: true, usesAiBinding: true },
+		description:
+			"Fetch a public web page and convert it to Markdown, returning the Markdown, the final URL and the page title. Gives agents a page reader without a browser: JavaScript is not run, so client-rendered pages come back empty. HTML is capped at 1 MiB and non-HTML responses are refused.",
+		display: {
+			actionLabel: "Convert page",
+			category: "Web",
+			examples: [
+				{ input: "https://example.com", label: "example.com" },
+				{ input: "https://en.wikipedia.org/wiki/Markdown", label: "Wikipedia article on Markdown" },
+			],
+		},
+		endpoint: "/api/url-to-markdown",
+		id: "url-to-markdown",
+		input: {
+			label: "Page address",
+			kind: "text",
+			required: true,
+		},
+		label: "URL to Markdown",
+		outputs: ["json"],
+		placeholder: "https://example.com",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"icon-search",
+			"iconify",
+			"font-lookup",
+			"fontsource",
+			"tailwind-colours",
+			"tailwind-palette",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					description: "Search Iconify for icons with their SVG URLs and licences.",
+					method: "GET",
+					url: "/api/design-reference?outputFormat=icons&input=rocket",
+				},
+				{
+					description: "Search Iconify, keeping only permissively licensed icon sets.",
+					method: "GET",
+					url: "/api/design-reference?outputFormat=icons&licence=permissive&input=rocket",
+				},
+				{
+					description: "Search Fontsource for font families with CSS import hints.",
+					method: "GET",
+					url: "/api/design-reference?outputFormat=fonts&input=mono",
+				},
+				{
+					description: "Read the full Fontsource record for an exact font id.",
+					method: "GET",
+					url: "/api/design-reference?outputFormat=fonts&input=inter",
+				},
+				{
+					description: "List every shade of a Tailwind CSS colour family.",
+					method: "GET",
+					url: "/api/design-reference?outputFormat=colours&input=sky",
+				},
+				{
+					description: "Find the nearest Tailwind CSS shade to a hex colour.",
+					method: "GET",
+					url: "/api/design-reference?outputFormat=colours&input=%23ff6b35",
+				},
+			],
+			fields: [
+				{
+					description: "Reference mode.",
+					id: "outputFormat",
+					required: true,
+					values: DESIGN_REFERENCE_FORMATS,
+				},
+				{
+					description:
+						"Which icon sets to search: any, or only sets under permissive licences such as MIT or Apache 2.0.",
+					id: "licence",
+					values: ICON_LICENCE_FILTERS,
+					visibleWhen: { field: "outputFormat", values: ["icons"] },
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { fetchesNetwork: true },
+		description:
+			"Look up design references: search Iconify icons with SVG URLs and per-set licences, search Fontsource fonts with CSS import hints, and find Tailwind CSS palette colours or the nearest shade to a hex colour. Upstream data is cached for a day.",
+		display: {
+			actionLabel: "Look up",
+			category: "Web",
+			examples: [
+				{
+					fields: { licence: "any", outputFormat: "icons" },
+					input: "rocket",
+					label: "Rocket icons",
+				},
+				{
+					fields: { licence: "permissive", outputFormat: "icons" },
+					input: "arrow",
+					label: "Arrow icons, permissive licences only",
+				},
+				{
+					fields: { outputFormat: "fonts" },
+					input: "mono",
+					label: "Monospace font families",
+				},
+				{
+					fields: { outputFormat: "fonts" },
+					input: "inter",
+					label: "Full record for Inter",
+				},
+				{
+					fields: { outputFormat: "colours" },
+					input: "sky",
+					label: "Tailwind sky shades",
+				},
+				{
+					fields: { outputFormat: "colours" },
+					input: "emerald-600",
+					label: "Tailwind emerald-600",
+				},
+				{
+					fields: { outputFormat: "colours" },
+					input: "#ff6b35",
+					label: "Nearest Tailwind shade to #ff6b35",
+				},
+			],
+		},
+		endpoint: "/api/design-reference",
+		id: "design-reference",
+		input: {
+			label: "Icon, font or colour",
+			kind: "text",
+			required: true,
+		},
+		label: "Design reference",
+		outputs: DESIGN_REFERENCE_FORMATS,
+		placeholder: "rocket",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"postcode-lookup",
+			"uk-postcode",
+			"carbon-intensity",
+			"grid-carbon-intensity",
+			"flood-warnings",
+			"uk-flood-warnings",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					description:
+						"Look up a UK postcode: country, region, local authority, ward and coordinates.",
+					method: "GET",
+					url: "/api/uk-lookup?outputFormat=postcode&input=SW1A%201AA",
+				},
+				{
+					description: "Look up an outward code such as SW1A.",
+					method: "GET",
+					url: "/api/uk-lookup?outputFormat=postcode&input=SW1A",
+				},
+				{
+					description: "Read the current national grid carbon intensity and generation mix.",
+					method: "GET",
+					url: "/api/uk-lookup?outputFormat=carbon&input=national",
+				},
+				{
+					description: "Read the regional carbon intensity for a postcode outward code.",
+					method: "GET",
+					url: "/api/uk-lookup?outputFormat=carbon&input=RG10",
+				},
+				{
+					description: "List current flood warnings and alerts for a county.",
+					method: "GET",
+					url: "/api/uk-lookup?outputFormat=floods&input=Somerset",
+				},
+				{
+					description: "List current flood warnings within 20 km of a latitude and longitude.",
+					method: "GET",
+					url: "/api/uk-lookup?outputFormat=floods&input=51.5,-0.12,20",
+				},
+			],
+			fields: [
+				{
+					description: "Lookup mode.",
+					id: "outputFormat",
+					required: true,
+					values: UK_LOOKUP_FORMATS,
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { fetchesNetwork: true },
+		description:
+			"Look up UK reference data: postcodes, current grid carbon intensity and Environment Agency flood warnings. Upstream data is cached and attributed.",
+		display: {
+			actionLabel: "Look up",
+			category: "Web",
+			examples: [
+				{
+					fields: { outputFormat: "postcode" },
+					input: "SW1A 1AA",
+					label: "Postcode for Buckingham Palace",
+				},
+				{
+					fields: { outputFormat: "postcode" },
+					input: "EH1",
+					label: "Outward code for Edinburgh",
+				},
+				{
+					fields: { outputFormat: "carbon" },
+					input: "national",
+					label: "National grid carbon intensity",
+				},
+				{
+					fields: { outputFormat: "carbon" },
+					input: "RG10",
+					label: "Carbon intensity for RG10",
+				},
+				{
+					fields: { outputFormat: "floods" },
+					input: "Somerset",
+					label: "Flood warnings in Somerset",
+				},
+				{
+					fields: { outputFormat: "floods" },
+					input: "51.5,-0.12,20",
+					label: "Flood warnings near London",
+				},
+				{
+					fields: { outputFormat: "floods" },
+					input: "all",
+					label: "All current flood warnings",
+				},
+			],
+		},
+		endpoint: "/api/uk-lookup",
+		id: "uk-lookup",
+		input: {
+			label: "Postcode, region or place",
+			kind: "text",
+			required: true,
+		},
+		label: "UK lookup",
+		outputs: UK_LOOKUP_FORMATS,
+		placeholder: "SW1A 1AA",
 		runtime: "worker",
 		status: "available",
 	},
@@ -1962,6 +2460,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					method: "GET",
 					url: "/api/unit-converter?input=100%20c&outputFormat=f",
 				},
+				{
+					description:
+						"Convert currency with European Central Bank reference rates. Only currency conversions make an upstream request.",
+					method: "GET",
+					url: "/api/unit-converter?input=100%20gbp&outputFormat=usd",
+				},
 			],
 			fields: [
 				{
@@ -1980,7 +2484,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		},
 		audience: "Documents",
 		description:
-			"Convert common length, mass, temperature, data, speed, area, volume, angle, time, pressure, energy, power, force, frequency, and torque units.",
+			"Convert common length, mass, temperature, data, speed, area, volume, angle, time, pressure, energy, power, force, frequency, and torque units, plus currencies at European Central Bank reference rates.",
 		display: {
 			actionLabel: "Convert unit",
 			category: "Units",
@@ -2051,6 +2555,15 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				{ fields: { outputFormat: "mhz" }, input: "88000 khz", label: "Kilohertz to megahertz" },
 				{ fields: { outputFormat: "nm" }, input: "250 lbft", label: "lb-ft to newton metres" },
 				{ fields: { outputFormat: "lbft" }, input: "400 nm", label: "Newton metres to lb-ft" },
+				{ fields: { outputFormat: "usd" }, input: "100 gbp", label: "Pounds to US dollars" },
+				{ fields: { outputFormat: "eur" }, input: "250 gbp", label: "Pounds to euros" },
+				{ fields: { outputFormat: "jpy" }, input: "50 usd", label: "US dollars to yen" },
+				{
+					fields: { fromUnit: "eur", outputFormat: "gbp" },
+					input: "1000",
+					label: "Bare number as euros",
+				},
+				...currencyExamples(["usd", "eur", "jpy", "gbp"]),
 			],
 		},
 		endpoint: "/api/unit-converter",

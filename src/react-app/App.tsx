@@ -13,6 +13,9 @@ import { ToolsPage } from "./pages/ToolsPage";
 
 import "./App.css";
 
+const StatsPage = lazy(() =>
+	import("./pages/StatsPage").then((module) => ({ default: module.StatsPage })),
+);
 const PrivacyPage = lazy(() =>
 	import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })),
 );
@@ -75,6 +78,7 @@ function App() {
 							<Route element={<SignInPage />} path="/sign-in" />
 							<Route element={<AboutPage />} path="/about" />
 							<Route element={<PrivacyPage />} path="/privacy" />
+							<Route element={<StatsPage />} path="/stats" />
 							<Route element={<ApiDocsPage />} path="/api" />
 							<Route element={<Navigate replace to="/" />} path="*" />
 						</Routes>

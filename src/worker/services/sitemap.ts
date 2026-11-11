@@ -25,6 +25,7 @@ function createSitemapXml(origin: string) {
 		"/labs/decide",
 		"/about",
 		"/privacy",
+		"/stats",
 		"/api",
 		...listGeneratorTools().map((tool) => `/tools/${tool.id}`),
 		...listConverterTools().map((tool) => `/tools/convert/${tool.id}`),

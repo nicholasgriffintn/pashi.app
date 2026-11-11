@@ -6,8 +6,9 @@ import { type PolicyName, policyFor } from "../security/policies";
 import type { ApiKeyEnv } from "../services/access/api-keys";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import type { EventEnv } from "../services/events";
+import type { StatsEnv } from "../services/stats";
 
-export type WorkerEnv = ConversionEnv & ApiKeyEnv & EventEnv;
+export type WorkerEnv = ConversionEnv & ApiKeyEnv & EventEnv & StatsEnv;
 
 export type AppContext = {
 	Bindings: WorkerEnv;

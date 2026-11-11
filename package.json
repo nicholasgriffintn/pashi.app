@@ -6,6 +6,7 @@
 	"scripts": {
 		"build": "tsc -b && vite build",
 		"check": "tsc -b",
+		"data:web-features": "node scripts/build-web-features.mjs",
 		"deploy": "pnpm types && pnpm check && pnpm build && wrangler deploy",
 		"dev": "node scripts/seed-dev-key.mjs && vite",
 		"fix": "oxlint --fix && oxfmt",

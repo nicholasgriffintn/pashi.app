@@ -9,7 +9,7 @@ The home for side projects. Named for the manga SFX `pashi`: a crisp smack or cl
 Pashi has three layers on one domain.
 
 - **Hub** at `/` lists every project, including the ones that live on their own subdomains.
-- **Tools** at `/tools` is the console: 79 generators and 26 converters, with exports to JSON, CSV and TXT. Text conversion, site inspection and the AI media tools run in the Worker; media and document format conversion runs in a container behind a queue.
+- **Tools** at `/tools` is the console: 79 generators and 31 converters, with exports to JSON, CSV and TXT. Text conversion, lookups (sites, news, UK data, web platform, design reference) and the AI media tools run in the Worker; media and document format conversion runs in a container behind a queue.
 - **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool, runs it when the tool is simple and otherwise opens it with the form filled in. Decide asks a Polychat decision model typed yes or no, choice and score questions about some text or an image.
 
 Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, [/api/info](https://pashi.app/api/info) for the raw contract, or [/api/openapi.json](https://pashi.app/api/openapi.json) for an OpenAPI 3.1 document covering every path.
@@ -50,7 +50,9 @@ To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any ho
 
 AI runs on [Polychat](https://polychat.app). AI mode and the Labs endpoints need a connected Polychat account, and usage counts against that account's plan.
 
-Container-backed converters and the paid AI media tools (audio transcription, image description) need an application API key or a connected Polychat Pro account. Send a key in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
+Container-backed converters and the paid AI media tools (audio transcription, image description) need a full application API key or a connected Polychat Pro account. Send a key in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
+
+Anyone with Polychat connected can create up to three free API keys on the sign-in page. A free key gives scripts and MCP clients their own rate-limit bucket and saved patterns and towns, but not the paid tools or the MCP apps that run on Pashi's own Workers AI quota. Keys provisioned by hand, as below, are full keys.
 
 Locally, `pnpm dev` seeds a permanent development key into the local KV store the first time it runs, and writes it to `.env.local` so the sign-in page can offer it with one click. Run `pnpm seed:dev` to do the seeding on its own.
 
@@ -59,6 +61,7 @@ Applications and key records live in the `APPLICATIONS` KV namespace, like this:
 ```text
 applications:v1:<application-id>
 api-keys:v1:<sha256-of-api-key>
+api-key-owners:v1:<sha256-of-owner>
 ```
 
 Provision an application and a high-entropy key:
@@ -143,7 +146,7 @@ Permanently failed conversions land in the `pashi-conversions-dlq` queue. Inspec
 pnpm exec wrangler queues list
 ```
 
-Service health, including the feature flags and bindings, is at `/api/health`. Usage is recorded to the `pashi_events` Analytics Engine dataset: tool runs, AI calls, conversions, exports and rate limits.
+Service health, including the feature flags and bindings, is at `/api/health`. Usage is recorded to the `pashi_events` Analytics Engine dataset: tool runs, AI calls, conversions, exports and rate limits. The public `/stats` page reads it back through the SQL API and needs the `ANALYTICS_ACCOUNT_ID` and `ANALYTICS_API_TOKEN` secrets (a token with Account Analytics Read).
 
 Social cards are generated per page at `/og?path=/tools/uuid`, drawn from the same catalogue as everything else.
 

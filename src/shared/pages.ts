@@ -44,6 +44,10 @@ export const STATIC_PAGES = {
 		description: "Connect Polychat to use AI and media conversion in Pashi.",
 		title: "Sign in",
 	},
+	"/stats": {
+		description: "Anonymous, sampled usage counts for Pashi over the last seven days.",
+		title: "Stats",
+	},
 	"/tools": {
 		description: "Generate UUIDs, tokens, colours, test data and more.",
 		title: "Generators",

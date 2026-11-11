@@ -1,4 +1,6 @@
 import { BudgetExceededError } from "../../utils/budget.ts";
+import { UpstreamError } from "../../utils/cached-fetch.ts";
+import { loadCurrencyRates } from "../../utils/currency-rates.ts";
 import { RegexTesterError, testRegex } from "../../utils/regex-tester.ts";
 import {
 	isTextTransformFormat,
@@ -7,7 +9,13 @@ import {
 	transformText,
 } from "../../utils/text-transforms.ts";
 import { safeFilename } from "../../utils/text.ts";
-import { convertUnitText, UNIT_OUTPUTS, UnitConversionError } from "../../utils/unit-conversion.ts";
+import {
+	convertCurrencyText,
+	convertUnitText,
+	parseCurrencyConversion,
+	UNIT_OUTPUTS,
+	UnitConversionError,
+} from "../../utils/unit-conversion.ts";
 import { jiraToMarkdown, markdownToJira } from "./atlassian-markup.ts";
 import {
 	AUDIO_TRANSCRIPTION_FORMATS,
@@ -22,6 +30,13 @@ import {
 	inspectDataShape,
 	isDataShapeFormat,
 } from "./data-shape.ts";
+import {
+	DesignReferenceError,
+	isDesignReferenceFormat,
+	isIconLicenceFilter,
+	lookupDesignReference,
+	DESIGN_REFERENCE_FORMATS,
+} from "./design-reference.ts";
 import {
 	DEVELOPER_INSPECT_FORMATS,
 	DeveloperInspectError,
@@ -59,6 +74,12 @@ import {
 	MARKDOWN_TARGET_FORMATS,
 } from "./markdown-targets.ts";
 import {
+	buildNewsBriefing,
+	isNewsBriefingFormat,
+	NEWS_BRIEFING_FORMATS,
+	NewsBriefingError,
+} from "./news-briefing.ts";
+import {
 	isRequestTransformFormat,
 	REQUEST_TRANSFORM_FORMATS,
 	RequestTransformError,
@@ -84,12 +105,20 @@ import {
 	transformTimestamp,
 } from "./timestamp-transform.ts";
 import type { ConverterHandler, ConverterResult } from "./types";
+import { isUkLookupFormat, lookupUk, UK_LOOKUP_FORMATS, UkLookupError } from "./uk-lookup.ts";
+import { convertUrlToMarkdown, UrlToMarkdownError } from "./url-to-markdown.ts";
 import {
 	isUrlTransformFormat,
 	transformUrl,
 	URL_TRANSFORM_FORMATS,
 	UrlTransformError,
 } from "./url-transform.ts";
+import {
+	isWebPlatformFormat,
+	lookupWebPlatform,
+	WEB_PLATFORM_FORMATS,
+	WebPlatformError,
+} from "./web-platform.ts";
 import {
 	calculateWorkingDays,
 	isWorkingDaysFormat,
@@ -714,6 +743,147 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			throw error;
 		}
 	},
+	"web-platform": async ({ fields, input }) => {
+		const outputFormat = fields.outputFormat || fields.format;
+
+		if (!isWebPlatformFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported lookup mode: ${WEB_PLATFORM_FORMATS.join(", ")}.`,
+			);
+		}
+
+		try {
+			return textResult(
+				"web-platform",
+				"Web platform reference",
+				input,
+				JSON.stringify(await lookupWebPlatform(input, outputFormat), null, 2),
+				`Looked up with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof WebPlatformError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"news-briefing": async ({ fields, input }) => {
+		const outputFormat = fields.outputFormat || fields.format;
+
+		if (!isNewsBriefingFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported briefing mode: ${NEWS_BRIEFING_FORMATS.join(", ")}.`,
+			);
+		}
+
+		try {
+			return textResult(
+				"news-briefing",
+				"News briefing",
+				input,
+				JSON.stringify(
+					await buildNewsBriefing(input, outputFormat, {
+						feed: fields.feed,
+						limit: fields.limit,
+						window: fields.window,
+					}),
+					null,
+					2,
+				),
+				`News briefing built with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof NewsBriefingError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"url-to-markdown": async ({ input }, { env }) => {
+		if (!env?.AI) {
+			throw new ConverterRequestError("Page conversion is not available.", 503);
+		}
+
+		try {
+			const page = await convertUrlToMarkdown(env.AI, input);
+
+			return textResult(
+				"url-to-markdown",
+				"Page Markdown",
+				input,
+				JSON.stringify(page, null, 2),
+				`Page converted to Markdown (${page.tokens} tokens).`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof UrlToMarkdownError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"design-reference": async ({ fields, input }) => {
+		const outputFormat = fields.outputFormat || fields.format;
+		const licence = fields.licence || "any";
+
+		if (!isDesignReferenceFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported reference mode: ${DESIGN_REFERENCE_FORMATS.join(", ")}.`,
+			);
+		}
+
+		if (!isIconLicenceFilter(licence)) {
+			throw new ConverterRequestError("Choose a licence filter: any or permissive.");
+		}
+
+		try {
+			return textResult(
+				"design-reference",
+				"Design reference",
+				input,
+				JSON.stringify(await lookupDesignReference(input, outputFormat, licence), null, 2),
+				`Looked up with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof DesignReferenceError || error instanceof UpstreamError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"uk-lookup": async ({ fields, input }) => {
+		const outputFormat = fields.outputFormat || fields.format;
+
+		if (!isUkLookupFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported lookup mode: ${UK_LOOKUP_FORMATS.join(", ")}.`,
+			);
+		}
+
+		try {
+			return textResult(
+				"uk-lookup",
+				"UK lookup",
+				input,
+				JSON.stringify(await lookupUk(input, outputFormat), null, 2),
+				`Looked up with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof UkLookupError || error instanceof UpstreamError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
 	"working-days": ({ fields, input }) => {
 		const outputFormat = workingDaysFormat(fields.outputFormat || fields.format);
 
@@ -740,16 +910,20 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			throw error;
 		}
 	},
-	"unit-converter": ({ fields, input }) => {
+	"unit-converter": async ({ fields, input }) => {
 		try {
 			const outputFormat = fields.outputFormat || fields.toUnit || fields.to;
+			const fromUnit = fields.fromUnit || fields.from;
+			const currency = parseCurrencyConversion(input, outputFormat, fromUnit);
 
 			return textResult(
 				"unit-converter",
 				"Unit conversion",
 				input,
-				convertUnitText(input, outputFormat, fields.fromUnit || fields.from),
-				"Unit value converted.",
+				currency
+					? convertCurrencyText(currency, await loadCurrencyRates())
+					: convertUnitText(input, outputFormat, fromUnit),
+				currency ? "Currency converted with reference rates." : "Unit value converted.",
 				{ mimeType: "text/plain;charset=utf-8" },
 			);
 		} catch (error) {
@@ -757,6 +931,10 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				throw new ConverterRequestError(
 					`${error.message} Supported outputs: ${UNIT_OUTPUTS.join(", ")}.`,
 				);
+			}
+
+			if (error instanceof UpstreamError) {
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;

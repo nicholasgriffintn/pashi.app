@@ -1,3 +1,11 @@
+import {
+	CURRENCY_CODES,
+	CURRENCY_RATES_SOURCE,
+	type CurrencyCode,
+	type CurrencyRates,
+	findCurrencyCode,
+} from "./currency-rates.ts";
+
 type UnitDimension =
 	| "angle"
 	| "area"
@@ -23,7 +31,7 @@ interface UnitDefinition {
 	toBase: (value: number) => number;
 }
 
-export const UNIT_OUTPUTS = [
+const PHYSICAL_UNIT_OUTPUTS = [
 	"m",
 	"km",
 	"cm",
@@ -79,11 +87,13 @@ export const UNIT_OUTPUTS = [
 	"lbft",
 ] as const;
 
-export type UnitOutput = (typeof UNIT_OUTPUTS)[number];
+export const UNIT_OUTPUTS = [...PHYSICAL_UNIT_OUTPUTS, ...CURRENCY_CODES] as const;
+
+type PhysicalUnitOutput = (typeof PHYSICAL_UNIT_OUTPUTS)[number];
 
 export class UnitConversionError extends Error {}
 
-const UNITS: Record<UnitOutput, UnitDefinition> = {
+const UNITS: Record<PhysicalUnitOutput, UnitDefinition> = {
 	acre: linearUnit("area", "acre", 4046.8564224, ["acres"]),
 	b: linearUnit("data", "B", 1, ["byte", "bytes"]),
 	bar: linearUnit("pressure", "bar", 100000, ["bars"]),
@@ -174,6 +184,54 @@ const UNITS: Record<UnitOutput, UnitDefinition> = {
 
 const UNIT_ALIASES = createUnitAliases();
 
+export interface CurrencyConversion {
+	amount: number;
+	from: CurrencyCode;
+	to: CurrencyCode;
+}
+
+export function parseCurrencyConversion(
+	input: string,
+	toUnitValue: string | undefined,
+	fromUnitValue?: string,
+): CurrencyConversion | undefined {
+	const parsed = parseUnitInput(input);
+	const from = findCurrencyCode(fromUnitValue || parsed.unit);
+	const to = findCurrencyCode(toUnitValue);
+
+	if (from && to) {
+		return { amount: parsed.value, from, to };
+	}
+
+	if (from || to) {
+		throw new UnitConversionError("Source and output units must measure the same dimension.");
+	}
+
+	return undefined;
+}
+
+export function convertCurrencyText(conversion: CurrencyConversion, rates: CurrencyRates) {
+	const fromRate = rates.perEuro.get(conversion.from);
+	const toRate = rates.perEuro.get(conversion.to);
+
+	if (!fromRate || !toRate) {
+		throw new UnitConversionError(
+			`No reference rate is available for ${conversion.from.toUpperCase()} or ${conversion.to.toUpperCase()}.`,
+		);
+	}
+
+	const from = conversion.from.toUpperCase();
+	const to = conversion.to.toUpperCase();
+	const converted = (conversion.amount / fromRate) * toRate;
+
+	return [
+		`${converted.toFixed(2)} ${to}`,
+		`Rate: 1 ${from} = ${Number((toRate / fromRate).toPrecision(6))} ${to} on ${rates.date}.`,
+		`Source: ${CURRENCY_RATES_SOURCE}.`,
+		"Reference rates, not live market quotes. Do not use them for trading or payments.",
+	].join("\n");
+}
+
 export function convertUnitText(input: string, toUnitValue: string, fromUnitValue?: string) {
 	const parsed = parseUnitInput(input);
 	const fromUnit = findUnit(fromUnitValue || parsed.unit);
@@ -219,9 +277,11 @@ function temperatureUnit(
 }
 
 function createUnitAliases() {
-	const aliases = new Map<string, UnitOutput>();
+	const aliases = new Map<string, PhysicalUnitOutput>();
 
-	for (const [unit, definition] of Object.entries(UNITS) as Array<[UnitOutput, UnitDefinition]>) {
+	for (const [unit, definition] of Object.entries(UNITS) as Array<
+		[PhysicalUnitOutput, UnitDefinition]
+	>) {
 		aliases.set(unit, unit);
 		for (const alias of definition.aliases) {
 			aliases.set(alias, unit);

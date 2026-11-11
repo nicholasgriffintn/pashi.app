@@ -1,3 +1,5 @@
+import { isRecord } from "../../shared/records";
+
 export const DNS_RECORD_TYPES = ["A", "AAAA", "CNAME", "MX", "TXT", "NS", "CAA"] as const;
 
 export type DnsRecordType = (typeof DNS_RECORD_TYPES)[number];
@@ -27,33 +29,21 @@ const RECORD_TYPE_NAMES: Record<number, string> = {
 };
 
 function readAnswers(value: unknown): DnsAnswer[] {
-	if (typeof value !== "object" || value === null || !("Answer" in value)) {
+	if (!isRecord(value) || !Array.isArray(value.Answer)) {
 		return [];
 	}
 
-	const answers = (value as { Answer: unknown }).Answer;
-
-	if (!Array.isArray(answers)) {
-		return [];
-	}
-
-	return answers.flatMap((answer: unknown) => {
-		if (typeof answer !== "object" || answer === null) {
-			return [];
-		}
-
-		const record = answer as Record<string, unknown>;
-
-		if (typeof record.data !== "string" || typeof record.type !== "number") {
+	return value.Answer.flatMap((answer: unknown) => {
+		if (!isRecord(answer) || typeof answer.data !== "string" || typeof answer.type !== "number") {
 			return [];
 		}
 
 		return [
 			{
-				data: record.data,
-				name: typeof record.name === "string" ? record.name.replace(/\.$/, "") : "",
-				ttl: typeof record.TTL === "number" ? record.TTL : 0,
-				type: RECORD_TYPE_NAMES[record.type] ?? String(record.type),
+				data: answer.data,
+				name: typeof answer.name === "string" ? answer.name.replace(/\.$/, "") : "",
+				ttl: typeof answer.TTL === "number" ? answer.TTL : 0,
+				type: RECORD_TYPE_NAMES[answer.type] ?? String(answer.type),
 			},
 		];
 	});
@@ -76,8 +66,7 @@ export async function lookupDns(hostname: string, type: DnsRecordType): Promise<
 		}
 
 		const body: unknown = await response.json();
-		const status =
-			typeof body === "object" && body !== null && "Status" in body ? body.Status : undefined;
+		const status = isRecord(body) ? body.Status : undefined;
 
 		if (status === 3) {
 			return { answers: [], status: "no-domain" };

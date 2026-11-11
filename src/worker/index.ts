@@ -11,8 +11,10 @@ import { securityHeaders } from "./middleware/security-headers";
 import { serveAppView } from "./routes/app-views";
 import { createAppRoutes } from "./routes/apps";
 import { guard, type AppContext } from "./routes/context";
+import { createKeyRoutes } from "./routes/keys";
 import { createLabsRoutes } from "./routes/labs";
 import { createPolychatRoutes } from "./routes/polychat";
+import { createStatsRoutes } from "./routes/stats";
 import { createToolRoutes } from "./routes/tools";
 import { isExpensiveGeneratorId } from "./security/policies";
 import { assertCatalogueExamples } from "./services/catalogue-examples";
@@ -60,6 +62,8 @@ app.get("/og", (c) => createOgImageResponse(new URL(c.req.url).searchParams.get(
 app.route("/api/apps", createAppRoutes());
 app.route("/api/labs", createLabsRoutes());
 app.route("/api/polychat", createPolychatRoutes());
+app.route("/api/keys", createKeyRoutes());
+app.route("/api/stats", createStatsRoutes());
 
 app.all("/mcp", async (c) => {
 	const denied = await resolveAgentAccess(c);
@@ -83,7 +87,14 @@ app.all("/mcp", async (c) => {
 	const response = await createMcpResponse(
 		c.req.raw,
 		c.env,
-		owner ? { ai: aiClientFor(c), origin, owner } : { origin },
+		owner
+			? {
+					ai: aiClientFor(c),
+					origin,
+					owner,
+					tier: c.get("polychat") ? "full" : (c.get("application")?.tier ?? "full"),
+				}
+			: { origin },
 	);
 
 	const outcome = response.ok ? "ok" : "error";
