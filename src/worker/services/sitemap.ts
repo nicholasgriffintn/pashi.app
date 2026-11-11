@@ -1,3 +1,5 @@
+import { appPagePath } from "../../shared/app-previews";
+import { listAppPreviews } from "../mcp/app-previews";
 import { escapeXml } from "../utils/text";
 import { listConverterTools } from "./converters";
 import { listGeneratorTools } from "./generators/index";
@@ -16,7 +18,10 @@ function createSitemapXml(origin: string) {
 		"/",
 		"/tools",
 		"/labs",
+		"/labs/ask",
+		"/labs/explain",
 		"/labs/apps",
+		...listAppPreviews().map((preview) => appPagePath(preview.id)),
 		"/about",
 		"/api",
 		...listGeneratorTools().map((tool) => `/tools/${tool.id}`),

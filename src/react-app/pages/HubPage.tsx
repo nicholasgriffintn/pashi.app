@@ -1,11 +1,14 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
 import { PashiLogoButton } from "../components/PashiLogoButton";
+import { appPreviewProjects, appPreviewsQueryOptions } from "../lib/app-previews";
 import { PROJECTS, STATUS_LABELS, type Project, type ProjectKind } from "../lib/projects";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
 const SECTIONS: { kind: ProjectKind; title: string }[] = [
 	{ kind: "project", title: "Projects" },
+	{ kind: "app", title: "Apps" },
 	{ kind: "extension", title: "Chrome extensions" },
 ];
 
@@ -47,6 +50,9 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export function HubPage() {
+	const previews = useQuery(appPreviewsQueryOptions);
+	const projects = [...PROJECTS, ...appPreviewProjects(previews.data?.apps ?? [])];
+
 	useDocumentMetadata("Pashi");
 
 	return (
@@ -61,22 +67,26 @@ export function HubPage() {
 				<PashiLogoButton className="hub-logo-button" imageClassName="hub-logo" />
 			</header>
 
-			{SECTIONS.map((section) => (
-				<section
-					aria-labelledby={`hub-${section.kind}-title`}
-					className="hub-projects"
-					key={section.kind}
-				>
-					<h2 className="hub-section-title" id={`hub-${section.kind}-title`}>
-						{section.title}
-					</h2>
-					<div className="project-grid">
-						{PROJECTS.filter((project) => project.kind === section.kind).map((project) => (
-							<ProjectCard key={project.id} project={project} />
-						))}
-					</div>
-				</section>
-			))}
+			{SECTIONS.map((section) => {
+				const entries = projects.filter((project) => project.kind === section.kind);
+
+				return entries.length > 0 ? (
+					<section
+						aria-labelledby={`hub-${section.kind}-title`}
+						className="hub-projects"
+						key={section.kind}
+					>
+						<h2 className="hub-section-title" id={`hub-${section.kind}-title`}>
+							{section.title}
+						</h2>
+						<div className="project-grid">
+							{entries.map((project) => (
+								<ProjectCard key={project.id} project={project} />
+							))}
+						</div>
+					</section>
+				) : null;
+			})}
 		</main>
 	);
 }

@@ -7,6 +7,7 @@ import { renderSharedPolisPage } from "./mcp/resources";
 import { apiCors } from "./middleware/cors";
 import { aiClientFor, requirePolychat, resolveAgentAccess } from "./middleware/polychat-access";
 import { serveAppView } from "./routes/app-views";
+import { createAppRoutes } from "./routes/apps";
 import { guard, type AppContext } from "./routes/context";
 import { createLabsRoutes } from "./routes/labs";
 import { createPolychatRoutes } from "./routes/polychat";
@@ -50,6 +51,7 @@ app.get("/api/openapi.json", (c) =>
 
 app.get("/og", (c) => createOgImageResponse(new URL(c.req.url).searchParams.get("path") ?? "/"));
 
+app.route("/api/apps", createAppRoutes());
 app.route("/api/labs", createLabsRoutes());
 app.route("/api/polychat", createPolychatRoutes());
 
