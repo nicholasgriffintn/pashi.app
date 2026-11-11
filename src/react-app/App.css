@@ -1,3 +1,5 @@
+@import "../shared-ui/readings.css";
+
 #root {
 	min-height: 100vh;
 }
@@ -3106,6 +3108,249 @@ h1 {
 	font-size: 0.85rem;
 	margin: 0;
 	overflow-wrap: anywhere;
+}
+
+.decide-form {
+	gap: var(--space-4);
+}
+
+.decide-form fieldset {
+	border: 2px solid var(--edge);
+	display: grid;
+	gap: var(--space-2);
+	margin: 0;
+	min-width: 0;
+	padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.decide-form legend {
+	color: var(--body-text);
+	font-family: var(--font-display);
+	font-size: 1.1rem;
+	letter-spacing: 0.02em;
+	padding: 0 var(--space-2);
+	text-transform: uppercase;
+}
+
+.decide-form input[type="text"],
+.decide-form select {
+	background: var(--paper);
+	border: 2px solid var(--ink-deep);
+	box-shadow: 3px 3px 0 var(--ink-shade);
+	color: var(--ink);
+	font-weight: 700;
+	min-width: 0;
+	padding: 0.45rem 0.6rem;
+}
+
+.decide-form input[type="text"]:focus-visible,
+.decide-form select:focus-visible {
+	box-shadow: 5px 5px 0 var(--magenta);
+	outline: 3px solid var(--body-text);
+	outline-offset: 2px;
+}
+
+.decide-form .decide-hint {
+	color: var(--body-muted);
+	font-size: 0.8rem;
+	margin: 0;
+}
+
+.decide-quiet {
+	background: transparent;
+	border: 2px solid var(--edge);
+	color: var(--body-text);
+	cursor: pointer;
+	font-size: 0.78rem;
+	font-weight: 700;
+	justify-self: start;
+	padding: 0.25rem 0.6rem;
+	transition:
+		background var(--duration) var(--ease),
+		border-color var(--duration) var(--ease);
+}
+
+.decide-quiet:hover:not(:disabled),
+.decide-quiet:focus-visible,
+.decide-quiet:focus-within {
+	background: var(--ground-tint-strong);
+	border-color: var(--body-text);
+	outline: 0;
+}
+
+.decide-quiet:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.decide-image {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-3);
+}
+
+.decide-image img {
+	border: 2px solid var(--edge);
+	max-height: 6rem;
+	max-width: 8rem;
+	object-fit: cover;
+}
+
+.decide-image span {
+	color: var(--body-muted);
+	font-size: 0.8rem;
+	overflow-wrap: anywhere;
+}
+
+.decide-image label {
+	position: relative;
+}
+
+.decide-image input[type="file"] {
+	height: 1px;
+	opacity: 0;
+	position: absolute;
+	width: 1px;
+}
+
+.decide-questions ol {
+	display: grid;
+	gap: var(--space-3);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.decide-question {
+	background: var(--ground-tint);
+	border: 2px solid var(--edge-soft);
+	display: grid;
+	gap: var(--space-2);
+	padding: var(--space-3);
+}
+
+.decide-question-head {
+	align-items: center;
+	color: var(--body-text);
+	display: flex;
+	font-weight: 900;
+	gap: var(--space-3);
+	justify-content: space-between;
+}
+
+.decide-entries {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.decide-entries-heading {
+	color: var(--body-muted);
+	font-size: 0.74rem;
+	font-weight: 900;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.decide-entries li {
+	display: grid;
+	gap: var(--space-2);
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.decide-results {
+	background: var(--panel-bg);
+	border: 2px solid var(--body-text);
+	box-shadow: 8px 8px 0 var(--magenta);
+	color: var(--panel-text);
+	display: grid;
+	gap: var(--space-3);
+	max-width: 60rem;
+	padding: var(--space-5);
+}
+
+.decide-results h2 {
+	font-size: 1.4rem;
+	margin: 0;
+}
+
+.decide-results > ol {
+	display: grid;
+	gap: var(--space-4);
+	grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.decide-answer {
+	align-content: start;
+	border: 2px solid var(--panel-border);
+	display: grid;
+	gap: var(--space-3);
+	padding: var(--space-3);
+}
+
+.decide-answer h3 {
+	font-size: 1rem;
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.decide-answer-body {
+	display: grid;
+	gap: var(--space-3);
+	justify-items: center;
+}
+
+.decide-answer-body p {
+	color: var(--panel-muted);
+	margin: 0;
+}
+
+.decide-answer-body .step-scale {
+	justify-self: stretch;
+}
+
+.decide-distribution {
+	display: grid;
+	gap: var(--space-1);
+	justify-self: stretch;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.decide-distribution li {
+	align-items: center;
+	display: grid;
+	font-size: 0.82rem;
+	gap: var(--space-2);
+	grid-template-columns: minmax(0, 1fr) minmax(3rem, 2fr) 3rem;
+}
+
+.decide-distribution li[data-chosen="true"] {
+	font-weight: 900;
+}
+
+.decide-distribution-label {
+	overflow-wrap: anywhere;
+}
+
+.decide-distribution-bar {
+	background: var(--edge-soft);
+	height: 0.45rem;
+}
+
+.decide-distribution-bar span {
+	background: var(--cyan);
+	display: block;
+	height: 100%;
+}
+
+.decide-distribution-value {
+	font-family: var(--font-mono);
+	text-align: right;
 }
 
 .ask-output {

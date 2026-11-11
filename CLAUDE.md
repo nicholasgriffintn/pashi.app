@@ -7,6 +7,7 @@ Pashi (https://pashi.app) is the home for side projects: a hub that lists projec
 - `src/react-app` — the SPA. Routes orchestrate; logic lives in `lib/` and `components/`.
 - `src/worker` — the Worker. `routes` compose `services`; `utils` holds shared helpers.
 - `src/shared` — types and contracts imported by both halves. Never import DOM or Worker globals here.
+- `src/shared-ui` — React components and styles shared by the SPA and the MCP views.
 - `containers/converter` — the Node container that runs ffmpeg, ImageMagick and pandoc.
 
 ## Rules
