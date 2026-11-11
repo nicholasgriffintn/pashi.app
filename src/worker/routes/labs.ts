@@ -5,7 +5,7 @@ import type { AiClient } from "../ai/run";
 import { aiClientFor, requirePolychat } from "../middleware/polychat-access";
 import { recordEvent } from "../services/events";
 import { createFeatureStatus } from "../services/features";
-import { routeRequestToTool } from "../services/labs/ask";
+import { askPashi } from "../services/labs/ask";
 import { explainInput, isExplainSubject } from "../services/labs/explain";
 import { readGeneratorBody } from "../utils/body";
 import { errorJson } from "../utils/http";
@@ -49,17 +49,8 @@ export function createLabsRoutes() {
 		}
 
 		const body = await readGeneratorBody(c);
-		const startedAt = Date.now();
-		const route = await routeRequestToTool(access.ai, body.input || body.fields.request || "");
 
-		recordEvent(c.env, {
-			durationMs: Date.now() - startedAt,
-			kind: "ask",
-			name: "ai_call",
-			toolId: route.toolId,
-		});
-
-		return c.json(route);
+		return c.json(await askPashi(access.ai, body.input || body.fields.request || "", c.env));
 	});
 
 	routes.post("/explain/:subject", async (c) => {

@@ -87,7 +87,7 @@ export async function answerViewRequest(message: ViewMessage, context: HostConte
 		return {};
 	}
 
-	if (message.method === "ping") {
+	if (message.method === "ping" || message.method === "ui/update-model-context") {
 		return {};
 	}
 

@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 
-import { host, readViewData } from "../shared/host";
+import { FULLSCREEN_CAPABILITIES, host, readViewData } from "../shared/host";
 
 import "../shared/view.css";
 import "../shared/readings.css";
@@ -15,7 +15,7 @@ const root = document.getElementById("root");
 if (root) {
 	const data = readViewData(isPolisViewData);
 
-	void host.connect("pashi-polis");
+	void host.connect("pashi-polis", FULLSCREEN_CAPABILITIES);
 	createRoot(root).render(
 		data.mode === "shared" ? (
 			<SharedPolisTown recordingUrl={data.recordingUrl} siteUrl={data.siteUrl} />

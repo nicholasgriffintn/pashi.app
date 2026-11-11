@@ -30,6 +30,7 @@ interface StrudelStudioProps {
 	isSaving: boolean;
 	onChange: (patch: Partial<StudioState>) => void;
 	onGenerate: () => void;
+	onPlay: (code: string) => void;
 	onSave: () => void;
 	onSelectExample: (example: PatternExample) => void;
 	parsedTags: string[];
@@ -44,6 +45,7 @@ export function StrudelStudio({
 	isSaving,
 	onChange,
 	onGenerate,
+	onPlay,
 	onSave,
 	onSelectExample,
 	parsedTags,
@@ -141,6 +143,7 @@ export function StrudelStudio({
 						code={state.code}
 						config={config}
 						onChange={(code) => onChange({ code })}
+						onPlay={onPlay}
 					/>
 				</section>
 			</div>

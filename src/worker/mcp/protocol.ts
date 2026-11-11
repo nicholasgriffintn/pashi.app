@@ -1,112 +1,56 @@
-import { isRecord } from "../../shared/records";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
-import { listMcpResources, readMcpResource } from "./resources";
-import { callMcpTool, listMcpTools, type McpCaller } from "./tools";
-
-const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18"]);
-const DEFAULT_PROTOCOL_VERSION = "2025-06-18";
+import { buildMcpInstructions } from "./instructions";
+import { isJsonRpcRequest, jsonRpcFailure, jsonRpcResult, type JsonRpcRequest } from "./json-rpc";
+import { findMcpMethod, MCP_SERVER_CAPABILITIES, MCP_SERVER_INFO } from "./methods";
+import { createModernMcpResponse } from "./modern";
+import { isModernRequest } from "./modern-envelope";
+import type { McpCaller } from "./tools";
+import {
+	DEFAULT_LEGACY_PROTOCOL_VERSION,
+	LEGACY_PROTOCOL_VERSIONS,
+	MODERN_PROTOCOL_VERSION,
+} from "./versions";
 
 export const MCP_MAX_BATCH = 20;
-
-interface JsonRpcRequest {
-	id?: number | string | null;
-	method: string;
-	params?: Record<string, unknown>;
-}
-
-function isJsonRpcRequest(value: unknown): value is JsonRpcRequest {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		typeof (value as JsonRpcRequest).method === "string"
-	);
-}
-
-function result(id: JsonRpcRequest["id"], value: unknown) {
-	return { id: id ?? null, jsonrpc: "2.0" as const, result: value };
-}
-
-function failure(id: JsonRpcRequest["id"], code: number, message: string) {
-	return { error: { code, message }, id: id ?? null, jsonrpc: "2.0" as const };
-}
 
 function negotiateVersion(params: Record<string, unknown> | undefined) {
 	const requested = typeof params?.protocolVersion === "string" ? params.protocolVersion : "";
 
-	return SUPPORTED_PROTOCOL_VERSIONS.has(requested) ? requested : DEFAULT_PROTOCOL_VERSION;
+	return LEGACY_PROTOCOL_VERSIONS.includes(requested) ? requested : DEFAULT_LEGACY_PROTOCOL_VERSION;
 }
 
 async function handleRequest(request: JsonRpcRequest, env: ConversionEnv, caller: McpCaller) {
 	if (request.method === "initialize") {
-		return result(request.id, {
-			capabilities: {
-				resources: { listChanged: false, subscribe: false },
-				tools: { listChanged: false },
-			},
+		return jsonRpcResult(request.id, {
+			capabilities: MCP_SERVER_CAPABILITIES,
+			instructions: buildMcpInstructions(caller),
 			protocolVersion: negotiateVersion(request.params),
-			serverInfo: { name: "pashi", version: "1.0.0" },
+			serverInfo: MCP_SERVER_INFO,
 		});
 	}
 
-	if (request.method === "tools/list") {
-		return result(request.id, { tools: listMcpTools() });
-	}
-
-	if (request.method === "resources/list") {
-		return result(request.id, { resources: listMcpResources() });
-	}
-
-	if (request.method === "resources/templates/list") {
-		return result(request.id, { resourceTemplates: [] });
-	}
-
-	if (request.method === "resources/read") {
-		const uri = typeof request.params?.uri === "string" ? request.params.uri : "";
-		const resource = readMcpResource(uri, caller.origin);
-
-		return resource
-			? result(request.id, resource)
-			: failure(request.id, -32002, `Resource not found: ${uri}`);
-	}
-
-	if (request.method === "tools/call") {
-		const name = typeof request.params?.name === "string" ? request.params.name : "";
-		const argumentsValue =
-			typeof request.params?.arguments === "object" && request.params.arguments !== null
-				? (request.params.arguments as Record<string, unknown>)
-				: {};
-
-		try {
-			const value = await callMcpTool(name, argumentsValue, env, caller);
-
-			return result(request.id, {
-				content: [{ text: JSON.stringify(value, null, 2), type: "text" }],
-				isError: false,
-				...(isRecord(value) ? { structuredContent: value } : {}),
-			});
-		} catch (error) {
-			return result(request.id, {
-				content: [
-					{
-						text: error instanceof Error ? error.message : "The tool call failed.",
-						type: "text",
-					},
-				],
-				isError: true,
-			});
-		}
-	}
-
 	if (request.method === "ping") {
-		return result(request.id, {});
+		return jsonRpcResult(request.id, {});
 	}
 
-	return failure(request.id, -32601, `Unknown method: ${request.method}`);
+	const method = findMcpMethod(request.method);
+
+	if (!method) {
+		return jsonRpcFailure(request.id, -32601, `Unknown method: ${request.method}`);
+	}
+
+	const outcome = await method.run({ caller, env, params: request.params });
+
+	return "missingResource" in outcome
+		? jsonRpcFailure(request.id, -32002, `Resource not found: ${outcome.missingResource}`)
+		: jsonRpcResult(request.id, outcome.result);
 }
 
 export async function createMcpResponse(request: Request, env: ConversionEnv, caller: McpCaller) {
 	if (request.method !== "POST") {
-		return Response.json(failure(null, -32600, "Use POST for MCP requests."), { status: 405 });
+		return Response.json(jsonRpcFailure(null, -32600, "Use POST for MCP requests."), {
+			status: 405,
+		});
 	}
 
 	let body: unknown;
@@ -114,26 +58,41 @@ export async function createMcpResponse(request: Request, env: ConversionEnv, ca
 	try {
 		body = await request.json();
 	} catch {
-		return Response.json(failure(null, -32700, "Invalid JSON."), { status: 400 });
+		return Response.json(jsonRpcFailure(null, -32700, "Invalid JSON."), { status: 400 });
 	}
 
 	if (Array.isArray(body) && body.length > MCP_MAX_BATCH) {
 		return Response.json(
-			failure(null, -32600, `Send at most ${MCP_MAX_BATCH} messages in one batch.`),
+			jsonRpcFailure(null, -32600, `Send at most ${MCP_MAX_BATCH} messages in one batch.`),
 			{ status: 422 },
 		);
 	}
 
 	if (Array.isArray(body)) {
-		const responses = await Promise.all(
-			body.filter(isJsonRpcRequest).map((entry) => handleRequest(entry, env, caller)),
-		);
+		const messages = body.filter(isJsonRpcRequest);
+
+		if (messages.some((entry) => isModernRequest(request, entry))) {
+			return Response.json(
+				jsonRpcFailure(
+					null,
+					-32600,
+					`Send each ${MODERN_PROTOCOL_VERSION} request in its own POST.`,
+				),
+				{ status: 400 },
+			);
+		}
+
+		const responses = await Promise.all(messages.map((entry) => handleRequest(entry, env, caller)));
 
 		return Response.json(responses);
 	}
 
 	if (!isJsonRpcRequest(body)) {
-		return Response.json(failure(null, -32600, "Invalid request."), { status: 400 });
+		return Response.json(jsonRpcFailure(null, -32600, "Invalid request."), { status: 400 });
+	}
+
+	if (isModernRequest(request, body)) {
+		return createModernMcpResponse(request, body, env, caller);
 	}
 
 	const response = await handleRequest(body, env, caller);

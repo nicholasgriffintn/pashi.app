@@ -3,6 +3,8 @@ import { useState } from "react";
 import { Toast, useToast } from "../shared/Toast";
 import type { StrudelConfig, StrudelPattern } from "./config";
 import { CreateStudio } from "./CreateStudio";
+import { FullscreenButton } from "./FullscreenButton";
+import { shareLibrary, sharePattern } from "./pattern-context";
 import { PatternEditor } from "./PatternEditor";
 import { PatternGrid } from "./PatternGrid";
 import { useStrudelLibrary } from "./useStrudelLibrary";
@@ -13,7 +15,16 @@ export function StrudelApp({ config }: { config: StrudelConfig }) {
 	const library = useStrudelLibrary();
 	const { show, toast } = useToast();
 	const [screen, setScreen] = useState<Screen>({ name: "library" });
-	const openLibrary = () => setScreen({ name: "library" });
+
+	const openLibrary = () => {
+		setScreen({ name: "library" });
+		shareLibrary();
+	};
+
+	const openPattern = (pattern: StrudelPattern) => {
+		setScreen({ name: "edit", pattern });
+		sharePattern({ code: pattern.code, event: "opened from the library", title: pattern.name });
+	};
 
 	return (
 		<main className="view strudel">
@@ -22,11 +33,14 @@ export function StrudelApp({ config }: { config: StrudelConfig }) {
 					<p className="eyebrow">Pashi studio</p>
 					<h1 className="view-title">Strudel</h1>
 				</div>
-				{screen.name === "library" ? null : (
-					<button type="button" className="button" onClick={openLibrary}>
-						All patterns
-					</button>
-				)}
+				<div className="strudel-head-actions">
+					<FullscreenButton />
+					{screen.name === "library" ? null : (
+						<button type="button" className="button" onClick={openLibrary}>
+							All patterns
+						</button>
+					)}
+				</div>
 			</header>
 
 			{screen.name === "new" ? (
@@ -73,7 +87,7 @@ export function StrudelApp({ config }: { config: StrudelConfig }) {
 			{screen.name === "library" && !library.isLoading && !library.loadError ? (
 				<PatternGrid
 					onNew={() => setScreen({ name: "new" })}
-					onOpen={(pattern) => setScreen({ name: "edit", pattern })}
+					onOpen={openPattern}
 					patterns={library.patterns}
 				/>
 			) : null}

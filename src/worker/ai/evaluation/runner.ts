@@ -22,12 +22,21 @@ async function runRouteCases(ai: AiClient): Promise<EvaluationCaseResult[]> {
 	for (const testCase of ROUTE_CASES) {
 		try {
 			const route = await routeRequestToTool(ai, testCase.request);
-			const passed = testCase.acceptableToolIds.includes(route.toolId);
+			const toolPassed = testCase.acceptableToolIds.includes(route.toolId);
+			const wrongFields =
+				route.toolId === testCase.expectedToolId
+					? Object.entries(testCase.expectedFields ?? {}).filter(
+							([id, value]) => route.fields[id] !== value,
+						)
+					: [];
+			const passed = toolPassed && wrongFields.length === 0;
 
 			results.push({
-				detail: passed
-					? `chose ${route.toolId}`
-					: `chose ${route.toolId}, expected one of ${testCase.acceptableToolIds.join(", ")}`,
+				detail: !toolPassed
+					? `chose ${route.toolId}, expected one of ${testCase.acceptableToolIds.join(", ")}`
+					: wrongFields.length > 0
+						? `chose ${route.toolId}, but ${wrongFields.map(([id, value]) => `${id} was ${route.fields[id] ?? "unset"}, expected ${value}`).join("; ")}`
+						: `chose ${route.toolId}`,
 				name: `route: ${testCase.request}`,
 				passed,
 			});
@@ -50,7 +59,7 @@ async function runExplainCases(ai: AiClient): Promise<EvaluationCaseResult[]> {
 		try {
 			const explanation = await explainInput(ai, testCase.subject, testCase.input);
 			const haystack =
-				`${explanation.summary} ${explanation.parts.map((part) => `${part.piece} ${part.detail}`).join(" ")}`.toLowerCase();
+				`${explanation.summary} ${explanation.parts.map((part) => `${part.piece} ${part.detail}`).join(" ")} ${explanation.warnings.join(" ")}`.toLowerCase();
 			const missing = testCase.mustMention.filter((term) => !haystack.includes(term.toLowerCase()));
 
 			results.push({

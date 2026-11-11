@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "./Button";
 import { POLIS_MAP_MODES, POLIS_SPEEDS, type PolisMapMode } from "./engine/protocol";
 import { formatMoment } from "./format";
+import { FullscreenControl } from "./FullscreenControl";
 import { ShareControl } from "./ShareControl";
 import type { PolisEngine } from "./usePolisEngine";
 
@@ -110,6 +111,7 @@ export function Transport({ engine }: { engine: PolisEngine }) {
 				onClick={() => send({ type: "export", purpose: "download" })}
 			/>
 			<ShareControl engine={engine} />
+			<FullscreenControl />
 			<Button variant="outline" size="sm" icon="history" onClick={() => send({ type: "watch" })}>
 				Rewind
 			</Button>

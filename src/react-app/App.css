@@ -3108,6 +3108,26 @@ h1 {
 	overflow-wrap: anywhere;
 }
 
+.ask-output {
+	background: var(--console-bg);
+	border: 2px solid var(--panel-border);
+	color: var(--body-text);
+	margin: 0;
+	max-height: 24rem;
+	overflow: auto;
+	padding: var(--space-3);
+}
+
+pre.ask-output {
+	font: 700 0.85rem / 1.5 var(--font-mono);
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+.ask-output dd {
+	color: var(--body-text);
+}
+
 .theme-toggle {
 	align-items: center;
 	background: transparent;

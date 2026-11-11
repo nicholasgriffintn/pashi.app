@@ -3,6 +3,8 @@ export interface OutputSchema {
 	schema: Record<string, unknown>;
 }
 
+export const TOOL_ROUTE_MAX_FIELDS = 8;
+
 export const TOOL_ROUTE_SCHEMA: OutputSchema = {
 	name: "pashi_tool_route",
 	schema: {
@@ -23,7 +25,7 @@ export const TOOL_ROUTE_SCHEMA: OutputSchema = {
 					required: ["id", "value"],
 					type: "object",
 				},
-				maxItems: 8,
+				maxItems: TOOL_ROUTE_MAX_FIELDS,
 				type: "array",
 			},
 			input: {

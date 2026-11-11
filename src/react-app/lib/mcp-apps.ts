@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { appViewOrigin, appViewPath, POLYCHAT_APP_META_KEY } from "../../shared/mcp-apps";
 import { isRecord } from "../../shared/records";
 import { mcpRequest } from "./mcp-client";
+import { QueryError } from "./query-client";
 
 export interface McpApp {
 	allow: string;
@@ -98,7 +99,13 @@ export function mcpAppsQueryOptions(apiKey: string) {
 				}),
 			);
 
-			return listOf(tools, "tools").flatMap((tool) => toApp(tool, views) ?? []);
+			const apps = listOf(tools, "tools").flatMap((tool) => toApp(tool, views) ?? []);
+
+			if (apps.length === 0) {
+				throw new QueryError("Apps need Polychat or an API key.", 401);
+			}
+
+			return apps;
 		},
 		queryKey: ["mcp-apps", apiKey],
 	});

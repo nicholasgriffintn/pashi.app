@@ -7,12 +7,15 @@ import { PlaybackBar } from "./PlaybackBar";
 import { SetupScreen } from "./SetupScreen";
 import { SidePanel } from "./SidePanel";
 import { usePolisEngine } from "./usePolisEngine";
+import { useTownContext } from "./useTownContext";
 
 export function PolisApp({ recording, siteUrl }: { recording?: PolisRecording; siteUrl: string }) {
 	const { show, toast } = useToast();
 	const engine = usePolisEngine({ notify: show, recording, siteUrl });
 	const { setContainer } = engine;
 	const started = engine.status !== null;
+
+	useTownContext(engine.status);
 
 	return (
 		<main className="view polis">
