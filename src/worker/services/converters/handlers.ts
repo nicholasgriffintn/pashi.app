@@ -22,17 +22,17 @@ import {
 	isDeveloperInspectFormat,
 } from "./developer-inspect.ts";
 import {
-	convertDocumentToMarkdown,
-	DOCUMENT_MARKDOWN_FORMATS,
-	DocumentMarkdownError,
-	isDocumentMarkdownFormat,
-} from "./document-markdown.ts";
-import {
 	DEVELOPER_TEXT_FORMATS,
 	DeveloperTextError,
 	isDeveloperTextFormat,
 	transformDeveloperText,
 } from "./developer-text.ts";
+import {
+	convertDocumentToMarkdown,
+	DOCUMENT_MARKDOWN_FORMATS,
+	DocumentMarkdownError,
+	isDocumentMarkdownFormat,
+} from "./document-markdown.ts";
 import { HTML_TRANSFORM_FORMATS, isHtmlTransformFormat, transformHtml } from "./html-transform.ts";
 import {
 	isJsonTransformFormat,

@@ -46,7 +46,6 @@ async function readBoundedBytes(
 			size += value.byteLength;
 
 			if (size > limit) {
-				await reader.cancel();
 				throw tooLarge();
 			}
 

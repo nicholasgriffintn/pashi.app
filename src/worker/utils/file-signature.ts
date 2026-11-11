@@ -104,7 +104,10 @@ export function detectFileSignature(bytes: ArrayLike<number>): FileSignature {
 		return image("jxl", "image/jxl", "JPEG XL image");
 	}
 
-	if (head.startsWith("8BPS") && (startsWith(bytes, [0x00, 0x01], 4) || startsWith(bytes, [0x00, 0x02], 4))) {
+	if (
+		head.startsWith("8BPS") &&
+		(startsWith(bytes, [0x00, 0x01], 4) || startsWith(bytes, [0x00, 0x02], 4))
+	) {
 		return image("psd", "image/vnd.adobe.photoshop", "Photoshop image");
 	}
 
@@ -123,10 +126,7 @@ export function detectFileSignature(bytes: ArrayLike<number>): FileSignature {
 		};
 	}
 
-	if (
-		startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]) ||
-		startsWith(bytes, [0x50, 0x4b, 0x05, 0x06])
-	) {
+	if (startsWith(bytes, [0x50, 0x4b, 0x03, 0x04]) || startsWith(bytes, [0x50, 0x4b, 0x05, 0x06])) {
 		return { extension: "zip", kind: "archive", mimeType: "application/zip", name: "ZIP archive" };
 	}
 
@@ -161,7 +161,7 @@ export function detectFileSignature(bytes: ArrayLike<number>): FileSignature {
 
 export function decodeStrictUtf8Text(bytes: Uint8Array) {
 	try {
-		const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+		const text = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(bytes);
 
 		return text.includes("\0") ? undefined : text;
 	} catch {

@@ -27,7 +27,11 @@ const DOCUMENT_FORMATS = {
 	},
 	htm: { container: "text", label: "HTML", mimeType: "text/html" },
 	html: { container: "text", label: "HTML", mimeType: "text/html" },
-	numbers: { container: "zip", label: "Numbers spreadsheet", mimeType: "application/vnd.apple.numbers" },
+	numbers: {
+		container: "zip",
+		label: "Numbers spreadsheet",
+		mimeType: "application/vnd.apple.numbers",
+	},
 	ods: {
 		container: "zip",
 		label: "OpenDocument spreadsheet",
@@ -73,8 +77,7 @@ const MIME_TYPE_ALIASES: Readonly<Record<string, DocumentExtension>> = {
 
 const ACCEPTED_FORMATS_COPY =
 	"PDF, Word (DOCX), Excel (XLSX, XLSM, XLSB, XLS), OpenDocument (ODT, ODS), Apple Numbers, CSV, HTML or XML";
-const IMAGE_REFUSAL =
-	"Images are not supported, because converting them runs paid image models.";
+const IMAGE_REFUSAL = "Images are not supported, because converting them runs paid image models.";
 const SVG_REFUSAL = `${IMAGE_REFUSAL} SVG files count as images.`;
 const SVG_EXTENSIONS = new Set(["svg", "svgz"]);
 
