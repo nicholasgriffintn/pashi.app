@@ -1,5 +1,6 @@
 import { isRecord } from "../../shared/records";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
+import { buildMcpInstructions } from "./instructions";
 import { listMcpResources, readMcpResource } from "./resources";
 import { errorToolResult } from "./tool-result";
 import { callMcpTool, canReadMcpResource, listMcpTools, type McpCaller } from "./tools";
@@ -44,6 +45,7 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv, caller
 				resources: { listChanged: false, subscribe: false },
 				tools: { listChanged: false },
 			},
+			instructions: buildMcpInstructions(caller),
 			protocolVersion: negotiateVersion(request.params),
 			serverInfo: { name: "pashi", version: "1.0.0" },
 		});

@@ -692,6 +692,12 @@ export function listMcpTools(caller: McpCaller) {
 	);
 }
 
+export function listMcpAppToolNames() {
+	return MCP_TOOLS.filter((tool) => tool._meta?.[POLYCHAT_APP_META_KEY] !== undefined).map(
+		(tool) => tool.name,
+	);
+}
+
 export function canReadMcpResource(uri: string, caller: McpCaller) {
 	return (
 		caller.owner !== undefined ||
