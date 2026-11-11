@@ -215,6 +215,10 @@ export function base64Encode(value: string) {
 	return bytesToBase64(new TextEncoder().encode(value));
 }
 
+export function base64Decode(value: string) {
+	return new TextDecoder().decode(base64UrlToBytes(value));
+}
+
 export function bytesToBase64(bytes: Uint8Array) {
 	let binary = "";
 
