@@ -1,4 +1,5 @@
 import { isRecord } from "../../../shared/records";
+import { PolychatError } from "./client";
 
 export interface DecisionChoice {
 	choice: string;
@@ -13,7 +14,7 @@ export interface DecisionScore {
 
 export function readDecisionAnswers(response: unknown): Record<string, unknown> {
 	if (!isRecord(response) || !isRecord(response.answers)) {
-		throw new Error("Polychat gave a decision Pashi could not read.");
+		throw new PolychatError("Polychat gave a decision Pashi could not read.", 502, "unavailable");
 	}
 
 	return response.answers;
@@ -35,10 +36,14 @@ export function readDecisionChoice(answer: unknown): DecisionChoice | undefined 
 	};
 }
 
-export function readDecisionNoul(answer: unknown) {
+export function readDecisionProbability(answer: unknown) {
 	return isRecord(answer) && answer.type === "noul" && typeof answer.noul === "number"
 		? answer.noul
-		: 0;
+		: undefined;
+}
+
+export function readDecisionNoul(answer: unknown) {
+	return readDecisionProbability(answer) ?? 0;
 }
 
 export function readDecisionScore(answer: unknown): DecisionScore | undefined {

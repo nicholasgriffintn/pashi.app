@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 
+import { formatProbabilityPercent } from "../../../shared-ui/probability";
 import { POLIS_DRAFT_LENGTH, type PolisLaw } from "../../../shared/polis";
 import { errorMessage } from "../../shared/errors";
-import { formatProbabilityPercent } from "../../shared/probability";
 import { Button } from "../Button";
 import type { PolisStatus } from "../engine/protocol";
 import { polisService } from "../service";

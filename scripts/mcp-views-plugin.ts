@@ -7,6 +7,7 @@ import { build, type Plugin } from "vite";
 const PREFIX = "virtual:mcp-view/";
 const RESOLVED_PREFIX = `\0${PREFIX}`;
 const VIEWS_ROOT = fileURLToPath(new URL("../src/mcp-views", import.meta.url));
+const SHARED_UI_ROOT = fileURLToPath(new URL("../src/shared-ui", import.meta.url));
 
 interface BundledView {
 	css: string;
@@ -104,6 +105,7 @@ export function mcpViews(): Plugin {
 				for (const file of [
 					...(existsSync(viewRoot) ? listFiles(viewRoot) : []),
 					...listFiles(join(VIEWS_ROOT, "shared")),
+					...listFiles(SHARED_UI_ROOT),
 				]) {
 					this.addWatchFile(file);
 				}

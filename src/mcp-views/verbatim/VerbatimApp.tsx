@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
-import { formatProbabilityPercent } from "../shared/probability";
-import { Readout } from "../shared/Readout";
+import { formatProbabilityPercent } from "../../shared-ui/probability";
+import { Readout } from "../../shared-ui/Readout";
 import { useModelContext } from "../shared/useModelContext";
 import { LevelTrace } from "./LevelTrace";
 import { RecordOrb } from "./RecordOrb";

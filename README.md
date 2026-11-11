@@ -10,7 +10,7 @@ Pashi has three layers on one domain.
 
 - **Hub** at `/` lists every project, including the ones that live on their own subdomains.
 - **Tools** at `/tools` is the console: 79 generators and 23 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
-- **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool, runs it when the tool is simple and otherwise opens it with the form filled in.
+- **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool, runs it when the tool is simple and otherwise opens it with the form filled in. Decide asks a Polychat decision model typed yes or no, choice and score questions about some text or an image.
 
 Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, [/api/info](https://pashi.app/api/info) for the raw contract, or [/api/openapi.json](https://pashi.app/api/openapi.json) for an OpenAPI 3.1 document covering every path.
 
@@ -27,10 +27,11 @@ An MCP endpoint at `/mcp` exposes four meta tools rather than one per generator,
 
 It speaks JSON-RPC over POST. The meta tools work without a credential and are rate limited per IP address. AI mode needs a Polychat link. Everything else takes either a Pashi API key or the Polychat link token as a bearer token.
 
-Two Labs tools need a Polychat link.
+Three Labs tools need a Polychat link.
 
 - `pashi_ask` routes a plain English request to a tool and runs it when it is simple.
 - `pashi_explain` explains a cron schedule, curl command, JWT, regular expression or SQL statement.
+- `pashi_decide` answers up to eight typed questions about some text or an image with a decision model. It needs Polychat Pro, the same as `POST /api/labs/decide`.
 
 ### MCP Apps
 

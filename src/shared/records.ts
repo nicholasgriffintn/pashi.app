@@ -4,6 +4,10 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+export function ownValue<T>(record: Record<string, T>, key: string): T | undefined {
+	return Object.hasOwn(record, key) ? record[key] : undefined;
+}
+
 export function isStringRecord(value: unknown): value is StringRecord {
 	return isRecord(value) && Object.values(value).every((item) => typeof item === "string");
 }

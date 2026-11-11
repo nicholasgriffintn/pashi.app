@@ -8,10 +8,10 @@ import {
 	readDecisionScore,
 	roundDecisionScore,
 } from "../services/polychat/decisions";
+import { requirePolychatPro } from "../services/polychat/pro-gate";
 import type { PolychatSessionEnv } from "../services/polychat/session";
 import { randomChoice, randomHex, sha256 } from "../utils/generation";
 import { readSealedRecord, writeSealedRecord } from "../utils/sealed-record";
-import { requirePolychatPro } from "./pro-gate";
 import { TWENTY_QUESTIONS_CATEGORIES } from "./twenty-questions-secrets";
 
 export const TWENTY_QUESTIONS_MAX_QUESTIONS = 20;

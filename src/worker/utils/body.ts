@@ -70,8 +70,8 @@ async function readBoundedText(c: Context, limit = MAX_TEXT_BODY_BYTES) {
 	return new TextDecoder().decode(await readBoundedBytes(c, limit));
 }
 
-async function readBoundedJson(c: Context) {
-	const text = await readBoundedText(c);
+export async function readBoundedJson(c: Context, limit = MAX_TEXT_BODY_BYTES) {
+	const text = await readBoundedText(c, limit);
 
 	if (!text) {
 		return undefined;
