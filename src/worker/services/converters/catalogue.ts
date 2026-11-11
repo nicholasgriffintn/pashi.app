@@ -1370,6 +1370,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		placeholder: "0 9 * * 1",
 		runtime: "worker",
 		status: "available",
+		undemonstratedModes: ["jwt"],
 	},
 	{
 		aliases: [
