@@ -13,7 +13,7 @@ interface Experiment {
 const EXPERIMENTS: readonly Experiment[] = [
 	{
 		blurb:
-			"Describe what you need in plain words. Pashi picks the tool, fills the form and runs it for you.",
+			"Describe what you need in plain words. Pashi picks the tool and runs it when it is simple; otherwise it opens the tool with the form filled in.",
 		id: "ask",
 		path: "/labs/ask",
 		state: "live",

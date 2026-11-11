@@ -1,21 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 
+import { AskAnswer } from "../components/AskAnswer";
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
-import { fetchJson } from "../lib/query-client";
+import { askPashi } from "../lib/ask-api";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
-
-interface ToolRoute {
-	confidence: number;
-	fields: Record<string, string>;
-	input: string;
-	path: string;
-	reason: string;
-	toolId: string;
-	toolLabel: string;
-	toolType: "converter" | "generator";
-}
 
 const EXAMPLES = [
 	"five uppercase v7 uuids",
@@ -24,39 +13,15 @@ const EXAMPLES = [
 	"what are the odds of rolling 15 or more on 3d6",
 ];
 
-function routeUrl(route: ToolRoute) {
-	const params = new URLSearchParams();
-
-	if (route.input) {
-		params.set("input", route.input);
-	}
-
-	for (const [key, value] of Object.entries(route.fields)) {
-		params.set(key, value);
-	}
-
-	const query = params.toString();
-
-	return query ? `${route.path}?${query}` : route.path;
-}
-
 export function AskPage() {
-	const navigate = useNavigate();
 	const [request, setRequest] = useState("");
 
 	useDocumentMetadata(
 		"Ask Pashi",
-		"Describe what you need and Pashi picks the tool and fills the form.",
+		"Describe what you need and Pashi picks the tool, runs it when it is simple and otherwise opens it with the form filled in.",
 	);
 
-	const { data, error, isPending, mutate } = useMutation({
-		mutationFn: (value: string) =>
-			fetchJson<ToolRoute>("/api/labs/ask", {
-				body: JSON.stringify({ input: value }),
-				headers: { "Content-Type": "application/json" },
-				method: "POST",
-			}),
-	});
+	const { data, error, isPending, mutate } = useMutation({ mutationFn: askPashi });
 
 	function handleSubmit(event: FormEvent) {
 		event.preventDefault();
@@ -70,7 +35,8 @@ export function AskPage() {
 		<main className="page">
 			<h1>Ask Pashi</h1>
 			<p className="page-lede">
-				Describe what you need. Pashi picks the tool and fills the form, then you run it.
+				Describe what you need. Pashi picks the tool and runs it when it is simple; otherwise it
+				fills the form for you to run.
 			</p>
 
 			<form className="ask-form" onSubmit={handleSubmit}>
@@ -84,7 +50,7 @@ export function AskPage() {
 				/>
 				<KeyRequiredNotice requires="polychat" what="Ask Pashi" />
 				<button disabled={isPending || !request.trim()} type="submit">
-					{isPending ? "Thinking" : "Find the tool"}
+					{isPending ? "Thinking" : "Ask"}
 				</button>
 			</form>
 
@@ -104,29 +70,7 @@ export function AskPage() {
 				</p>
 			) : null}
 
-			{data ? (
-				<section className="ask-result" aria-live="polite">
-					<h2>{data.toolLabel}</h2>
-					<p>{data.reason}</p>
-					<dl className="ask-fields">
-						{data.input ? (
-							<div>
-								<dt>input</dt>
-								<dd>{data.input}</dd>
-							</div>
-						) : null}
-						{Object.entries(data.fields).map(([key, value]) => (
-							<div key={key}>
-								<dt>{key}</dt>
-								<dd>{value}</dd>
-							</div>
-						))}
-					</dl>
-					<button onClick={() => void navigate(routeUrl(data))} type="button">
-						Open {data.toolLabel}
-					</button>
-				</section>
-			) : null}
+			{data ? <AskAnswer answer={data} /> : null}
 		</main>
 	);
 }

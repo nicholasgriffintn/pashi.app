@@ -74,6 +74,16 @@ export function parseChoice<T extends string>(
 	return options.find((option) => option === normalised) ?? fallback;
 }
 
+export function matchOption(options: readonly string[], input: string) {
+	const value = input.trim();
+	const folded = value.toLowerCase();
+
+	return (
+		options.find((option) => option === value) ??
+		options.find((option) => option.toLowerCase() === folded)
+	);
+}
+
 export function parseDelimitedList(input: string) {
 	return input
 		.split(/\r?\n|,/)
