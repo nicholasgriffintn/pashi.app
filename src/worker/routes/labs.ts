@@ -6,8 +6,14 @@ import { aiClientFor, attachPolychat, requirePolychat } from "../middleware/poly
 import { recordEvent } from "../services/events";
 import { createFeatureStatus } from "../services/features";
 import { routeRequestToTool } from "../services/labs/ask";
-import { DECIDE_BODY_BYTES, decide } from "../services/labs/decide";
+import {
+	DECIDE_APP_NAME,
+	DECIDE_BODY_BYTES,
+	DECIDE_PURPOSE,
+	decide,
+} from "../services/labs/decide";
 import { explainInput, isExplainSubject } from "../services/labs/explain";
+import { requirePolychatPro } from "../services/polychat/pro-gate";
 import { readBoundedJson, readGeneratorBody } from "../utils/body";
 import { errorJson } from "../utils/http";
 import { guard, type AppContext } from "./context";
@@ -98,15 +104,16 @@ export function createLabsRoutes() {
 			return errorJson("AI is not available.", 503, "unavailable");
 		}
 
-		await attachPolychat(c);
-
+		const ai = (await attachPolychat(c)) ? aiClientFor(c) : undefined;
 		const limited = await guard(c, { isAiMode: true });
 
 		if (limited) {
 			return limited;
 		}
 
-		return c.json(await decide(c.env, aiClientFor(c), await readBoundedJson(c, DECIDE_BODY_BYTES)));
+		const client = await requirePolychatPro(c.env, ai, DECIDE_APP_NAME, DECIDE_PURPOSE);
+
+		return c.json(await decide(c.env, client, await readBoundedJson(c, DECIDE_BODY_BYTES)));
 	});
 
 	routes.post("/evaluate", async (c) => {
