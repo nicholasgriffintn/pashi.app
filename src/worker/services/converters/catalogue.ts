@@ -2490,11 +2490,6 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			"pdf-to-markdown",
 			"pdf-to-text",
 			"word-to-markdown",
-			"excel-to-markdown",
-			"xlsx-to-markdown",
-			"spreadsheet-to-markdown",
-			"odt-to-markdown",
-			"numbers-to-markdown",
 			"html-to-markdown-file",
 			"document-to-text",
 		],
@@ -2509,11 +2504,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					url: "/api/document-to-markdown",
 				},
 				{
-					body: "<raw bytes of budget.xlsx>",
+					body: "<raw bytes of notes.csv>",
 					contentType: "application/octet-stream",
 					description: "Post raw file bytes and name the file with sourceName.",
 					method: "POST",
-					url: "/api/document-to-markdown?sourceName=budget.xlsx&outputFormat=text",
+					url: "/api/document-to-markdown?sourceName=notes.csv&outputFormat=text",
 				},
 			],
 			fields: [
@@ -2535,7 +2530,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		audience: "Documents",
 		capabilities: { binaryInput: true, usesAiBinding: true },
 		description:
-			"Convert PDF, Word (DOCX), Excel (XLSX, XLSM, XLSB, XLS), OpenDocument (ODT, ODS), Apple Numbers, CSV, HTML and XML files to Markdown or plain text. Uploads are capped at 5 MiB. Images, SVG and scanned PDFs are refused, because they need paid image models or OCR.",
+			"Convert PDF, Word (DOCX), CSV, HTML and XML files to Markdown or plain text. Uploads are capped at 5 MiB. Images, SVG and scanned PDFs are refused, because they need paid image models or OCR.",
 		display: {
 			actionLabel: "Convert to Markdown",
 			category: "Documents",
@@ -2554,7 +2549,7 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		},
 		label: "Documents to Markdown",
 		outputs: DOCUMENT_MARKDOWN_FORMATS,
-		placeholder: "PDF, DOCX, XLSX, XLS, ODT, ODS, Numbers, CSV, HTML, or XML",
+		placeholder: "PDF, DOCX, CSV, HTML, or XML",
 		runtime: "worker",
 		status: "available",
 	},

@@ -18,8 +18,10 @@ const HEIF_BRANDS = new Set(["heic", "heix", "heim", "heis", "hevc", "hevx", "mi
 const AVIF_BRANDS = new Set(["avif", "avis"]);
 const BMP_HEADER_SIZES = new Set([12, 40, 52, 56, 64, 108, 124]);
 const SVG_SCAN_LENGTH = 4096;
-const XML_ROOT_ELEMENT =
-	/^(?:\s|<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<!DOCTYPE[^>[]*(?:\[[\s\S]*?\])?\s*>)*<([A-Za-z_][\w:.-]*)/i;
+const XML_PROLOGUE_BLOCKS = [
+	["<?", "?>"],
+	["<!--", "-->"],
+] as const;
 
 function startsWith(bytes: ArrayLike<number>, signature: readonly number[], offset = 0) {
 	return signature.every((byte, index) => bytes[offset + index] === byte);
@@ -170,8 +172,71 @@ export function decodeStrictUtf8Text(bytes: Uint8Array) {
 }
 
 export function isSvgDocument(text: string) {
-	const root = XML_ROOT_ELEMENT.exec(text.replace(/^﻿/, "").slice(0, SVG_SCAN_LENGTH));
-	const name = root?.[1].toLowerCase() ?? "";
+	const name = xmlRootElementName(text.replace(/^\uFEFF/, "").slice(0, SVG_SCAN_LENGTH)) ?? "";
 
 	return name === "svg" || name.endsWith(":svg");
+}
+
+function xmlRootElementName(text: string) {
+	let index = 0;
+
+	while (index < text.length) {
+		if (/\s/.test(text[index])) {
+			index += 1;
+			continue;
+		}
+
+		const block = XML_PROLOGUE_BLOCKS.find(([open]) => text.startsWith(open, index));
+
+		if (block) {
+			const end = text.indexOf(block[1], index + block[0].length);
+
+			if (end === -1) {
+				return undefined;
+			}
+
+			index = end + block[1].length;
+			continue;
+		}
+
+		if (text.slice(index, index + 9).toUpperCase() === "<!DOCTYPE") {
+			const end = doctypeEnd(text, index + 9);
+
+			if (end === -1) {
+				return undefined;
+			}
+
+			index = end + 1;
+			continue;
+		}
+
+		return text[index] === "<" ? elementName(text, index + 1) : undefined;
+	}
+
+	return undefined;
+}
+
+function doctypeEnd(text: string, from: number) {
+	const close = text.indexOf(">", from);
+	const subset = text.indexOf("[", from);
+
+	if (subset === -1 || (close !== -1 && close < subset)) {
+		return close;
+	}
+
+	const subsetEnd = text.indexOf("]", subset + 1);
+
+	return subsetEnd === -1 ? -1 : text.indexOf(">", subsetEnd + 1);
+}
+
+function elementName(text: string, from: number) {
+	let end = from;
+
+	while (end < text.length && /[\w:.-]/.test(text[end])) {
+		end += 1;
+	}
+
+	return end > from && /[A-Za-z_]/.test(text[from])
+		? text.slice(from, end).toLowerCase()
+		: undefined;
 }

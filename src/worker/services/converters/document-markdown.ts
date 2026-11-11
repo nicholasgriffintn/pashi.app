@@ -10,7 +10,7 @@ export const DOCUMENT_MARKDOWN_FORMATS = ["markdown", "text"] as const;
 
 export type DocumentMarkdownFormat = (typeof DOCUMENT_MARKDOWN_FORMATS)[number];
 
-type DocumentContainer = "ole" | "pdf" | "text" | "zip";
+type DocumentContainer = "pdf" | "text" | "zip";
 
 interface DocumentFormat {
 	container: DocumentContainer;
@@ -27,45 +27,13 @@ const DOCUMENT_FORMATS = {
 	},
 	htm: { container: "text", label: "HTML", mimeType: "text/html" },
 	html: { container: "text", label: "HTML", mimeType: "text/html" },
-	numbers: {
-		container: "zip",
-		label: "Numbers spreadsheet",
-		mimeType: "application/vnd.apple.numbers",
-	},
-	ods: {
-		container: "zip",
-		label: "OpenDocument spreadsheet",
-		mimeType: "application/vnd.oasis.opendocument.spreadsheet",
-	},
-	odt: {
-		container: "zip",
-		label: "OpenDocument text",
-		mimeType: "application/vnd.oasis.opendocument.text",
-	},
 	pdf: { container: "pdf", label: "PDF", mimeType: "application/pdf" },
-	xls: { container: "ole", label: "Excel 97-2003 workbook", mimeType: "application/vnd.ms-excel" },
-	xlsb: {
-		container: "zip",
-		label: "Excel binary workbook",
-		mimeType: "application/vnd.ms-excel.sheet.binary.macroenabled.12",
-	},
-	xlsm: {
-		container: "zip",
-		label: "Excel macro-enabled workbook",
-		mimeType: "application/vnd.ms-excel.sheet.macroenabled.12",
-	},
-	xlsx: {
-		container: "zip",
-		label: "Excel workbook",
-		mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-	},
 	xml: { container: "text", label: "XML", mimeType: "application/xml" },
 } as const satisfies Record<string, DocumentFormat>;
 
 type DocumentExtension = keyof typeof DOCUMENT_FORMATS;
 
 const CONTAINER_SIGNATURES: Record<Exclude<DocumentContainer, "text">, string> = {
-	ole: "cfb",
 	pdf: "pdf",
 	zip: "zip",
 };
@@ -75,8 +43,7 @@ const MIME_TYPE_ALIASES: Readonly<Record<string, DocumentExtension>> = {
 	"text/xml": "xml",
 };
 
-const ACCEPTED_FORMATS_COPY =
-	"PDF, Word (DOCX), Excel (XLSX, XLSM, XLSB, XLS), OpenDocument (ODT, ODS), Apple Numbers, CSV, HTML or XML";
+const ACCEPTED_FORMATS_COPY = "PDF, Word (DOCX), CSV, HTML or XML";
 const IMAGE_REFUSAL = "Images are not supported, because converting them runs paid image models.";
 const SVG_REFUSAL = `${IMAGE_REFUSAL} SVG files count as images.`;
 const SVG_EXTENSIONS = new Set(["svg", "svgz"]);
@@ -208,6 +175,30 @@ function sourceStem(name: string, extension: string) {
 	return safeFilename(base || "document");
 }
 
+async function requestConversion(
+	ai: Ai,
+	document: MarkdownDocument,
+	outputFormat: DocumentMarkdownFormat,
+	label: string,
+) {
+	const failure = new DocumentMarkdownError(`The ${label} could not be converted.`, 422);
+	let response: ConversionResponse;
+
+	try {
+		response = await ai.toMarkdown(document, {
+			conversionOptions: conversionOptions(outputFormat),
+		});
+	} catch {
+		throw failure;
+	}
+
+	if (response.format === "error") {
+		throw failure;
+	}
+
+	return response;
+}
+
 export async function convertDocumentToMarkdown(
 	ai: Ai,
 	file: UploadedFile,
@@ -221,17 +212,12 @@ export async function convertDocumentToMarkdown(
 	assertContents(extension, file.bytes);
 
 	const stem = sourceStem(file.name, extension);
-	const response = await ai.toMarkdown(
+	const response = await requestConversion(
+		ai,
 		{ blob: new Blob([file.bytes], { type: format.mimeType }), name: `${stem}.${extension}` },
-		{ conversionOptions: conversionOptions(outputFormat) },
+		outputFormat,
+		format.label,
 	);
-
-	if (response.format === "error") {
-		throw new DocumentMarkdownError(
-			response.error || `The ${format.label} could not be converted.`,
-			422,
-		);
-	}
 
 	if (format.container === "pdf" && !response.data.trim()) {
 		throw new DocumentMarkdownError(
