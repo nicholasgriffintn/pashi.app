@@ -2,10 +2,9 @@ import { useMutation } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
+import { EXPLAIN_EXAMPLES, type ExplainExample, type ExplainSubject } from "../lib/labs-examples";
 import { fetchJson } from "../lib/query-client";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
-
-type Subject = "cron" | "curl" | "jwt" | "regex" | "sql";
 
 interface Explanation {
 	parts: { detail: string; piece: string }[];
@@ -13,7 +12,7 @@ interface Explanation {
 	warnings: string[];
 }
 
-const SUBJECTS: { id: Subject; label: string; placeholder: string }[] = [
+const SUBJECTS: { id: ExplainSubject; label: string; placeholder: string }[] = [
 	{ id: "regex", label: "Regex", placeholder: "^\\+?[1-9]\\d{1,14}$" },
 	{ id: "cron", label: "Cron", placeholder: "*/15 9-17 * * 1-5" },
 	{ id: "jwt", label: "JWT", placeholder: "Paste the three dot separated segments" },
@@ -30,7 +29,7 @@ const SUBJECTS: { id: Subject; label: string; placeholder: string }[] = [
 ];
 
 export function ExplainPage() {
-	const [subject, setSubject] = useState<Subject>("regex");
+	const [subject, setSubject] = useState<ExplainSubject>("regex");
 	const [input, setInput] = useState("");
 
 	useDocumentMetadata(
@@ -48,6 +47,12 @@ export function ExplainPage() {
 				method: "POST",
 			}),
 	});
+
+	function loadExample(example: ExplainExample) {
+		setSubject(example.subject);
+		setInput(example.input);
+		reset();
+	}
 
 	function handleSubmit(event: FormEvent) {
 		event.preventDefault();
@@ -94,6 +99,16 @@ export function ExplainPage() {
 					{isPending ? "Reading" : "Explain"}
 				</button>
 			</form>
+
+			<ul aria-label="Examples" className="ask-examples">
+				{EXPLAIN_EXAMPLES.map((example) => (
+					<li key={example.label}>
+						<button onClick={() => loadExample(example)} type="button">
+							{SUBJECTS.find((entry) => entry.id === example.subject)?.label}: {example.label}
+						</button>
+					</li>
+				))}
+			</ul>
 
 			{error ? (
 				<p className="ask-error" role="alert">
