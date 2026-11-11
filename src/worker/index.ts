@@ -5,7 +5,7 @@ import { createMcpResponse } from "./mcp/protocol";
 import { readMcpCallPolicies } from "./mcp/rate-policy";
 import { renderSharedPolisPage } from "./mcp/resources";
 import { apiCors } from "./middleware/cors";
-import { aiClientFor, requireAgentAccess, requirePolychat } from "./middleware/polychat-access";
+import { aiClientFor, requirePolychat, resolveAgentAccess } from "./middleware/polychat-access";
 import { serveAppView } from "./routes/app-views";
 import { guard, type AppContext } from "./routes/context";
 import { createLabsRoutes } from "./routes/labs";
@@ -54,14 +54,15 @@ app.route("/api/labs", createLabsRoutes());
 app.route("/api/polychat", createPolychatRoutes());
 
 app.all("/mcp", async (c) => {
-	const denied = await requireAgentAccess(c);
+	const denied = await resolveAgentAccess(c);
 
 	if (denied) {
 		return denied;
 	}
 
+	const owner = c.get("polychat")?.subjectId ?? c.get("application")?.id;
 	const outcomes = await Promise.all(
-		(await readMcpCallPolicies(c.req.raw)).map((policy) => guard(c, { policy })),
+		(await readMcpCallPolicies(c.req.raw, !owner)).map((policy) => guard(c, { policy })),
 	);
 	const limited = outcomes.find((outcome) => outcome !== undefined);
 
@@ -69,17 +70,12 @@ app.all("/mcp", async (c) => {
 		return limited;
 	}
 
-	const owner = c.get("polychat")?.subjectId ?? c.get("application")?.id;
-
-	if (!owner) {
-		return errorJson("Sign in to use Pashi over MCP.", 401, "unauthorised");
-	}
-
-	const response = await createMcpResponse(c.req.raw, c.env, {
-		ai: aiClientFor(c),
-		origin: new URL(c.req.url).origin,
-		owner,
-	});
+	const origin = new URL(c.req.url).origin;
+	const response = await createMcpResponse(
+		c.req.raw,
+		c.env,
+		owner ? { ai: aiClientFor(c), origin, owner } : { origin },
+	);
 
 	recordEvent(c.env, { name: "mcp_call", outcome: response.ok ? "ok" : "error" });
 

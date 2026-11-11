@@ -18,13 +18,14 @@ Press `K` anywhere, or the search button, to open the command palette: tools, pa
 
 ## Agent access
 
-An MCP endpoint at `/mcp` exposes three meta tools rather than one per generator, so an agent can work without flooding its context.
+An MCP endpoint at `/mcp` exposes four meta tools rather than one per generator, so an agent can work without flooding its context.
 
 - `pashi_list_tools` finds a tool id, optionally filtered by search or kind.
+- `pashi_describe_tool` describes one tool's input and options.
 - `pashi_generate` runs a generator.
 - `pashi_convert` runs a text converter. Media and document conversion is not available over MCP.
 
-It speaks JSON-RPC over POST and takes either a Pashi API key or the Polychat link token as a bearer token.
+It speaks JSON-RPC over POST. The meta tools are open without a credential, rate limited per IP address, apart from AI mode. Everything else takes either a Pashi API key or the Polychat link token as a bearer token.
 
 ### MCP Apps
 
@@ -37,7 +38,7 @@ Pashi's views and games are [MCP Apps](https://modelcontextprotocol.io/specifica
 - `pashi_open_polis` links `ui://pashi/polis`. You found a town of up to 50,000 people, pass laws in plain English and stage disasters, and residents decide through the linked Polychat account (Workers AI without a link). Shared towns replay at `/polis/<token>`.
 - A tool that opens an app on its own carries `_meta["app.polychat/app"]` (name, description, category, icon, theme, when, uses, produces, surface) next to its `_meta.ui.resourceUri`. It is read-only and needs no arguments, so a host can open the app by calling it with `{}`.
 
-To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps) with your token, then ask for a password, a Jira conversion or a game of Charades.
+To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps), then ask for a password or a Jira conversion. Add your token to ask for a game of Charades.
 
 ## API access
 
