@@ -5,7 +5,7 @@ import { ConverterConsole } from "../components/ConverterConsole";
 import { GeneratorConsole } from "../components/GeneratorConsole";
 import { ToolModeTabs } from "../components/ToolModeTabs";
 import { KEEP_SCROLL_STATE } from "../lib/scroll-reset";
-import { useDocumentMetadata } from "../lib/use-document-metadata";
+import { useToolPageMetadata } from "../lib/use-tool-page-metadata";
 
 interface ToolsPageProps {
 	mode: "convert" | "generate";
@@ -35,12 +35,7 @@ export function ToolsPage({ mode }: ToolsPageProps) {
 		[navigate],
 	);
 
-	useDocumentMetadata(
-		toolId ? toolId.replaceAll("-", " ") : mode === "convert" ? "Converters" : "Generators",
-		mode === "convert"
-			? "Convert between text, data, document and media formats."
-			: "Generate UUIDs, tokens, colours, test data and more.",
-	);
+	useToolPageMetadata(mode, toolId);
 
 	const controls = <ToolModeTabs mode={mode} />;
 
