@@ -24,6 +24,7 @@ function createSitemapXml(origin: string) {
 		...listAppPreviews().map((preview) => appPagePath(preview.id)),
 		"/labs/decide",
 		"/about",
+		"/privacy",
 		"/api",
 		...listGeneratorTools().map((tool) => `/tools/${tool.id}`),
 		...listConverterTools().map((tool) => `/tools/convert/${tool.id}`),

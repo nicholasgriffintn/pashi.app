@@ -8,6 +8,7 @@ export function SiteFooter() {
 				<nav aria-label="Footer" className="site-footer-links">
 					<Link to="/api">API</Link>
 					<Link to="/about">About</Link>
+					<Link to="/privacy">Privacy</Link>
 					<a href="https://github.com/nicholasgriffintn/pashi.app" rel="noreferrer" target="_blank">
 						Source
 					</a>

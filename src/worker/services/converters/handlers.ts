@@ -408,10 +408,10 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 	"markdown-to-jira": ({ input }) =>
 		textResult(
 			"markdown-to-jira",
-			"Jira markup",
+			"Jira and Confluence markup",
 			input,
 			markdownToJira(input),
-			"Markdown converted to Jira and Confluence wiki markup",
+			"Markdown converted to wiki markup for Jira and Confluence",
 		),
 	"markdown-format": ({ fields, input }) => {
 		const outputFormat = markdownTargetFormat(fields.outputFormat || fields.format);

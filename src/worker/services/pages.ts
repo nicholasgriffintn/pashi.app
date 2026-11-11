@@ -29,6 +29,7 @@ const SECTION_LINKS: readonly PageLink[] = [
 	{ href: "/labs", label: "Labs" },
 	{ href: "/api", label: "API" },
 	{ href: "/about", label: "About" },
+	{ href: "/privacy", label: "Privacy" },
 ];
 
 const NOT_FOUND_PAGE: PageMetadata = {

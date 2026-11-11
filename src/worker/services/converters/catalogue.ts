@@ -129,9 +129,9 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			response: "json",
 		},
 		audience: "Documents",
-		description: "Convert Markdown into Jira and Confluence wiki markup.",
+		description: "Convert Markdown into wiki markup that Jira and Confluence both accept.",
 		display: {
-			actionLabel: "Convert to Jira",
+			actionLabel: "Convert to wiki markup",
 			category: "Jira and Confluence",
 			examples: [
 				{
@@ -148,8 +148,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			kind: "text",
 			required: true,
 		},
-		label: "Markdown to Jira",
-		outputs: ["jira", "confluence"],
+		label: "Markdown to Jira and Confluence",
+		outputs: ["wiki-markup"],
 		placeholder: "## Heading\n\n- **Bold** item\n- [Link](https://pashi.app)",
 		runtime: "worker",
 		status: "available",

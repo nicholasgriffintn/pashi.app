@@ -36,6 +36,10 @@ export const STATIC_PAGES = {
 			"Plain English for regular expressions, cron schedules, JWTs, curl commands and SQL.",
 		title: "Explainers",
 	},
+	"/privacy": {
+		description: "What Pashi stores, records and sends to other services.",
+		title: "Privacy",
+	},
 	"/sign-in": {
 		description: "Connect Polychat to use AI and media conversion in Pashi.",
 		title: "Sign in",
