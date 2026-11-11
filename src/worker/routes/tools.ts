@@ -18,7 +18,7 @@ import {
 	usesAiMode,
 } from "../services/generators/request";
 import { createHealthResponse } from "../services/health";
-import { readConverterBody, readGeneratorBody } from "../utils/body";
+import { readConverterBody, readConverterUploadBody, readGeneratorBody } from "../utils/body";
 import { withCacheControl } from "../utils/cache";
 import { errorJson } from "../utils/http";
 import { guard, type AppContext } from "./context";
@@ -101,7 +101,9 @@ export function createToolRoutes() {
 				return createConverterResponse(type, request, c.env, params, application.id);
 			}
 
-			const limited = await guard(c);
+			const limited = await guard(c, {
+				usesAiBinding: converterTool.capabilities?.usesAiBinding,
+			});
 
 			if (limited) {
 				recordEvent(c.env, { name: "rate_limited", toolId: converterTool.id });
@@ -229,7 +231,9 @@ export function createToolRoutes() {
 				);
 			}
 
-			const limited = await guard(c);
+			const limited = await guard(c, {
+				usesAiBinding: converterTool.capabilities?.usesAiBinding,
+			});
 
 			if (limited) {
 				recordEvent(c.env, { name: "rate_limited", toolId: converterTool.id });
@@ -237,10 +241,12 @@ export function createToolRoutes() {
 				return limited;
 			}
 
-			const body = await readConverterBody(c);
+			const body = converterTool.capabilities?.binaryInput
+				? await readConverterUploadBody(c)
+				: await readConverterBody(c);
 			const response = await createConverterResponse(
 				type,
-				createGeneratorRequest(body.input, body.fields),
+				{ ...createGeneratorRequest(body.input, body.fields), file: body.file },
 				c.env,
 			);
 

@@ -1,4 +1,6 @@
 import type { FieldVisibility, ToolExample } from "../../../shared/tool-examples.ts";
+import type { UploadedFile } from "../../utils/body.ts";
+import type { ConversionEnv } from "./conversion-pipeline.ts";
 
 export type ConverterAudience = "Documents" | "Media";
 export type ConverterInputKind = "file" | "text";
@@ -48,7 +50,9 @@ export interface ConverterApiContract {
 export interface ConverterCapabilities {
 	acceptsSourceUrl?: boolean;
 	batchesByEffect?: boolean;
+	binaryInput?: boolean;
 	compactInput?: boolean;
+	usesAiBinding?: boolean;
 }
 
 export interface ConverterTool {
@@ -92,9 +96,15 @@ export interface ConverterResult {
 
 export interface ConverterRequest {
 	fields: Record<string, string>;
+	file?: UploadedFile;
 	input: string;
+}
+
+export interface ConverterContext {
+	env: ConversionEnv | undefined;
 }
 
 export type ConverterHandler = (
 	request: ConverterRequest,
+	context: ConverterContext,
 ) => ConverterResult | Promise<ConverterResult>;

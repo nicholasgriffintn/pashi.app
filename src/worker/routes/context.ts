@@ -20,6 +20,7 @@ export interface GuardOptions {
 	isExpensiveGenerator?: boolean;
 	isUpload?: boolean;
 	policy?: PolicyName;
+	usesAiBinding?: boolean;
 }
 
 export async function guard(c: Context<AppContext>, options: GuardOptions = {}) {
@@ -34,6 +35,7 @@ export async function guard(c: Context<AppContext>, options: GuardOptions = {}) 
 				isExpensiveGenerator: options.isExpensiveGenerator ?? false,
 				isUpload: options.isUpload ?? false,
 				method: c.req.method,
+				usesAiBinding: options.usesAiBinding ?? false,
 			}),
 		request: c.req.raw,
 	});

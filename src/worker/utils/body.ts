@@ -1,25 +1,34 @@
 import type { Context } from "hono";
 
-import { PayloadTooLargeError } from "./http";
+import { PayloadTooLargeError, UploadTooLargeError } from "./http";
 
 const BODY_INPUT_FIELD_IDS = new Set(["data", "file", "input"]);
 const MAX_TEXT_BODY_BYTES = 1024 * 1024;
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 
-function assertDeclaredSizeWithinLimit(c: Context, limit: number) {
+export const MAX_CONVERTER_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+type TooLargeError = () => PayloadTooLargeError;
+
+function assertDeclaredSizeWithinLimit(c: Context, limit: number, tooLarge: TooLargeError) {
 	const declared = Number(c.req.header("content-length") ?? "");
 
 	if (Number.isFinite(declared) && declared > limit) {
-		throw new PayloadTooLargeError(limit);
+		throw tooLarge();
 	}
 }
 
-async function readBoundedText(c: Context, limit = MAX_TEXT_BODY_BYTES) {
-	assertDeclaredSizeWithinLimit(c, limit);
+async function readBoundedBytes(
+	c: Context,
+	limit: number,
+	tooLarge: TooLargeError = () => new PayloadTooLargeError(limit),
+) {
+	assertDeclaredSizeWithinLimit(c, limit, tooLarge);
 
 	const body = c.req.raw.body;
 
 	if (!body) {
-		return "";
+		return new Uint8Array(0);
 	}
 
 	const reader = body.getReader();
@@ -37,7 +46,8 @@ async function readBoundedText(c: Context, limit = MAX_TEXT_BODY_BYTES) {
 			size += value.byteLength;
 
 			if (size > limit) {
-				throw new PayloadTooLargeError(limit);
+				await reader.cancel();
+				throw tooLarge();
 			}
 
 			chunks.push(value);
@@ -54,7 +64,11 @@ async function readBoundedText(c: Context, limit = MAX_TEXT_BODY_BYTES) {
 		offset += chunk.byteLength;
 	}
 
-	return new TextDecoder().decode(merged);
+	return merged;
+}
+
+async function readBoundedText(c: Context, limit = MAX_TEXT_BODY_BYTES) {
+	return new TextDecoder().decode(await readBoundedBytes(c, limit));
 }
 
 async function readBoundedJson(c: Context) {
@@ -71,8 +85,15 @@ async function readBoundedJson(c: Context) {
 	}
 }
 
+export interface UploadedFile {
+	bytes: Uint8Array<ArrayBuffer>;
+	name: string;
+	type: string;
+}
+
 export interface ToolBody {
 	fields: Record<string, string>;
+	file?: UploadedFile;
 	input: string;
 }
 
@@ -112,7 +133,11 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 	}
 
 	if (contentType.includes("multipart/form-data")) {
-		assertDeclaredSizeWithinLimit(c, MAX_TEXT_BODY_BYTES);
+		assertDeclaredSizeWithinLimit(
+			c,
+			MAX_TEXT_BODY_BYTES,
+			() => new PayloadTooLargeError(MAX_TEXT_BODY_BYTES),
+		);
 
 		try {
 			return bodyFromFormData(await c.req.formData(), queryFields, queryInput);
@@ -143,6 +168,72 @@ export async function readConverterBody(c: Context): Promise<ToolBody> {
 		fields: queryFields,
 		input: input || queryInput,
 	};
+}
+
+export async function readConverterUploadBody(
+	c: Context,
+	limit = MAX_CONVERTER_UPLOAD_BYTES,
+): Promise<ToolBody> {
+	const queryFields = fieldsFromSearchParams(new URL(c.req.url).searchParams);
+	const contentType = c.req.header("content-type") ?? "";
+	const mediaType = contentType.split(";")[0].trim().toLowerCase();
+	const tooLarge = () => new UploadTooLargeError(limit);
+
+	if (mediaType === "application/octet-stream") {
+		return {
+			fields: queryFields,
+			file: {
+				bytes: await readBoundedBytes(c, limit, tooLarge),
+				name: queryFields.sourceName ?? "",
+				type: mediaType,
+			},
+			input: "",
+		};
+	}
+
+	if (mediaType !== "multipart/form-data") {
+		return readConverterBody(c);
+	}
+
+	const bytes = await readBoundedBytes(c, limit + MULTIPART_OVERHEAD_BYTES, tooLarge);
+	const formData = await parseFormData(bytes, contentType);
+
+	if (!formData) {
+		return { fields: queryFields, input: "" };
+	}
+
+	const fields = { ...queryFields, ...fieldsFromFormData(formData) };
+	const file = formData.get("file");
+
+	if (!(file instanceof File)) {
+		return { fields, input: "" };
+	}
+
+	if (file.size > limit) {
+		throw tooLarge();
+	}
+
+	if (!fields.sourceName && file.name) {
+		fields.sourceName = file.name;
+	}
+
+	return {
+		fields,
+		file: {
+			bytes: new Uint8Array(await file.arrayBuffer()),
+			name: file.name || fields.sourceName || "",
+			type: file.type,
+		},
+		input: "",
+	};
+}
+
+async function parseFormData(bytes: Uint8Array<ArrayBuffer>, contentType: string) {
+	try {
+		return await new Response(bytes, { headers: { "Content-Type": contentType } }).formData();
+	} catch {
+		return undefined;
+	}
 }
 
 export function isInputBody(value: unknown): value is { input: string } {
