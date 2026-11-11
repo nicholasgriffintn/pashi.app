@@ -9,6 +9,7 @@ import { POLYCHAT_APP_META_KEY } from "../../shared/mcp-apps";
 import { POLIS_DRAFT_LENGTH, POLIS_MAX_BUCKETS_PER_REQUEST } from "../../shared/polis";
 import type { AiClient } from "../ai/run";
 import type { PolicyName } from "../security/policies";
+import type { ApplicationTier } from "../services/access/api-keys";
 import { isMcpConverter } from "../services/converters/availability";
 import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
@@ -73,6 +74,7 @@ export interface McpToolDefinition {
 	outputSchema?: Record<string, unknown>;
 	ratePolicy: PolicyName | ((argumentsValue: Record<string, unknown>) => PolicyName);
 	title: string;
+	workersAiFallback?: boolean;
 }
 
 const MCP_TOOLS: readonly McpToolDefinition[] = [
@@ -549,6 +551,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_generate_strudel",
 		ratePolicy: "expensive",
 		title: "Generate a Strudel pattern",
+		workersAiFallback: true,
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -638,6 +641,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_transcribe_verbatim",
 		ratePolicy: "read",
 		title: "Transcribe speech",
+		workersAiFallback: true,
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -704,6 +708,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_polis_decide",
 		ratePolicy: "read",
 		title: "Decide how Polis residents react",
+		workersAiFallback: true,
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -725,6 +730,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_polis_draft_law",
 		ratePolicy: "read",
 		title: "Draft a Polis law",
+		workersAiFallback: true,
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -745,6 +751,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_polis_draft_scenario",
 		ratePolicy: "read",
 		title: "Draft a Polis scenario",
+		workersAiFallback: true,
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -826,6 +833,7 @@ interface McpOwnerCaller {
 	ai?: AiClient;
 	origin: string;
 	owner: string;
+	tier: ApplicationTier;
 }
 
 interface McpAnonymousCaller {
@@ -928,6 +936,13 @@ function listTools(argumentsValue: Record<string, unknown>) {
 	);
 
 	return { count: tools.length, tools };
+}
+
+function workersAiRefused() {
+	return new McpToolError(
+		"This tool runs on Pashi's own AI quota, which free API keys do not include. Link Polychat to use it on your plan.",
+		"forbidden",
+	);
 }
 
 function accountRequired() {
@@ -1090,6 +1105,14 @@ export async function callMcpTool(
 
 	if (caller.owner === undefined) {
 		throw accountRequired();
+	}
+
+	if (
+		caller.tier === "free" &&
+		!caller.ai &&
+		MCP_TOOLS.find((tool) => tool.name === name)?.workersAiFallback
+	) {
+		throw workersAiRefused();
 	}
 
 	return jsonToolResult(await callJsonTool(name, argumentsValue, env, caller));

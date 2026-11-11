@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { ApiKeyControl } from "../components/ApiKeyControl";
+import { ApiKeyManager } from "../components/ApiKeyManager";
 import { PolychatConnect } from "../components/PolychatConnect";
 import { useApiKey } from "../lib/api-key-context";
 import { useStaticPageMetadata } from "../lib/use-document-metadata";
@@ -24,7 +25,11 @@ export function SignInPage() {
 			</section>
 
 			<section className="sign-in-panel">
-				<ApiKeyControl hint="For media conversion without Polychat Pro. Stored in this browser only." />
+				<ApiKeyManager />
+			</section>
+
+			<section className="sign-in-panel">
+				<ApiKeyControl hint="The key this browser sends with tool requests. Stored in this browser only." />
 				{import.meta.env.DEV && DEV_KEY ? (
 					<button
 						className="sign-in-dev"

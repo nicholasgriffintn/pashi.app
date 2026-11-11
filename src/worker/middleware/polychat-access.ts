@@ -46,26 +46,37 @@ export function aiClientFor<E extends PolychatContext>(c: Context<E>): AiClient 
 	return credential ? { apiKey: credential.apiKey, env: c.env } : undefined;
 }
 
+const FREE_KEY_REFUSAL =
+	"Your Pashi API key covers the free tools. Media conversion and the AI media tools need Polychat Pro.";
+
 export async function requireConversionAccess<E extends PolychatContext>(c: Context<E>) {
 	const denied = await requireApiKey(c);
 
-	if (!denied) {
+	if (!denied && c.get("application")?.tier === "full") {
 		return undefined;
 	}
 
 	const credential = await resolvePolychatCredential(c.req.raw, c.env);
 
 	if (!credential) {
-		return denied;
+		return denied ?? errorJson(FREE_KEY_REFUSAL, 403, "forbidden", { "Cache-Control": "no-store" });
 	}
 
 	if (!(await isPolychatPro(c.env, credential.apiKey))) {
-		return errorJson("Media conversion needs Polychat Pro.", 403, "forbidden", {
-			"Cache-Control": "no-store",
-		});
+		return errorJson(
+			denied ? "Media conversion needs Polychat Pro." : FREE_KEY_REFUSAL,
+			403,
+			"forbidden",
+			{ "Cache-Control": "no-store" },
+		);
 	}
 
-	c.set("application", { enabled: true, id: credential.subjectId, name: "Polychat" });
+	c.set("application", {
+		enabled: true,
+		id: credential.subjectId,
+		name: "Polychat",
+		tier: "full",
+	});
 
 	return undefined;
 }

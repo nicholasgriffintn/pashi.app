@@ -1,14 +1,18 @@
 import { sha256 } from "../../utils/generation.ts";
 
-const APPLICATION_KEY_PREFIX = "applications:v1:";
-const API_KEY_PREFIX = "api-keys:v1:";
+export const APPLICATION_KEY_PREFIX = "applications:v1:";
+export const API_KEY_PREFIX = "api-keys:v1:";
 const API_KEY_PATTERN = /^[A-Za-z0-9._~-]{32,256}$/;
 const APPLICATION_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+
+export type ApplicationTier = "free" | "full";
 
 export interface Application {
 	enabled: boolean;
 	id: string;
 	name: string;
+	owner?: string;
+	tier: ApplicationTier;
 }
 
 interface ApiKeyRecord {
@@ -148,6 +152,8 @@ function parseApplication(value: string): Application | undefined {
 		enabled: record.enabled,
 		id: record.id,
 		name: record.name,
+		...(typeof record.owner === "string" ? { owner: record.owner } : {}),
+		tier: record.tier === "free" ? "free" : "full",
 	};
 }
 

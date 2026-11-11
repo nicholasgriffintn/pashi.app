@@ -29,6 +29,8 @@ export function createApiIndexResponse(env: FeatureEnv) {
 			requiredFor: [
 				"container and account-only converters, unless a Polychat Pro account is connected",
 			],
+			selfServe:
+				"Connect Polychat on the sign-in page to create free keys. Free keys cover the free tools with their own rate limit; paid tools need a full key or Polychat Pro.",
 		},
 		endpoints: tools.flatMap((tool) => (tool.endpoint ? [tool.endpoint] : [])),
 		exportFormats: listExportFormats(),

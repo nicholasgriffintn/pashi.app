@@ -152,14 +152,23 @@ export async function resolvePolychatCredential(
 			? await readConnected(env, SESSION_RECORD_PREFIX, sessionToken)
 			: undefined;
 
-	if (!record) {
-		return undefined;
-	}
+	return record ? credentialFor(record.apiKey) : undefined;
+}
 
-	return {
-		apiKey: record.apiKey,
-		subjectId: `polychat-${(await sha256(record.apiKey)).slice(0, 32)}`,
-	};
+async function credentialFor(apiKey: string): Promise<PolychatCredential> {
+	return { apiKey, subjectId: `polychat-${(await sha256(apiKey)).slice(0, 32)}` };
+}
+
+export async function resolvePolychatSessionCredential(
+	request: Request,
+	env: PolychatSessionEnv,
+): Promise<PolychatCredential | undefined> {
+	const sessionToken = readSessionToken(request);
+	const record = sessionToken
+		? await readConnected(env, SESSION_RECORD_PREFIX, sessionToken)
+		: undefined;
+
+	return record ? credentialFor(record.apiKey) : undefined;
 }
 
 function callbackUrl(request: Request) {
