@@ -75,6 +75,8 @@ const ACCEPTED_FORMATS_COPY =
 	"PDF, Word (DOCX), Excel (XLSX, XLSM, XLSB, XLS), OpenDocument (ODT, ODS), Apple Numbers, CSV, HTML or XML";
 const IMAGE_REFUSAL =
 	"Images are not supported, because converting them runs paid image models.";
+const SVG_REFUSAL = `${IMAGE_REFUSAL} SVG files count as images.`;
+const SVG_EXTENSIONS = new Set(["svg", "svgz"]);
 
 export const DOCUMENT_MARKDOWN_EXTENSIONS = Object.keys(DOCUMENT_FORMATS).map(
 	(extension) => `.${extension}`,
@@ -126,12 +128,20 @@ function unsupported(message: string): never {
 	throw new DocumentMarkdownError(message, 415);
 }
 
+function assertNotImage(file: UploadedFile) {
+	const signature = detectFileSignature(file.bytes);
+
+	if (signature.kind === "image") {
+		unsupported(`${IMAGE_REFUSAL} This file is a ${signature.name}.`);
+	}
+
+	if (SVG_EXTENSIONS.has(fileExtension(file.name))) {
+		unsupported(SVG_REFUSAL);
+	}
+}
+
 function resolveExtension(file: UploadedFile) {
 	const named = fileExtension(file.name);
-
-	if (named === "svg" || named === "svgz") {
-		unsupported(`${IMAGE_REFUSAL} SVG files count as images.`);
-	}
 
 	if (isDocumentExtension(named)) {
 		return named;
@@ -158,14 +168,9 @@ function resolveExtension(file: UploadedFile) {
 
 function assertContents(extension: DocumentExtension, bytes: Uint8Array) {
 	const format: DocumentFormat = DOCUMENT_FORMATS[extension];
-	const signature = detectFileSignature(bytes);
-
-	if (signature.kind === "image") {
-		unsupported(`${IMAGE_REFUSAL} This file is a ${signature.name}.`);
-	}
 
 	if (format.container !== "text") {
-		if (signature.extension !== CONTAINER_SIGNATURES[format.container]) {
+		if (detectFileSignature(bytes).extension !== CONTAINER_SIGNATURES[format.container]) {
 			unsupported(`This file is named .${extension} but its contents are not a ${format.label}.`);
 		}
 
@@ -179,7 +184,7 @@ function assertContents(extension: DocumentExtension, bytes: Uint8Array) {
 	}
 
 	if (isSvgDocument(text)) {
-		unsupported(`${IMAGE_REFUSAL} SVG files count as images.`);
+		unsupported(SVG_REFUSAL);
 	}
 }
 
@@ -205,6 +210,8 @@ export async function convertDocumentToMarkdown(
 	file: UploadedFile,
 	outputFormat: DocumentMarkdownFormat,
 ): Promise<DocumentMarkdownResult> {
+	assertNotImage(file);
+
 	const extension = resolveExtension(file);
 	const format: DocumentFormat = DOCUMENT_FORMATS[extension];
 

@@ -84,7 +84,7 @@ export async function createConverterResponse(
 	}
 
 	if (tool.input.required && !hasConverterInput(tool, requestWithPresets)) {
-		const action = tool.capabilities?.binaryInput ? "Upload" : "Paste";
+		const action = tool.capabilities?.binaryInput ? "Upload a" : "Paste";
 
 		return json({ error: `${action} ${tool.input.label.toLowerCase()} to convert.` }, 400);
 	}
