@@ -71,6 +71,7 @@ export interface McpToolDefinition {
 	name: string;
 	outputSchema?: Record<string, unknown>;
 	ratePolicy: PolicyName | ((argumentsValue: Record<string, unknown>) => PolicyName);
+	title: string;
 }
 
 const MCP_TOOLS: readonly McpToolDefinition[] = [
@@ -120,6 +121,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			type: "object",
 		},
 		ratePolicy: "read",
+		title: "List Pashi tools",
 	},
 	{
 		_meta: { ui: { resourceUri: MCP_VIEW_URIS.generator } },
@@ -143,6 +145,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_generate",
 		ratePolicy: generatorRatePolicy,
+		title: "Run a generator",
 	},
 	{
 		_meta: { ui: { resourceUri: MCP_VIEW_URIS.converter } },
@@ -166,6 +169,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_convert",
 		ratePolicy: converterRatePolicy,
+		title: "Run a text converter",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -183,6 +187,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_describe_tool",
 		outputSchema: DESCRIBED_TOOL_OUTPUT_SCHEMA,
 		ratePolicy: "read",
+		title: "Describe a tool",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -248,6 +253,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_decide",
 		ratePolicy: "expensive",
+		title: "Decide",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -267,6 +273,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_ask",
 		ratePolicy: "expensive",
+		title: "Ask Pashi",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -287,6 +294,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_explain",
 		ratePolicy: "expensive",
+		title: "Explain a format",
 	},
 	{
 		_meta: {
@@ -320,6 +328,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_play_charades",
 		ratePolicy: "read",
+		title: "Open Charades",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -337,6 +346,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_judge_charades",
 		ratePolicy: "read",
+		title: "Judge a charades clip",
 	},
 	{
 		_meta: {
@@ -361,6 +371,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_play_photo_sorter",
 		ratePolicy: "read",
+		title: "Open Photo Sorter",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -394,6 +405,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_sort_photo",
 		ratePolicy: "read",
+		title: "Sort a photo",
 	},
 	{
 		_meta: {
@@ -427,6 +439,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_play_twenty_questions",
 		ratePolicy: "read",
+		title: "Open Twenty Questions",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -445,6 +458,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_start_twenty_questions",
 		ratePolicy: "read",
+		title: "Start a Twenty Questions game",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -465,6 +479,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_ask_twenty_questions",
 		ratePolicy: "read",
+		title: "Ask a Twenty Questions question",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -480,6 +495,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_reveal_twenty_questions",
 		ratePolicy: "read",
+		title: "Reveal the Twenty Questions answer",
 	},
 	{
 		_meta: {
@@ -504,6 +520,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_open_strudel",
 		ratePolicy: "read",
+		title: "Open Strudel",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -530,6 +547,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_generate_strudel",
 		ratePolicy: "expensive",
+		title: "Generate a Strudel pattern",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -537,6 +555,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_list_strudel_patterns",
 		ratePolicy: "read",
+		title: "List saved Strudel patterns",
 	},
 	{
 		annotations: { readOnlyHint: false },
@@ -560,6 +579,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_save_strudel_pattern",
 		ratePolicy: "write",
+		title: "Save a Strudel pattern",
 	},
 	{
 		annotations: { destructiveHint: true, readOnlyHint: false },
@@ -572,6 +592,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_delete_strudel_pattern",
 		ratePolicy: "write",
+		title: "Delete a Strudel pattern",
 	},
 	{
 		_meta: {
@@ -596,6 +617,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_open_verbatim",
 		ratePolicy: "read",
+		title: "Open Verbatim",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -614,6 +636,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_transcribe_verbatim",
 		ratePolicy: "read",
+		title: "Transcribe speech",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -636,6 +659,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_check_verbatim",
 		ratePolicy: "read",
+		title: "Check a transcript against the audio",
 	},
 	{
 		_meta: {
@@ -660,6 +684,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_open_polis",
 		ratePolicy: "read",
+		title: "Open Polis",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -677,6 +702,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_polis_decide",
 		ratePolicy: "read",
+		title: "Decide how Polis residents react",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -697,6 +723,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_polis_draft_law",
 		ratePolicy: "read",
+		title: "Draft a Polis law",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -716,6 +743,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_polis_draft_scenario",
 		ratePolicy: "read",
+		title: "Draft a Polis scenario",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -723,6 +751,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
 		name: "pashi_list_polis_towns",
 		ratePolicy: "read",
+		title: "List saved Polis towns",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -735,6 +764,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_get_polis_town",
 		ratePolicy: "read",
+		title: "Load a saved Polis town",
 	},
 	{
 		annotations: { readOnlyHint: false },
@@ -747,6 +777,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_save_polis_town",
 		ratePolicy: "write",
+		title: "Save a Polis town",
 	},
 	{
 		annotations: { destructiveHint: true, readOnlyHint: false },
@@ -759,6 +790,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_delete_polis_town",
 		ratePolicy: "write",
+		title: "Delete a Polis town",
 	},
 	{
 		annotations: { readOnlyHint: false },
@@ -772,6 +804,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_share_polis_town",
 		ratePolicy: "write",
+		title: "Share a Polis town",
 	},
 	{
 		annotations: { destructiveHint: true, readOnlyHint: false },
@@ -784,6 +817,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		},
 		name: "pashi_stop_sharing_polis_town",
 		ratePolicy: "write",
+		title: "Stop sharing a Polis town",
 	},
 ];
 
@@ -803,13 +837,14 @@ export type McpCaller = McpAnonymousCaller | McpOwnerCaller;
 
 export function listMcpTools(caller: McpCaller) {
 	return MCP_TOOLS.filter((tool) => caller.owner !== undefined || tool.anonymous).map(
-		({ _meta, annotations, description, inputSchema, name, outputSchema }) => ({
+		({ _meta, annotations, description, inputSchema, name, outputSchema, title }) => ({
 			_meta,
 			annotations,
 			description,
 			inputSchema,
 			name,
 			outputSchema,
+			title,
 		}),
 	);
 }
