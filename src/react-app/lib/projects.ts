@@ -1,5 +1,5 @@
 export type ProjectStatus = "archived" | "lab" | "live";
-export type ProjectKind = "extension" | "project";
+export type ProjectKind = "app" | "extension" | "project";
 
 export interface Project {
 	blurb: string;

@@ -1,3 +1,4 @@
+import type { AppAccess } from "../../shared/app-previews";
 import {
 	DECIDE_ID_PATTERN,
 	DECIDE_IMAGE_TYPES,
@@ -64,6 +65,7 @@ export interface McpToolDefinition {
 	_meta?: { [POLYCHAT_APP_META_KEY]?: PolychatAppMeta; ui: McpToolUiMeta };
 	annotations: { destructiveHint?: boolean; readOnlyHint: boolean };
 	anonymous?: boolean;
+	appAccess?: AppAccess;
 	description: string;
 	inputSchema: Record<string, unknown>;
 	name: string;
@@ -302,6 +304,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			ui: { resourceUri: MCP_VIEW_URIS.charades },
 		},
 		annotations: { readOnlyHint: true },
+		appAccess: "polychat-pro",
 		description:
 			"Open Charades: act out a card on camera for six seconds and an AI audience guesses which card it was. Opens a game view; the player does the acting.",
 		inputSchema: {
@@ -352,6 +355,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			ui: { resourceUri: MCP_VIEW_URIS.photoSorter },
 		},
 		annotations: { readOnlyHint: true },
+		appAccess: "polychat-pro",
 		description:
 			"Open Photo Sorter: the player names some piles, drops in up to 80 photos and an AI files each one, flagging faces, text, blur and screenshots. Opens a sorting view; the photos stay with the player.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
@@ -407,6 +411,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			ui: { resourceUri: MCP_VIEW_URIS.twentyQuestions },
 		},
 		annotations: { readOnlyHint: true },
+		appAccess: "polychat-pro",
 		description:
 			"Open Twenty Questions: an AI thinks of something and the player has twenty yes or no questions to find it. Opens a game view; the player asks the questions.",
 		inputSchema: {
@@ -493,6 +498,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			ui: { resourceUri: MCP_VIEW_URIS.strudel },
 		},
 		annotations: { readOnlyHint: true },
+		appAccess: "account",
 		description:
 			"Open Strudel Music Patterns: generate a Strudel pattern from a description, live-code it in the browser and keep a library of patterns. Opens a studio view.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
@@ -584,6 +590,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			ui: { resourceUri: MCP_VIEW_URIS.verbatim },
 		},
 		annotations: { readOnlyHint: true },
+		appAccess: "polychat-pro",
 		description:
 			"Open Verbatim: live transcription where every phrase is transcribed, then checked word by word against the audio, and anything the checker cannot hear is struck out. Opens a recording view.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
@@ -647,6 +654,7 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 			ui: { resourceUri: MCP_VIEW_URIS.polis },
 		},
 		annotations: { readOnlyHint: true },
+		appAccess: "api-key-or-pro",
 		description:
 			"Open Polis: found a town of up to 50,000 residents, pass laws in plain English, stage disasters, poll the town and watch everyone react. Opens a simulation view.",
 		inputSchema: { additionalProperties: false, properties: {}, type: "object" },
@@ -807,9 +815,24 @@ export function listMcpTools(caller: McpCaller) {
 }
 
 export function listMcpAppToolNames() {
-	return MCP_TOOLS.filter((tool) => tool._meta?.[POLYCHAT_APP_META_KEY] !== undefined).map(
-		(tool) => tool.name,
-	);
+	return listMcpAppDefinitions().map((definition) => definition.name);
+}
+
+export function listMcpAppDefinitions() {
+	return MCP_TOOLS.flatMap((tool) => {
+		const meta = tool._meta;
+		const app = meta?.[POLYCHAT_APP_META_KEY];
+
+		if (!meta || !app) {
+			return [];
+		}
+
+		if (!tool.appAccess) {
+			throw new Error(`${tool.name} opens an app but does not say what access it needs.`);
+		}
+
+		return [{ access: tool.appAccess, app, name: tool.name, resourceUri: meta.ui.resourceUri }];
+	});
 }
 
 export function canReadMcpResource(uri: string, caller: McpCaller) {

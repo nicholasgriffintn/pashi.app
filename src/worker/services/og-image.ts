@@ -1,3 +1,4 @@
+import { findAppPreview } from "../mcp/app-previews";
 import { escapeXml } from "../utils/text";
 import { listConverterTools } from "./converters/catalogue";
 import { listGeneratorTools } from "./generators/catalogue";
@@ -32,6 +33,11 @@ const PAGE_SUBJECTS: Record<string, OgSubject> = {
 		eyebrow: "pashi.app / labs",
 		subtitle: "Plain English tool routing, format explainers and agent access.",
 		title: "Labs",
+	},
+	polis: {
+		eyebrow: "pashi.app / polis",
+		subtitle: "A simulated town shared from Polis. Watch the recording back.",
+		title: "Shared Polis town",
 	},
 	tools: {
 		eyebrow: "pashi.app / tools",
@@ -91,6 +97,14 @@ function subjectForPath(pathname: string): OgSubject {
 				subtitle: tool.description,
 				title: tool.label,
 			};
+		}
+	}
+
+	if (first === "labs" && second === "apps" && third) {
+		const preview = findAppPreview(third);
+
+		if (preview) {
+			return { eyebrow: "pashi.app / apps", subtitle: preview.description, title: preview.name };
 		}
 	}
 

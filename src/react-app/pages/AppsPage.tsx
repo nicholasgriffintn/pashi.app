@@ -1,14 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 
+import { appPagePath } from "../../shared/app-previews";
+import { AppPreviewCard } from "../components/AppPreviewCard";
 import { McpAccessNotice } from "../components/McpAccessNotice";
 import { useApiKey } from "../lib/api-key-context";
+import { appPreviewsQueryOptions, isAccessDenied } from "../lib/app-previews";
 import { mcpAppsQueryOptions } from "../lib/mcp-apps";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
 
 export function AppsPage() {
 	const { apiKey } = useApiKey();
 	const apps = useQuery(mcpAppsQueryOptions(apiKey));
+	const signedOut = isAccessDenied(apps.error);
+	const previews = useQuery({ ...appPreviewsQueryOptions, enabled: signedOut });
 
 	useDocumentMetadata("Apps", "Pashi's MCP Apps, playable in the browser.");
 
@@ -26,7 +31,7 @@ export function AppsPage() {
 			) : null}
 			<div className="project-grid app-grid">
 				{apps.data?.map((app) => (
-					<Link className="project-card" key={app.id} to={`/labs/apps/${app.id}`}>
+					<Link className="project-card" key={app.id} to={appPagePath(app.id)}>
 						<span className="project-card-status" data-status="lab">
 							{app.category}
 						</span>
@@ -38,6 +43,11 @@ export function AppsPage() {
 						</span>
 					</Link>
 				))}
+				{signedOut
+					? previews.data?.apps.map((preview) => (
+							<AppPreviewCard key={preview.id} preview={preview} />
+						))
+					: null}
 			</div>
 		</main>
 	);

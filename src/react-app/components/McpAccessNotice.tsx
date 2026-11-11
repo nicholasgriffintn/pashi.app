@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 
-import { QueryError } from "../lib/query-client";
+import { isAccessDenied } from "../lib/app-previews";
 
 export function McpAccessNotice({ error }: { error: Error }) {
-	if (error instanceof QueryError && (error.status === 401 || error.status === 403)) {
+	if (isAccessDenied(error)) {
 		return (
 			<p className="key-required" role="status">
 				<span>Apps need Polychat or an API key.</span>

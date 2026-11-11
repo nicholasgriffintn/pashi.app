@@ -206,17 +206,32 @@ const VIEWS: readonly McpView[] = [
 ];
 
 export function renderSharedPolisPage(token: string, origin: string) {
-	return renderViewDocument(bundledViewTemplate(polisView, "Polis"), {
-		mode: "shared",
-		recordingUrl: `/api/polis/shared/${token}`,
-		siteUrl: origin,
-	});
+	const path = `/polis/${encodeURIComponent(token)}`;
+
+	return renderViewDocument(
+		bundledViewTemplate(polisView, "Polis"),
+		{
+			mode: "shared",
+			recordingUrl: `/api/polis/shared/${token}`,
+			siteUrl: origin,
+		},
+		{
+			"og:image": `${origin}/og?path=${encodeURIComponent(path)}`,
+			"og:title": "Shared Polis town",
+			"og:type": "website",
+			"og:url": `${origin}${path}`,
+		},
+	);
 }
 
 export function renderMcpViewPage(name: string, origin: string) {
 	const view = VIEWS.find((entry) => entry.name === name);
 
 	return view ? renderViewDocument(view.template, viewData(view, origin)) : undefined;
+}
+
+export function mcpViewName(uri: McpViewUri) {
+	return VIEWS.find((entry) => entry.uri === uri)?.name;
 }
 
 export function listMcpResources() {

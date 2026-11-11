@@ -51,7 +51,11 @@ export function bundledViewTemplate(view: BundledView, title: string): ViewTempl
 	};
 }
 
-export function renderViewDocument(template: ViewTemplate, data: unknown) {
+export function renderViewDocument(
+	template: ViewTemplate,
+	data: unknown,
+	meta: Record<string, string> = {},
+) {
 	return [
 		"<!doctype html>",
 		'<html lang="en-GB">',
@@ -59,6 +63,10 @@ export function renderViewDocument(template: ViewTemplate, data: unknown) {
 		'<meta charset="utf-8">',
 		'<meta name="viewport" content="width=device-width, initial-scale=1">',
 		`<title>${escapeXml(template.title)}</title>`,
+		...Object.entries(meta).map(
+			([property, content]) =>
+				`<meta property="${escapeXml(property)}" content="${escapeXml(content)}">`,
+		),
 		`<style>\n${readDesignTokens()}\n${viewCss}\n${template.css ?? ""}</style>`,
 		"</head>",
 		"<body>",
