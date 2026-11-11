@@ -1,6 +1,39 @@
 import { isRecord } from "../../../shared/records.ts";
+import {
+	contrastRatio,
+	findCssColours,
+	parseCssColour,
+	relativeLuminance,
+	rgbToHex,
+} from "../../utils/color.ts";
+import {
+	CRON_SEARCH_HORIZON_YEARS,
+	CronExpressionError,
+	describeCronField,
+	describeCronSchedule,
+	nextCronRuns,
+	parseCronExpression,
+} from "../../utils/cron.ts";
+import { base64UrlToBytes } from "../../utils/generation.ts";
+import { identifyHash } from "../../utils/hash-type.ts";
+import {
+	checkJwtSignature,
+	isJwtSecretEncoding,
+	JWT_SECRET_ENCODINGS,
+	type JwtKeyMaterial,
+	JwtKeyError,
+	type JwtSignedParts,
+} from "../../utils/jwt.ts";
+import { parseUserAgent } from "../../utils/user-agent.ts";
 
-export type DeveloperInspectFormat = "colour-contrast" | "cron" | "jwt" | "mime-signature" | "uuid";
+export type DeveloperInspectFormat =
+	| "colour-contrast"
+	| "cron"
+	| "hash-type"
+	| "jwt"
+	| "mime-signature"
+	| "user-agent"
+	| "uuid";
 
 export const DEVELOPER_INSPECT_FORMATS: readonly DeveloperInspectFormat[] = [
 	"jwt",
@@ -8,20 +41,41 @@ export const DEVELOPER_INSPECT_FORMATS: readonly DeveloperInspectFormat[] = [
 	"cron",
 	"colour-contrast",
 	"mime-signature",
+	"hash-type",
+	"user-agent",
 ];
 
-export class DeveloperInspectError extends Error {}
+const CRON_RUN_COUNT = 5;
+const MAX_COLOUR_LENGTH = 400;
+const MAX_CRON_LENGTH = 200;
+const MAX_HASH_LENGTH = 1024;
+const MAX_JWT_KEY_LENGTH = 8192;
+const MAX_JWT_LENGTH = 16_384;
+const MAX_NUMERIC_DATE_SECONDS = 8_640_000_000_000;
+const MAX_USER_AGENT_LENGTH = 1024;
+
+export class DeveloperInspectError extends Error {
+	readonly status: number;
+
+	constructor(message: string, status = 400) {
+		super(message);
+		this.status = status;
+	}
+}
 
 interface InspectOptions {
 	background?: string;
 	foreground?: string;
+	publicKey?: string;
+	secret?: string;
+	secretEncoding?: string;
 }
 
 export function isDeveloperInspectFormat(value: string): value is DeveloperInspectFormat {
 	return DEVELOPER_INSPECT_FORMATS.some((format) => format === value);
 }
 
-export function inspectDeveloperText(
+export async function inspectDeveloperText(
 	input: string,
 	format: DeveloperInspectFormat,
 	options: InspectOptions = {},
@@ -31,16 +85,28 @@ export function inspectDeveloperText(
 			return JSON.stringify(inspectColourContrast(input, options), null, 2);
 		case "cron":
 			return JSON.stringify(inspectCron(input), null, 2);
+		case "hash-type":
+			return JSON.stringify(inspectHashType(input), null, 2);
 		case "jwt":
-			return JSON.stringify(inspectJwt(input), null, 2);
+			return JSON.stringify(await inspectJwt(input, options), null, 2);
 		case "mime-signature":
 			return JSON.stringify(inspectMimeSignature(input), null, 2);
+		case "user-agent":
+			return JSON.stringify(inspectUserAgent(input), null, 2);
 		case "uuid":
 			return JSON.stringify(inspectUuid(input), null, 2);
 	}
 }
 
-function inspectJwt(input: string) {
+function assertWithinBudget(value: string, limit: number, label: string) {
+	if (value.length > limit) {
+		throw new DeveloperInspectError(`${label} is longer than the ${limit} character limit.`, 422);
+	}
+}
+
+async function inspectJwt(input: string, options: InspectOptions) {
+	assertWithinBudget(input, MAX_JWT_LENGTH, "The JWT");
+
 	const token = input.trim().replace(/^Bearer\s+/i, "");
 	const parts = token.split(".");
 
@@ -48,15 +114,32 @@ function inspectJwt(input: string) {
 		throw new DeveloperInspectError("Enter a JWT with header, payload, and signature segments.");
 	}
 
-	const header = parseJwtSegment(parts[0], "header");
-	const payload = parseJwtSegment(parts[1], "payload");
+	const [headerSegment, payloadSegment, signatureSegment] = parts;
+	const header = parseJwtSegment(headerSegment, "header");
+	const payload = parseJwtSegment(payloadSegment, "payload");
+	const claims = isRecord(payload) ? payload : {};
+	const signature = await inspectJwtSignature(
+		{
+			algorithm: isRecord(header) ? header.alg : undefined,
+			signature: signatureSegment,
+			signingInput: `${headerSegment}.${payloadSegment}`,
+		},
+		jwtKeyMaterial(options),
+	);
+	const now = Math.floor(Date.now() / 1000);
+	const wasChecked = signature.status !== "not-checked" && signature.status !== "unsupported";
 
 	return {
+		claims: {
+			expiry: jwtExpiryStatus(numericDate(claims.exp), now),
+			notBefore: jwtNotBeforeStatus(numericDate(claims.nbf), now),
+		},
 		header,
 		payload,
-		signatureBytes: base64UrlByteLength(parts[2]),
-		timing: isRecord(payload) ? jwtTiming(payload) : {},
-		warning: "Decoded only; signature is not verified.",
+		signature,
+		signatureBytes: base64UrlByteLength(signatureSegment),
+		timing: jwtTiming(claims, now),
+		...(wasChecked ? {} : { warning: "Decoded only; the signature was not checked." }),
 	};
 }
 
@@ -94,35 +177,61 @@ function inspectUuid(input: string) {
 }
 
 function inspectCron(input: string) {
-	const fields = input.trim().split(/\s+/);
+	assertWithinBudget(input, MAX_CRON_LENGTH, "The cron expression");
 
-	if (fields.length !== 5) {
-		throw new DeveloperInspectError("Enter a standard five-field cron expression.");
+	const schedule = parseCronSchedule(input);
+	const nextRuns = nextCronRuns(schedule, new Date(), CRON_RUN_COUNT);
+
+	if (nextRuns.length === 0) {
+		throw new DeveloperInspectError(
+			`This cron expression never fires within the next ${CRON_SEARCH_HORIZON_YEARS} years.`,
+			422,
+		);
 	}
 
-	const [minute, hour, dayOfMonth, month, dayOfWeek] = fields;
-
 	return {
-		dayOfMonth: explainCronField(dayOfMonth, "day of month", 1, 31),
-		dayOfWeek: explainCronField(dayOfWeek, "day of week", 0, 7),
-		expression: fields.join(" "),
-		hour: explainCronField(hour, "hour", 0, 23),
-		minute: explainCronField(minute, "minute", 0, 59),
-		month: explainCronField(month, "month", 1, 12),
-		summary: cronSummary(minute, hour, dayOfMonth, month, dayOfWeek),
+		dayOfMonth: describeCronField(schedule.dayOfMonth),
+		dayOfWeek: describeCronField(schedule.dayOfWeek),
+		expression: schedule.expression,
+		hour: describeCronField(schedule.hour),
+		minute: describeCronField(schedule.minute),
+		month: describeCronField(schedule.month),
+		nextRuns: nextRuns.map((run) => run.toISOString()),
+		summary: describeCronSchedule(schedule),
 	};
 }
 
+function parseCronSchedule(input: string) {
+	try {
+		return parseCronExpression(input);
+	} catch (error) {
+		if (error instanceof CronExpressionError) {
+			throw new DeveloperInspectError(error.message);
+		}
+
+		throw error;
+	}
+}
+
 function inspectColourContrast(input: string, options: InspectOptions) {
-	const inputColours = input.match(/#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b/g) ?? [];
-	const foreground = parseHexColour(options.foreground || inputColours[0]);
-	const background = parseHexColour(options.background || inputColours[foreground ? 1 : 0]);
+	assertWithinBudget(input, MAX_COLOUR_LENGTH, "The colour input");
+
+	const inputColours = findCssColours(input);
+	const foreground = options.foreground?.trim()
+		? fieldColour(options.foreground, "The foreground colour")
+		: inputColours.shift();
+	const background = options.background?.trim()
+		? fieldColour(options.background, "The background colour")
+		: inputColours.shift();
 
 	if (!foreground || !background) {
-		throw new DeveloperInspectError("Enter foreground and background hex colours.");
+		throw new DeveloperInspectError(
+			"Enter foreground and background colours as hex, rgb(), hsl(), or a CSS colour name.",
+		);
 	}
 
 	const ratio = contrastRatio(relativeLuminance(foreground), relativeLuminance(background));
+	const hasAlpha = foreground.alpha < 1 || background.alpha < 1;
 
 	return {
 		AA: {
@@ -133,10 +242,37 @@ function inspectColourContrast(input: string, options: InspectOptions) {
 			largeText: ratio >= 4.5,
 			normalText: ratio >= 7,
 		},
-		background: rgbToHex(background),
-		foreground: rgbToHex(foreground),
+		background: rgbToHex(background).toLowerCase(),
+		foreground: rgbToHex(foreground).toLowerCase(),
+		...(hasAlpha ? { note: "Alpha is ignored; the ratio treats both colours as opaque." } : {}),
 		ratio: Number(ratio.toFixed(2)),
 	};
+}
+
+function fieldColour(value: string, label: string) {
+	assertWithinBudget(value, MAX_COLOUR_LENGTH, label);
+
+	return parseCssColour(value) ?? parseCssColour(`#${value.trim()}`);
+}
+
+function inspectHashType(input: string) {
+	assertWithinBudget(input, MAX_HASH_LENGTH, "The hash");
+
+	if (!input.trim()) {
+		throw new DeveloperInspectError("Enter a hash to identify.");
+	}
+
+	return identifyHash(input);
+}
+
+function inspectUserAgent(input: string) {
+	assertWithinBudget(input, MAX_USER_AGENT_LENGTH, "The user agent");
+
+	if (!input.trim()) {
+		throw new DeveloperInspectError("Enter a user-agent string to parse.");
+	}
+
+	return parseUserAgent(input);
 }
 
 function inspectMimeSignature(input: string) {
@@ -159,32 +295,78 @@ function inspectMimeSignature(input: string) {
 	};
 }
 
-function parseJwtSegment(segment: string, name: string) {
+function parseJwtSegment(segment: string, name: string): unknown {
 	try {
-		return JSON.parse(base64UrlToText(segment));
+		return JSON.parse(new TextDecoder().decode(base64UrlToBytes(segment)));
 	} catch {
 		throw new DeveloperInspectError(`Enter a JWT with a valid ${name} segment.`);
 	}
 }
 
-function jwtTiming(payload: Record<string, unknown>) {
-	const now = Math.floor(Date.now() / 1000);
+function jwtKeyMaterial(options: InspectOptions): JwtKeyMaterial {
+	const secretEncoding = options.secretEncoding?.trim() || "utf8";
 
-	return Object.fromEntries(
-		["iat", "nbf", "exp"]
-			.filter((claim) => typeof payload[claim] === "number")
-			.map((claim) => {
-				const seconds = payload[claim] as number;
+	if (!isJwtSecretEncoding(secretEncoding)) {
+		throw new DeveloperInspectError(
+			`Choose a supported secretEncoding: ${JWT_SECRET_ENCODINGS.join(", ")}.`,
+		);
+	}
 
-				return [
-					claim,
-					{
-						iso: new Date(seconds * 1000).toISOString(),
-						relativeSeconds: seconds - now,
-					},
-				];
-			}),
-	);
+	assertWithinBudget(options.secret ?? "", MAX_JWT_KEY_LENGTH, "The secret");
+	assertWithinBudget(options.publicKey ?? "", MAX_JWT_KEY_LENGTH, "The public key");
+
+	return { publicKey: options.publicKey, secret: options.secret, secretEncoding };
+}
+
+async function inspectJwtSignature(parts: JwtSignedParts, keys: JwtKeyMaterial) {
+	try {
+		return await checkJwtSignature(parts, keys);
+	} catch (error) {
+		if (error instanceof JwtKeyError) {
+			throw new DeveloperInspectError(error.message);
+		}
+
+		throw error;
+	}
+}
+
+function numericDate(value: unknown) {
+	return typeof value === "number" && Math.abs(value) <= MAX_NUMERIC_DATE_SECONDS
+		? value
+		: undefined;
+}
+
+function jwtExpiryStatus(expiresAt: number | undefined, now: number) {
+	if (expiresAt === undefined) {
+		return "absent";
+	}
+
+	return now >= expiresAt ? "expired" : "valid";
+}
+
+function jwtNotBeforeStatus(notBefore: number | undefined, now: number) {
+	if (notBefore === undefined) {
+		return "absent";
+	}
+
+	return now < notBefore ? "not-yet-valid" : "active";
+}
+
+function jwtTiming(payload: Record<string, unknown>, now: number) {
+	const timing: Record<string, { iso: string; relativeSeconds: number }> = {};
+
+	for (const claim of ["iat", "nbf", "exp"]) {
+		const seconds = numericDate(payload[claim]);
+
+		if (seconds !== undefined) {
+			timing[claim] = {
+				iso: new Date(seconds * 1000).toISOString(),
+				relativeSeconds: seconds - now,
+			};
+		}
+	}
+
+	return timing;
 }
 
 function uuidVariant(nibble: number) {
@@ -201,111 +383,6 @@ function uuidVariant(nibble: number) {
 	}
 
 	return "future";
-}
-
-function explainCronField(value: string, label: string, min: number, max: number) {
-	if (value === "*") {
-		return `every ${label}`;
-	}
-
-	const step = /^\*\/(\d+)$/.exec(value);
-
-	if (step) {
-		return `every ${step[1]} ${label}s`;
-	}
-
-	if (value.includes(",")) {
-		return `${label}s ${value}`;
-	}
-
-	if (value.includes("-")) {
-		return `${label}s ${value}`;
-	}
-
-	const numeric = Number.parseInt(value, 10);
-
-	if (Number.isInteger(numeric) && numeric >= min && numeric <= max) {
-		return `${label} ${numeric}`;
-	}
-
-	return `custom ${label} field: ${value}`;
-}
-
-function cronSummary(
-	minute: string,
-	hour: string,
-	dayOfMonth: string,
-	month: string,
-	dayOfWeek: string,
-) {
-	if (
-		minute.startsWith("*/") &&
-		hour === "*" &&
-		dayOfMonth === "*" &&
-		month === "*" &&
-		dayOfWeek === "*"
-	) {
-		return `Every ${minute.slice(2)} minutes`;
-	}
-
-	if (minute !== "*" && hour === "*" && dayOfMonth === "*" && month === "*" && dayOfWeek === "*") {
-		return `Every hour at minute ${minute}`;
-	}
-
-	if (minute !== "*" && hour !== "*" && dayOfMonth === "*" && month === "*" && dayOfWeek === "*") {
-		return `Every day at ${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
-	}
-
-	if (minute !== "*" && hour !== "*" && dayOfMonth === "*" && month === "*" && dayOfWeek !== "*") {
-		return `Every week on day ${dayOfWeek} at ${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
-	}
-
-	if (minute !== "*" && hour !== "*" && dayOfMonth !== "*" && month === "*" && dayOfWeek === "*") {
-		return `Every month on day ${dayOfMonth} at ${hour.padStart(2, "0")}:${minute.padStart(2, "0")}`;
-	}
-
-	return "Custom cron schedule";
-}
-
-function parseHexColour(value: string | undefined) {
-	if (!value) {
-		return undefined;
-	}
-
-	const hex = value.trim().replace(/^#/, "");
-
-	if (![3, 4, 6, 8].includes(hex.length) || !/^[0-9a-fA-F]+$/.test(hex)) {
-		return undefined;
-	}
-
-	const expanded = hex.length <= 4 ? [...hex].map((char) => `${char}${char}`).join("") : hex;
-
-	return [
-		Number.parseInt(expanded.slice(0, 2), 16),
-		Number.parseInt(expanded.slice(2, 4), 16),
-		Number.parseInt(expanded.slice(4, 6), 16),
-	] as const;
-}
-
-function relativeLuminance([red, green, blue]: readonly [number, number, number]) {
-	const [r, g, b] = [red, green, blue].map((channel) => {
-		const value = channel / 255;
-
-		return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-	});
-
-	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function contrastRatio(left: number, right: number) {
-	const light = Math.max(left, right);
-	const dark = Math.min(left, right);
-
-	return (light + 0.05) / (dark + 0.05);
-}
-
-function rgbToHex([red, green, blue]: readonly [number, number, number]) {
-	return `#${[red, green, blue].map((channel) => channel.toString(16).padStart(2, "0")).join("")}`;
 }
 
 function inputBytes(input: string) {
@@ -383,16 +460,6 @@ function detectSignature(bytes: readonly number[]) {
 		mimeType: "application/octet-stream",
 		name: "Unknown binary data",
 	};
-}
-
-function base64UrlToText(value: string) {
-	const padded = value
-		.replace(/-/g, "+")
-		.replace(/_/g, "/")
-		.padEnd(Math.ceil(value.length / 4) * 4, "=");
-	const binary = atob(padded);
-
-	return new TextDecoder().decode(Uint8Array.from(binary, (char) => char.codePointAt(0) ?? 0));
 }
 
 function base64UrlByteLength(value: string) {

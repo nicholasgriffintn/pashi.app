@@ -86,7 +86,7 @@ export async function createConverterResponse(
 	}
 
 	try {
-		return json(handler(requestWithPresets));
+		return json(await handler(requestWithPresets));
 	} catch (error) {
 		if (error instanceof ConverterRequestError) {
 			return json({ error: error.message }, error.status);

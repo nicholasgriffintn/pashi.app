@@ -229,11 +229,22 @@ export function bytesToBase64Url(bytes: Uint8Array) {
 	return bytesToBase64(bytes).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
 }
 
+export function base64ToBytes(value: string) {
+	return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+}
+
 export function base64UrlToBytes(value: string) {
 	const base64 = value.replaceAll("-", "+").replaceAll("_", "/");
-	const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
 
-	return Uint8Array.from(atob(padded), (character) => character.charCodeAt(0));
+	return base64ToBytes(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="));
+}
+
+export function parseBase64Url(value: string) {
+	if (!/^[A-Za-z0-9_-]*$/.test(value) || value.length % 4 === 1) {
+		return undefined;
+	}
+
+	return base64UrlToBytes(value);
 }
 
 export function concatBytes(chunks: readonly Uint8Array[]) {
