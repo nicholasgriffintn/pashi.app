@@ -49,6 +49,20 @@ export function ConverterFieldControl({
 		);
 	}
 
+	if (field.display?.control === "textarea") {
+		return (
+			<label className={fieldControlClassName(field)}>
+				<span>{field.description}</span>
+				<textarea
+					onChange={(event) => onChange(event.target.value)}
+					required={Boolean(field.required)}
+					rows={4}
+					value={value}
+				/>
+			</label>
+		);
+	}
+
 	if (field.values && field.values.length > 0) {
 		return (
 			<label className={fieldControlClassName(field)}>

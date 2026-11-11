@@ -13,9 +13,14 @@ import {
 	conversionJobStatus,
 } from "./converter-api";
 import { createConversionJobPoller, type ConversionJobPoller } from "./converter-polling";
+import type { ToolExample } from "../../shared/tool-examples";
 import {
+	converterRequestFields,
+	converterShareFields,
+	converterValuesFromExample,
+	type ConverterValues,
 	findConverterByRoute,
-	getDefaultConverterInput,
+	getDefaultConverterValues,
 	getInitialConverterValues,
 } from "./converter-state";
 import { clearHistory, readHistory, saveHistoryEntry } from "./history-store";
@@ -118,24 +123,6 @@ function createImageConverterResult(
 		sourceUrl: `${activeTool.endpoint}?${params.toString()}`,
 		src,
 	};
-}
-
-function defaultConverterFields(tool: ConverterInfoTool) {
-	const fields: Record<string, string> = {};
-
-	for (const field of tool.api?.fields ?? []) {
-		if (field.id === "outputFormat") {
-			continue;
-		}
-
-		if (field.defaultValue !== undefined) {
-			fields[field.id] = field.defaultValue;
-		} else if (field.values?.length) {
-			fields[field.id] = field.values[0] ?? "";
-		}
-	}
-
-	return fields;
 }
 
 function findSourcePresetField(tool: ConverterInfoTool) {
@@ -244,13 +231,13 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 	);
 
 	const applyToolValues = useCallback(
-		(nextTool: ConverterInfoTool, nextInput: string) => {
+		(nextTool: ConverterInfoTool, values: ConverterValues) => {
 			stopPolling();
 			setActiveToolId(nextTool.id);
-			setInput(nextInput);
-			setConverterFields(defaultConverterFields(nextTool));
+			setInput(values.input);
+			setConverterFields(values.fields);
 			slackmojiBatchResultsRef.current = [];
-			setOutputFormat(nextTool.outputs[0] ?? "");
+			setOutputFormat(values.outputFormat);
 			setSelectedFile(undefined);
 			setError("");
 			setIsLoading(false);
@@ -291,7 +278,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 				const nextTool = pickInitialConverter(info.tools, routeToolIdRef.current);
 
 				setTools(info.tools);
-				applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
+				applyToolValues(nextTool, getInitialConverterValues(nextTool));
 				notify("Converters ready");
 			})
 			.catch((caught) => {
@@ -347,7 +334,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 		}
 
 		setIsHistoryLoaded(false);
-		applyToolValues(nextTool, getInitialConverterValues(nextTool).input);
+		applyToolValues(nextTool, getInitialConverterValues(nextTool));
 
 		if (nextTool.id !== routeToolId) {
 			navigateToTool(nextTool.id, { replace: true });
@@ -428,6 +415,8 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 		}
 	}
 
+	const currentValues: ConverterValues = { fields: converterFields, input, outputFormat };
+
 	async function convertActiveTool() {
 		stopPolling();
 		convertAbortRef.current?.abort();
@@ -474,7 +463,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 
 			try {
 				const fields = {
-					...converterFields,
+					...converterRequestFields(activeTool, currentValues),
 					outputFormat: outputFormat || activeTool.outputs[0] || "txt",
 					...(selectedFile ? { sourceName: selectedFile.name } : {}),
 				};
@@ -562,10 +551,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 		}
 
 		try {
-			const fields = {
-				...converterFields,
-				...(outputFormat ? { outputFormat } : {}),
-			};
+			const fields = converterRequestFields(activeTool, currentValues);
 
 			const nextResult = await convertThing(
 				activeTool.endpoint,
@@ -604,8 +590,24 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 			return;
 		}
 
-		applyToolValues(nextTool, getDefaultConverterInput(nextTool));
+		applyToolValues(nextTool, getDefaultConverterValues(nextTool));
 		navigateToTool(nextTool.id);
+	}
+
+	function applyExample(example: ToolExample) {
+		if (!activeTool) {
+			return;
+		}
+
+		const values = converterValuesFromExample(activeTool, example);
+
+		if (activeTool.input.kind === "text") {
+			setInput(values.input);
+		}
+
+		setConverterFields(values.fields);
+		setOutputFormat(values.outputFormat);
+		setError("");
 	}
 
 	function clearResult() {
@@ -639,6 +641,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 
 	return {
 		activeTool,
+		applyExample,
 		clearResultHistory,
 		restoreResult,
 		resultHistory,
@@ -670,6 +673,7 @@ export function useConverterConsole({ navigateToTool, routeToolId }: ToolConsole
 		},
 		setOutputFormat,
 		setInput,
+		shareFields: activeTool ? converterShareFields(activeTool, currentValues) : {},
 		setSelectedFile: (file: File | undefined) => {
 			setSelectedFile(file);
 			if (file) {

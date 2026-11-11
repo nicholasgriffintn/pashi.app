@@ -13,7 +13,6 @@ import { createPolychatRoutes } from "./routes/polychat";
 import { createToolRoutes } from "./routes/tools";
 import { isExpensiveGeneratorId } from "./security/policies";
 import { assertUniqueToolIdentifiers } from "./services/catalogue-integrity";
-import { assertValidToolExamples } from "./services/example-integrity";
 import {
 	ConversionContainer,
 	processConversionQueue,
@@ -35,7 +34,6 @@ import { toErrorResponse } from "./utils/error-response";
 import { errorJson } from "./utils/http";
 
 assertUniqueToolIdentifiers();
-assertValidToolExamples();
 
 const app = new Hono<AppContext>({ strict: false });
 

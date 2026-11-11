@@ -1,5 +1,3 @@
-import type { FieldVisibility, ToolExample } from "../../../shared/tool-examples.ts";
-
 export type Audience =
 	| "Design"
 	| "Engineering"
@@ -29,7 +27,6 @@ export interface GeneratorInputField {
 	placeholder: string;
 	required: boolean;
 	type?: "select" | "textarea" | "text";
-	visibleWhen?: FieldVisibility;
 }
 
 export interface GeneratorTool {
@@ -39,7 +36,7 @@ export interface GeneratorTool {
 	display: {
 		actionLabel: string;
 		category: string;
-		examples: readonly ToolExample[];
+		examples: readonly string[];
 	};
 	endpoint: string;
 	id: string;
