@@ -18,6 +18,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 	const consoleState = useGeneratorConsole({ navigateToTool, routeToolId });
 	const {
 		activeTool,
+		applyExample,
 		clearResult,
 		clearResultHistory,
 		error,
@@ -34,6 +35,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 		isLoading,
 		notification,
 		notify,
+		requestFields,
 		result,
 		resultHistory,
 		resultMode,
@@ -42,7 +44,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 		setInput,
 		tools,
 	} = consoleState;
-	const resultFields = resultMode === "ai" ? { ...fieldValues, mode: "ai" } : fieldValues;
+	const resultFields = resultMode === "ai" ? { ...requestFields, mode: "ai" } : requestFields;
 	const actions =
 		result && activeTool ? (
 			<ResultActions
@@ -105,6 +107,7 @@ export function GeneratorConsole({ controls, navigateToTool, routeToolId }: Gene
 					generationMode={resultMode}
 					input={input}
 					isLoading={isLoading}
+					onApplyExample={applyExample}
 					onFieldChange={handleFieldChange}
 					onGenerationModeChange={setResultMode}
 					onInputChange={setInput}

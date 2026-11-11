@@ -1,3 +1,4 @@
+import type { ToolExample } from "../../../../shared/tool-examples.ts";
 import { todayIsoDate } from "../../../utils/text.ts";
 import { POKEMON_TYPES } from "../data/pokemon.ts";
 import type { Audience, GeneratorInputField, GeneratorTool, ResultKind } from "../types";
@@ -163,7 +164,12 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"https://pashi.app",
 			"image",
 			"generate QR",
-			["https://pashi.app", "https://nicholasgriffin.dev/docs"],
+			[
+				{ input: "https://pashi.app", label: "Website link" },
+				{ input: "mailto:hello@example.com?subject=Pashi%20feedback", label: "Email draft" },
+				{ input: "tel:+442071234567", label: "Phone number" },
+				{ input: "Meet at the main entrance at 10:00", label: "Plain note" },
+			],
 		),
 		tool(
 			"barcode",
@@ -175,7 +181,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"PASHI-12345",
 			"image",
 			"Generate barcode",
-			["PASHI-12345", "ORDER-2048"],
+			[
+				{ fields: { value: "PASHI-12345" }, label: "Product code" },
+				{ fields: { height: "240", scale: "3", value: "ORDER-2048" }, label: "Tall order label" },
+				{ fields: { text: "hide", value: "AISLE-07-B" }, label: "Shelf tag, no text" },
+			],
 			[
 				field("value", "Value", "PASHI-12345", true),
 				field("height", "Height", "160", true),
@@ -193,7 +203,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"⚡",
 			"image",
 			"Generate image",
-			["⚡", "✨"],
+			[
+				{ fields: { emoji: "⚡" }, label: "Lightning on navy" },
+				{ fields: { background: "ffffff", emoji: "✨", size: "128" }, label: "Sparkles favicon" },
+				{ fields: { background: "ff2f78", emoji: "🚀", size: "1024" }, label: "Rocket banner" },
+			],
 			[
 				field("emoji", "Emoji", "⚡", true),
 				field("size", "Size", "512", true),
@@ -210,7 +224,17 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1",
 			"text",
 			"Generate UUID",
-			["1", "10"],
+			[
+				{ fields: { format: "v4" }, label: "Random v4" },
+				{ fields: { count: "10", format: "v7" }, label: "Ten time-ordered v7" },
+				{
+					fields: { format: "v5", name: "https://pashi.app", namespace: "url" },
+					label: "Name-based v5",
+				},
+				{ fields: { format: "v3", name: "pashi.app", namespace: "dns" }, label: "v3 for a domain" },
+				{ fields: { format: "v4", outputFormat: "braced" }, label: "Braced for .NET" },
+				{ fields: { count: "3", format: "v1", outputFormat: "urn" }, label: "URN form" },
+			],
 			[
 				field("count", "Count", "1", true),
 				field("format", "Format", "v4", false, "select", ["v1", "v3", "v4", "v5", "v7"]),
@@ -221,8 +245,8 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"braced",
 					"urn",
 				]),
-				field("name", "Name", "name", false),
-				field("namespace", "Namespace", "url", false),
+				shownWhen(field("name", "Name", "name", false), "format", ["v3", "v5"]),
+				shownWhen(field("namespace", "Namespace", "url", false), "format", ["v3", "v5"]),
 			],
 		),
 		tool(
@@ -235,7 +259,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"32",
 			"text",
 			"Generate token",
-			["32", "48"],
+			[
+				{ fields: { length: "32" }, label: "32-character token" },
+				{ fields: { count: "5", length: "48" }, label: "Five 48-character" },
+				{ fields: { length: "12" }, label: "Short 12-character" },
+			],
 			[field("length", "Length", "32", true), field("count", "Count", "1", true)],
 		),
 		tool(
@@ -248,7 +276,17 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"32",
 			"text",
 			"Generate API token",
-			["32", "64"],
+			[
+				{ fields: { count: "10", format: "alphanumeric" }, label: "Ten alphanumeric" },
+				{
+					fields: { count: "5", format: "hex", length: "64", prefix: "" },
+					label: "Hex, no prefix",
+				},
+				{
+					fields: { count: "3", format: "base64url", length: "48", prefix: "svc_" },
+					label: "Base64url service tokens",
+				},
+			],
 			[
 				field("count", "Count", "10", true),
 				field("length", "Length", "32", true),
@@ -271,7 +309,18 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"16",
 			"text",
 			"Generate password",
-			["16", "32"],
+			[
+				{ fields: { count: "5", length: "16" }, label: "Five 16-character" },
+				{
+					fields: { count: "3", length: "32", symbols: "false" },
+					label: "32 characters, no symbols",
+				},
+				{
+					fields: { excludeSimilar: "true", length: "12", symbols: "false" },
+					label: "Easy to read aloud",
+				},
+				{ fields: { customSymbols: "!@#-_", length: "20" }, label: "Limited symbol set" },
+			],
 			[
 				field("length", "Length", "16", true),
 				field("count", "Count", "5", true),
@@ -293,7 +342,18 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Text to hash",
 			"fields",
 			"Generate hash",
-			["hello world", "sha256"],
+			[
+				{ fields: { algorithm: "sha256", value: "hello world" }, label: "SHA-256 of text" },
+				{
+					fields: { algorithm: "md5", includeInput: "true", value: "The quick brown fox" },
+					label: "MD5 with input",
+				},
+				{
+					fields: { algorithm: "sha512", uppercase: "true", value: "pashi" },
+					label: "Uppercase SHA-512",
+				},
+				{ fields: { algorithm: "sha1", count: "5", value: "" }, label: "Random SHA-1 digests" },
+			],
 			[
 				field("value", "Text", "hello world", false, "textarea"),
 				field("algorithm", "Algorithm", "sha256", true, "select", [
@@ -317,24 +377,41 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"32",
 			"fields",
 			"Generate key",
-			["32", "64"],
+			[
+				{
+					fields: { format: "alphanumeric", length: "32", prefix: "sk_test_" },
+					label: "Test secret key",
+				},
+				{ fields: { count: "5", format: "hex", length: "40", prefix: "" }, label: "Hex keys" },
+				{ fields: { count: "3", format: "uuid", prefix: "key_" }, label: "UUID keys" },
+				{
+					fields: { includeSecret: "true", keyLength: "24", secretLength: "48" },
+					label: "Key and secret pair",
+				},
+			],
 			[
 				field("count", "Count", "1", true),
-				field("length", "Length", "32", true),
-				field("format", "Format", "alphanumeric", false, "select", [
-					"alphanumeric",
-					"hex",
-					"base64",
-					"base64url",
-					"uuid",
-					"numeric",
-				]),
-				field("prefix", "Prefix", "sk_", false),
+				shownWhen(field("length", "Length", "32", true), "includeSecret", ["false"]),
+				shownWhen(
+					field("format", "Format", "alphanumeric", false, "select", [
+						"alphanumeric",
+						"hex",
+						"base64",
+						"base64url",
+						"uuid",
+						"numeric",
+					]),
+					"includeSecret",
+					["false"],
+				),
+				shownWhen(field("prefix", "Prefix", "sk_", false), "includeSecret", ["false"]),
 				field("includeSecret", "Include secret", "false", false, "select", ["false", "true"]),
-				field("keyLength", "Key length", "32", true),
-				field("secretLength", "Secret length", "64", true),
-				field("keyPrefix", "Key prefix", "key_", false),
-				field("secretPrefix", "Secret prefix", "secret_", false),
+				shownWhen(field("keyLength", "Key length", "32", true), "includeSecret", ["true"]),
+				shownWhen(field("secretLength", "Secret length", "64", true), "includeSecret", ["true"]),
+				shownWhen(field("keyPrefix", "Key prefix", "key_", false), "includeSecret", ["true"]),
+				shownWhen(field("secretPrefix", "Secret prefix", "secret_", false), "includeSecret", [
+					"true",
+				]),
 			],
 		),
 		tool(
@@ -347,7 +424,28 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"user_123",
 			"fields",
 			"Sign JWT",
-			["1", "3"],
+			[
+				{ fields: { algorithm: "HS256", subject: "user_123" }, label: "HS256 user token" },
+				{
+					fields: {
+						algorithm: "RS256",
+						audience: "https://api.example.com",
+						expiresIn: "900",
+						issuer: "https://auth.example.com",
+						subject: "svc_billing",
+					},
+					label: "RS256 service token",
+				},
+				{
+					fields: {
+						algorithm: "HS512",
+						customClaims: '{"role":"editor","tenant":"acme"}',
+						expiresIn: "300",
+						includeNbf: "true",
+					},
+					label: "Short-lived with claims",
+				},
+			],
 			[
 				field("count", "Count", "1", true),
 				field("algorithm", "Algorithm", "HS256", false, "select", [
@@ -377,7 +475,17 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"64",
 			"fields",
 			"Generate OAuth",
-			["64"],
+			[
+				{ fields: { includeRefresh: "true", tokenType: "bearer" }, label: "Bearer with refresh" },
+				{
+					fields: { expiresIn: "900", includeRefresh: "false", scope: "read" },
+					label: "Access token only",
+				},
+				{
+					fields: { accessTokenLength: "48", format: "hex", scope: "read write admin" },
+					label: "Hex, admin scope",
+				},
+			],
 			[
 				field("count", "Count", "1", true),
 				field("tokenType", "Token type", "bearer", false, "select", ["bearer", "mac", "basic"]),
@@ -404,7 +512,17 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"32",
 			"fields",
 			"Generate secret",
-			["32"],
+			[
+				{ fields: { algorithm: "sha256", format: "hex" }, label: "SHA-256 signing secret" },
+				{
+					fields: { format: "base64", includeTimestamp: "true", length: "48" },
+					label: "Base64 with timestamp",
+				},
+				{
+					fields: { algorithm: "sha512", includeExample: "false", length: "64" },
+					label: "SHA-512, secret only",
+				},
+			],
 			[
 				field("count", "Count", "1", true),
 				field("length", "Length", "32", true),
@@ -424,7 +542,21 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"aes",
 			"fields",
 			"Generate key",
-			["1", "3"],
+			[
+				{
+					fields: { algorithm: "aes", includeIv: "true", keySize: "256" },
+					label: "AES-256 with IV",
+				},
+				{
+					fields: { algorithm: "aes", format: "base64", keySize: "128" },
+					label: "AES-128 in base64",
+				},
+				{
+					fields: { algorithm: "hmac", includeIv: "false", keySize: "512" },
+					label: "HMAC-SHA-512 key",
+				},
+				{ fields: { algorithm: "rsa", keySize: "2048" }, label: "RSA-2048 key pair" },
+			],
 			[
 				field("count", "Count", "1", true),
 				field("algorithm", "Algorithm", "aes", false, "select", ["aes", "hmac", "rsa"]),
@@ -437,8 +569,16 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"2048",
 					"4096",
 				]),
-				field("format", "Format", "hex", false, "select", ["hex", "base64", "base64url", "pem"]),
-				field("includeIv", "Include IV", "true", false, "select", ["true", "false"]),
+				shownWhen(
+					field("format", "Format", "hex", false, "select", ["hex", "base64", "base64url", "pem"]),
+					"algorithm",
+					["aes", "hmac"],
+				),
+				shownWhen(
+					field("includeIv", "Include IV", "true", false, "select", ["true", "false"]),
+					"algorithm",
+					["aes", "hmac"],
+				),
 			],
 		),
 		tool(
@@ -451,7 +591,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"32",
 			"fields",
 			"Generate salt",
-			["16", "32"],
+			[
+				{ fields: { encoding: "base64", length: "32" }, label: "32-byte base64" },
+				{ fields: { count: "5", encoding: "hex", length: "16" }, label: "Five 16-byte hex" },
+				{
+					fields: { encoding: "base64url", includeLength: "true" },
+					label: "Base64url with length",
+				},
+			],
 			[
 				field("length", "Length", "32", true),
 				field("encoding", "Encoding", "base64", false, "select", [
@@ -474,7 +621,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"fields",
 			"Generate SSH",
-			["1", "2"],
+			[
+				{ fields: { bits: "2048" }, label: "RSA 2048 key pair" },
+				{
+					fields: { bits: "4096", comment: "deploy@build-server" },
+					label: "RSA 4096 for a server",
+				},
+				{ fields: { format: "pem" }, label: "Private key only" },
+			],
 			[
 				field("count", "Count", "1", true),
 				field("type", "Type", "rsa", false, "select", ["rsa"]),
@@ -493,7 +647,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"48",
 			"text",
 			"Generate bearer",
-			["48"],
+			[
+				{ fields: { bytes: "48" }, label: "48-byte bearer" },
+				{ fields: { bytes: "32", count: "3" }, label: "Three 32-byte" },
+			],
 			[field("bytes", "Bytes", "48", true), field("count", "Count", "1", true)],
 		),
 		tool(
@@ -506,7 +663,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1024-65535",
 			"text",
 			"Generate port",
-			["1024", "49152"],
+			[
+				{ fields: { max: "65535", min: "1024" }, label: "Unprivileged port" },
+				{ fields: { count: "5", max: "65535", min: "49152" }, label: "Five ephemeral" },
+				{ fields: { count: "3", max: "9000", min: "3000" }, label: "Dev server range" },
+			],
 			[
 				field("min", "Min", "1024", true),
 				field("max", "Max", "65535", true),
@@ -523,7 +684,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Text to encode",
 			"text",
 			"Encode",
-			["hello world", '{"ok":true}'],
+			[
+				{ input: "hello world", label: "Plain text" },
+				{ input: '{"ok":true,"user":"ada"}', label: "JSON payload" },
+				{ input: "Grüße aus London ☕", label: "Accented text" },
+			],
 		),
 		tool(
 			"url",
@@ -535,7 +700,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Text or URL",
 			"text",
 			"Encode URL",
-			["hello world", "https://nicholasgriffin.dev/?q=hello world"],
+			[
+				{ input: "hello world", label: "Phrase with spaces" },
+				{ input: "https://nicholasgriffin.dev/?q=hello world", label: "Query string" },
+				{ input: "ada+news@example.com", label: "Email with plus" },
+			],
 		),
 		tool(
 			"slug",
@@ -547,7 +716,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Launch notes v2",
 			"text",
 			"Make slug",
-			["My Great Blog Post", "Launch notes v2"],
+			[
+				{ input: "My Great Blog Post", label: "Blog title" },
+				{ input: "Launch notes v2", label: "Release notes" },
+				{ input: "Crème brûlée: 10 tips", label: "Accented title" },
+			],
 		),
 		tool(
 			"cron-expression",
@@ -559,7 +732,18 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"daily",
 			"fields",
 			"Generate cron",
-			["daily", "weekly"],
+			[
+				{ fields: { hour: "9", minute: "0", preset: "daily" }, label: "Daily at 09:00" },
+				{ fields: { minute: "30", preset: "hourly" }, label: "Hourly at :30" },
+				{
+					fields: { hour: "8", minute: "15", preset: "weekly", weekday: "1" },
+					label: "Mondays at 08:15",
+				},
+				{
+					fields: { day: "1", hour: "0", minute: "0", preset: "monthly" },
+					label: "Month start, midnight",
+				},
+			],
 			[
 				field("preset", "Preset", "daily", false, "select", [
 					"hourly",
@@ -568,9 +752,9 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"monthly",
 				]),
 				field("minute", "Minute", "0", true),
-				field("hour", "Hour", "9", true),
-				field("weekday", "Weekday", "1", true),
-				field("day", "Day", "1", true),
+				shownWhen(field("hour", "Hour", "9", true), "preset", ["daily", "weekly", "monthly"]),
+				shownWhen(field("weekday", "Weekday", "1", true), "preset", ["weekly"]),
+				shownWhen(field("day", "Day", "1", true), "preset", ["monthly"]),
 			],
 		),
 		tool(
@@ -583,7 +767,13 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"email",
 			"fields",
 			"Generate regex",
-			["email", "uuid", "hex-colour"],
+			[
+				{ fields: { preset: "email" }, label: "Email address" },
+				{ fields: { flags: "i", preset: "uuid" }, label: "UUID, any case" },
+				{ fields: { preset: "hex-colour" }, label: "Hex colour" },
+				{ fields: { anchors: "false", flags: "g", preset: "iso-date" }, label: "Find ISO dates" },
+				{ fields: { preset: "ipv4" }, label: "IPv4 address" },
+			],
 			[
 				field("preset", "Preset", "email", false, "select", [
 					"email",
@@ -613,7 +803,26 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"name:string\nage:number",
 			"text",
 			"Generate schema",
-			["User", "Order"],
+			[
+				{
+					fields: {
+						fields: "id:integer\nname:string\nemail:string\nactive:boolean",
+						title: "User",
+					},
+					label: "User",
+				},
+				{
+					fields: {
+						fields: "orderId:string\ntotal:number\nitems:array\nshippedAt:string",
+						title: "Order",
+					},
+					label: "Order",
+				},
+				{
+					fields: { fields: "theme:string\nnotifications:object\nbeta:boolean", title: "Settings" },
+					label: "Settings",
+				},
+			],
 			[
 				field("title", "Title", "Example", false),
 				field("fields", "Fields", "name:string\nage:number", true, "textarea"),
@@ -629,7 +838,19 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{\n  "id": 123,\n  "name": "Ada"\n}',
 			"text",
 			"Generate interface",
-			['{"id":123,"name":"Ada"}'],
+			[
+				{
+					fields: { json: '{"id":123,"name":"Ada","admin":true}', name: "User" },
+					label: "User record",
+				},
+				{
+					fields: {
+						json: '{"id":"ord_1","total":42.5,"items":[{"sku":"A1","qty":2}],"customer":{"email":"ada@example.com"}}',
+						name: "Order",
+					},
+					label: "Nested order",
+				},
+			],
 			[
 				field("json", "JSON", '{\n  "id": 123,\n  "name": "Ada"\n}', true, "textarea"),
 				field("name", "Interface name", "Root", true),
@@ -645,7 +866,36 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate Fetch",
-			["https://api.example.com/items"],
+			[
+				{
+					fields: {
+						json: '{"name":"Widget","price":9.99}',
+						method: "POST",
+						url: "https://api.example.com/items",
+					},
+					label: "POST a new item",
+				},
+				{
+					fields: {
+						headers: "Accept: application/json\nAuthorization: Bearer YOUR_TOKEN",
+						method: "GET",
+						url: "https://api.example.com/users?page=2",
+					},
+					label: "GET with auth header",
+				},
+				{
+					fields: {
+						json: '{"status":"archived"}',
+						method: "PATCH",
+						url: "https://api.example.com/items/42",
+					},
+					label: "PATCH a status",
+				},
+				{
+					fields: { method: "DELETE", url: "https://api.example.com/items/42" },
+					label: "DELETE a record",
+				},
+			],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -656,6 +906,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"DELETE",
 				]),
 				field("headers", "Headers", "Accept: application/json", false, "textarea"),
+				shownWhen(field("json", "JSON body", '{"ok":true}', false, "textarea"), "method", [
+					"POST",
+					"PUT",
+					"PATCH",
+				]),
 			],
 		),
 		tool(
@@ -668,7 +923,36 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate Axios",
-			["https://api.example.com/items"],
+			[
+				{
+					fields: {
+						json: '{"name":"Widget","price":9.99}',
+						method: "POST",
+						url: "https://api.example.com/items",
+					},
+					label: "POST a new item",
+				},
+				{
+					fields: {
+						headers: "Accept: application/json\nAuthorization: Bearer YOUR_TOKEN",
+						method: "GET",
+						url: "https://api.example.com/users?page=2",
+					},
+					label: "GET with auth header",
+				},
+				{
+					fields: {
+						json: '{"status":"archived"}',
+						method: "PATCH",
+						url: "https://api.example.com/items/42",
+					},
+					label: "PATCH a status",
+				},
+				{
+					fields: { method: "DELETE", url: "https://api.example.com/items/42" },
+					label: "DELETE a record",
+				},
+			],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -679,6 +963,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"DELETE",
 				]),
 				field("headers", "Headers", "Accept: application/json", false, "textarea"),
+				shownWhen(field("json", "JSON body", '{"ok":true}', false, "textarea"), "method", [
+					"POST",
+					"PUT",
+					"PATCH",
+				]),
 			],
 		),
 		tool(
@@ -691,7 +980,36 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate cURL",
-			["https://api.example.com/items", "https://api.example.com/users"],
+			[
+				{
+					fields: {
+						json: '{"name":"Widget","price":9.99}',
+						method: "POST",
+						url: "https://api.example.com/items",
+					},
+					label: "POST a new item",
+				},
+				{
+					fields: {
+						headers: "Accept: application/json\nAuthorization: Bearer YOUR_TOKEN",
+						method: "GET",
+						url: "https://api.example.com/users?page=2",
+					},
+					label: "GET with auth header",
+				},
+				{
+					fields: {
+						json: '{"status":"archived"}',
+						method: "PATCH",
+						url: "https://api.example.com/items/42",
+					},
+					label: "PATCH a status",
+				},
+				{
+					fields: { method: "DELETE", url: "https://api.example.com/items/42" },
+					label: "DELETE a record",
+				},
+			],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -702,6 +1020,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"DELETE",
 				]),
 				field("headers", "Headers", "Accept: application/json", false, "textarea"),
+				shownWhen(field("json", "JSON body", '{"ok":true}', false, "textarea"), "method", [
+					"POST",
+					"PUT",
+					"PATCH",
+				]),
 			],
 		),
 		tool(
@@ -714,7 +1037,36 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate request",
-			["https://api.example.com/items", "https://api.example.com/users"],
+			[
+				{
+					fields: {
+						json: '{"name":"Widget","price":9.99}',
+						method: "POST",
+						url: "https://api.example.com/items",
+					},
+					label: "POST a new item",
+				},
+				{
+					fields: {
+						headers: "Accept: application/json\nAuthorization: Bearer YOUR_TOKEN",
+						method: "GET",
+						url: "https://api.example.com/users?page=2",
+					},
+					label: "GET with auth header",
+				},
+				{
+					fields: {
+						json: '{"status":"archived"}',
+						method: "PATCH",
+						url: "https://api.example.com/items/42",
+					},
+					label: "PATCH a status",
+				},
+				{
+					fields: { method: "DELETE", url: "https://api.example.com/items/42" },
+					label: "DELETE a record",
+				},
+			],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -725,6 +1077,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"DELETE",
 				]),
 				field("headers", "Headers", "Accept: application/json", false, "textarea"),
+				shownWhen(field("json", "JSON body", '{"ok":true}', false, "textarea"), "method", [
+					"POST",
+					"PUT",
+					"PATCH",
+				]),
 			],
 		),
 		tool(
@@ -737,7 +1094,36 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate HAR",
-			["https://api.example.com/items", "https://api.example.com/users"],
+			[
+				{
+					fields: {
+						json: '{"name":"Widget","price":9.99}',
+						method: "POST",
+						url: "https://api.example.com/items",
+					},
+					label: "POST a new item",
+				},
+				{
+					fields: {
+						headers: "Accept: application/json\nAuthorization: Bearer YOUR_TOKEN",
+						method: "GET",
+						url: "https://api.example.com/users?page=2",
+					},
+					label: "GET with auth header",
+				},
+				{
+					fields: {
+						json: '{"status":"archived"}',
+						method: "PATCH",
+						url: "https://api.example.com/items/42",
+					},
+					label: "PATCH a status",
+				},
+				{
+					fields: { method: "DELETE", url: "https://api.example.com/items/42" },
+					label: "DELETE a record",
+				},
+			],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -748,6 +1134,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"DELETE",
 				]),
 				field("headers", "Headers", "Accept: application/json", false, "textarea"),
+				shownWhen(field("json", "JSON body", '{"ok":true}', false, "textarea"), "method", [
+					"POST",
+					"PUT",
+					"PATCH",
+				]),
 			],
 		),
 		tool(
@@ -760,10 +1151,21 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"id":123}',
 			"text",
 			"Generate response",
-			["200", "404"],
+			[
+				{
+					fields: { json: '{"id":123,"name":"Ada"}', status: "200", success: "true" },
+					label: "200 with data",
+				},
+				{
+					fields: { json: '{"id":"ord_42","status":"pending"}', status: "201", success: "true" },
+					label: "201 created",
+				},
+				{ fields: { json: "null", status: "404", success: "false" }, label: "404 not found" },
+			],
 			[
 				field("status", "Status", "200", true),
 				field("success", "Success", "true", false, "select", ["true", "false"]),
+				field("json", "Data JSON", '{"id":123}', false, "textarea"),
 			],
 		),
 		tool(
@@ -776,7 +1178,25 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Pashi",
 			"text",
 			"Generate tags",
-			["Pashi"],
+			[
+				{
+					fields: {
+						description: "Fast tools and converters",
+						title: "Pashi",
+						url: "https://pashi.app",
+					},
+					label: "Pashi homepage",
+				},
+				{
+					fields: {
+						description: "Notes on scope, tooling and launch day.",
+						image: "https://nicholasgriffin.dev/images/weekend-project.png",
+						title: "Shipping a side project in a weekend",
+						url: "https://nicholasgriffin.dev/blog/weekend-project",
+					},
+					label: "Blog post with image",
+				},
+			],
 			[
 				field("title", "Title", "Pashi", true),
 				field("description", "Description", "Fast tools and converters", true),
@@ -794,7 +1214,26 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"2020-2030",
 			"fields",
 			"Generate timestamp",
-			["2020-01-01T00:00:00Z", "2024-06-01T00:00:00Z"],
+			[
+				{
+					fields: {
+						count: "5",
+						end: "2029-12-31T23:59:59Z",
+						start: "2020-01-01T00:00:00Z",
+						unit: "seconds",
+					},
+					label: "2020s in seconds",
+				},
+				{
+					fields: {
+						count: "3",
+						end: "2024-12-31T23:59:59Z",
+						start: "2024-01-01T00:00:00Z",
+						unit: "milliseconds",
+					},
+					label: "2024 in milliseconds",
+				},
+			],
 			[
 				field("start", "Start", "2020-01-01T00:00:00Z", true),
 				field("end", "End", "2030-12-31T23:59:59Z", true),
@@ -812,7 +1251,21 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1970-01-01",
 			"text",
 			"Generate date",
-			["2020-01-01", "2000-01-01"],
+			[
+				{ fields: { format: "iso8601", startDate: "2020-01-01" }, label: "ISO since 2020" },
+				{
+					fields: { count: "5", endDate: "2005-12-31", format: "us", startDate: "1960-01-01" },
+					label: "US-format birthdays",
+				},
+				{
+					fields: { endDate: "2024-12-31", format: "long", startDate: "2024-01-01" },
+					label: "Long-form in 2024",
+				},
+				{
+					fields: { endDate: "2009-12-31", format: "unix", startDate: "2000-01-01" },
+					label: "Unix in the 2000s",
+				},
+			],
 			[
 				field("startDate", "Start date", "1970-01-01", true),
 				field("endDate", "End date", todayIsoDate(), true),
@@ -837,7 +1290,19 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"24-hour",
 			"fields",
 			"Generate time",
-			["24-hour", "12-hour"],
+			[
+				{ fields: { format: "24-hour", includeSeconds: "true" }, label: "24-hour with seconds" },
+				{
+					fields: {
+						count: "5",
+						endHour: "17",
+						format: "12-hour",
+						includeSeconds: "false",
+						startHour: "9",
+					},
+					label: "12-hour office hours",
+				},
+			],
 			[
 				field("format", "Format", "24-hour", false, "select", ["24-hour", "12-hour"]),
 				field("startHour", "Start hour", "0", true),
@@ -856,7 +1321,13 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"unix",
 			"fields",
 			"Generate timestamp",
-			["unix", "iso8601"],
+			[
+				{ fields: { format: "unix", startDate: "2000-01-01" }, label: "Unix since 2000" },
+				{
+					fields: { count: "5", endDate: "2024-12-31", format: "iso8601", startDate: "2024-01-01" },
+					label: "ISO 8601 in 2024",
+				},
+			],
 			[
 				field("format", "Format", "unix", false, "select", ["unix", "iso8601"]),
 				field("startDate", "Start date", "1970-01-01", true),
@@ -874,7 +1345,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"ipv4",
 			"text",
 			"Generate IP",
-			["ipv4", "ipv6"],
+			[
+				{ fields: { version: "ipv4" }, label: "Ten IPv4" },
+				{ fields: { unique: "true", version: "ipv6" }, label: "Unique IPv6" },
+				{
+					fields: { count: "20", includePrivate: "false", version: "both" },
+					label: "Public only, mixed",
+				},
+			],
 			[
 				field("version", "Version", "ipv4", false, "select", ["ipv4", "ipv6", "both"]),
 				field("count", "Count", "10", true),
@@ -893,7 +1371,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"10",
 			"text",
 			"Generate IPv4",
-			["10", "25"],
+			[
+				{ fields: { count: "10" }, label: "Ten addresses" },
+				{
+					fields: { count: "25", includePrivate: "false", unique: "true" },
+					label: "25 unique public",
+				},
+				{ fields: { count: "5", includeLocalhost: "true" }, label: "With localhost" },
+			],
 			[
 				field("count", "Count", "10", true),
 				field("unique", "Unique", "false", false, "select", ["false", "true"]),
@@ -911,7 +1396,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"10",
 			"text",
 			"Generate IPv6",
-			["10", "25"],
+			[
+				{ fields: { count: "10" }, label: "Ten addresses" },
+				{
+					fields: { count: "25", includePrivate: "false", unique: "true" },
+					label: "25 unique public",
+				},
+				{ fields: { count: "5", includeLocalhost: "true" }, label: "With localhost" },
+			],
 			[
 				field("count", "Count", "10", true),
 				field("unique", "Unique", "false", false, "select", ["false", "true"]),
@@ -929,7 +1421,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"colon",
 			"text",
 			"Generate MAC",
-			["colon", "cisco"],
+			[
+				{ fields: { format: "colon" }, label: "Colon separated" },
+				{ fields: { format: "cisco" }, label: "Cisco dotted" },
+				{
+					fields: { format: "hyphen", local: "false", unique: "true", uppercase: "true" },
+					label: "Global, uppercase",
+				},
+			],
 			[
 				field("format", "Format", "colon", false, "select", [
 					"colon",
@@ -955,7 +1454,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"US",
 			"text",
 			"Generate phone",
-			["US", "GB"],
+			[
+				{ fields: { country: "US", format: "national" }, label: "US national" },
+				{ fields: { country: "GB", format: "international" }, label: "UK international" },
+				{ fields: { country: "DE", format: "e164", unique: "true" }, label: "German E.164" },
+			],
 			[
 				field("country", "Country", "US", false, "select", [
 					"US",
@@ -992,7 +1495,19 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"mixed",
 			"text",
 			"Generate username",
-			["mixed", "gamer"],
+			[
+				{ fields: { style: "mixed" }, label: "Mixed styles" },
+				{ fields: { style: "gamer" }, label: "Gamer tags" },
+				{
+					fields: {
+						includeNumbers: "false",
+						maxLength: "20",
+						minLength: "8",
+						style: "professional",
+					},
+					label: "Professional, no digits",
+				},
+			],
 			[
 				field("style", "Style", "mixed", false, "select", [
 					"professional",
@@ -1019,7 +1534,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"mixed",
 			"text",
 			"Generate company",
-			["mixed", "tech"],
+			[
+				{ fields: { industry: "general", style: "mixed" }, label: "Any industry" },
+				{ fields: { industry: "tech", style: "tech" }, label: "Tech start-ups" },
+				{
+					fields: { count: "5", industry: "finance", style: "traditional" },
+					label: "Traditional finance",
+				},
+			],
 			[
 				field("style", "Style", "mixed", false, "select", [
 					"professional",
@@ -1054,7 +1576,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1",
 			"fields",
 			"Generate UUID",
-			["1", "10"],
+			[
+				{ fields: { count: "1" }, label: "One player" },
+				{ fields: { count: "10" }, label: "Ten players" },
+			],
 			[field("count", "Count", "1", true)],
 		),
 		tool(
@@ -1067,7 +1592,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1",
 			"text",
 			"Generate state",
-			["1", "5"],
+			[
+				{ fields: { count: "1" }, label: "One state" },
+				{ fields: { count: "5" }, label: "Five states" },
+			],
 			[field("count", "Count", "1", true)],
 		),
 		tool(
@@ -1080,7 +1608,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1",
 			"text",
 			"Generate sign",
-			["1", "5"],
+			[
+				{ fields: { count: "1" }, label: "One sign" },
+				{ fields: { count: "5" }, label: "Five signs" },
+			],
 			[field("count", "Count", "1", true)],
 		),
 		tool(
@@ -1093,7 +1624,17 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"en_GB",
 			"fields",
 			"Generate person",
-			["en_GB", "en_US", "de_DE"],
+			[
+				{ fields: { locale: "en_GB" }, label: "British adult" },
+				{
+					fields: { ageMax: "40", ageMin: "25", gender: "female", locale: "en_US" },
+					label: "US women 25 to 40",
+				},
+				{
+					fields: { count: "3", includeFinancial: "false", locale: "de_DE" },
+					label: "German, no financials",
+				},
+			],
 			[
 				field("locale", "Locale", "en_GB", false, "select", [
 					"en_GB",
@@ -1127,7 +1668,16 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"integer",
 			"text",
 			"Generate number",
-			["1", "-100"],
+			[
+				{ fields: { max: "100", min: "1", type: "integer" }, label: "1 to 100" },
+				{
+					fields: { decimals: "3", max: "1", min: "0", type: "decimal" },
+					label: "Decimals 0 to 1",
+				},
+				{ fields: { max: "1000", min: "2", type: "prime" }, label: "Primes under 1000" },
+				{ fields: { max: "-1", min: "-500", type: "negative" }, label: "Negative numbers" },
+				{ fields: { count: "5", decimals: "1", type: "percentage" }, label: "Percentages" },
+			],
 			[
 				field("min", "Min", "1", true),
 				field("max", "Max", "100", true),
@@ -1140,7 +1690,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"odd",
 					"negative",
 				]),
-				field("decimals", "Decimals", "2", true),
+				shownWhen(field("decimals", "Decimals", "2", true), "type", ["decimal", "percentage"]),
 				field("count", "Count", "10", true),
 			],
 		),
@@ -1154,7 +1704,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"8",
 			"text",
 			"Generate binary",
-			["8", "16"],
+			[
+				{ fields: { bits: "8" }, label: "8-bit bytes" },
+				{ fields: { bits: "16", count: "5" }, label: "16-bit words" },
+				{ fields: { bits: "32", count: "3" }, label: "32-bit values" },
+			],
 			[field("bits", "Bits", "8", true), field("count", "Count", "10", true)],
 		),
 		tool(
@@ -1167,7 +1721,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"8",
 			"text",
 			"Generate hex",
-			["8", "16"],
+			[
+				{ fields: { length: "8", prefix: "true" }, label: "8 digits with 0x" },
+				{
+					fields: { length: "16", prefix: "false", uppercase: "false" },
+					label: "16 digits, lowercase",
+				},
+				{ fields: { count: "20", length: "4", unique: "true" }, label: "Unique 4-digit" },
+			],
 			[
 				field("count", "Count", "10", true),
 				field("length", "Length", "8", true),
@@ -1186,7 +1747,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"8",
 			"text",
 			"Generate octal",
-			["8", "16"],
+			[
+				{ fields: { length: "8", prefix: "true" }, label: "8 digits with 0o" },
+				{ fields: { length: "3", prefix: "false" }, label: "File modes" },
+				{ fields: { count: "20", length: "6", unique: "true" }, label: "Unique 6-digit" },
+			],
 			[
 				field("count", "Count", "10", true),
 				field("length", "Length", "8", true),
@@ -1204,7 +1769,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"proper",
 			"fields",
 			"Generate fraction",
-			["proper", "mixed"],
+			[
+				{ fields: { count: "5", type: "proper" }, label: "Proper fractions" },
+				{ fields: { count: "5", type: "mixed" }, label: "Mixed numbers" },
+				{
+					fields: { maxDenominator: "20", maxNumerator: "50", simplify: "no", type: "improper" },
+					label: "Improper, unsimplified",
+				},
+			],
 			[
 				field("type", "Type", "proper", true, "select", ["proper", "improper", "mixed"]),
 				field("maxNumerator", "Max numerator", "12", true),
@@ -1223,7 +1795,23 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"32",
 			"text",
 			"Generate string",
-			["alphanumeric", "lorem"],
+			[
+				{ fields: { length: "32", type: "alphanumeric" }, label: "32-char alphanumeric" },
+				{
+					fields: { case: "lower", count: "5", length: "12", type: "letters" },
+					label: "Lowercase letters",
+				},
+				{ fields: { type: "words", wordCount: "5" }, label: "Five random words" },
+				{
+					fields: { paragraphCount: "2", sentenceCount: "4", type: "lorem" },
+					label: "Lorem paragraphs",
+				},
+				{ fields: { byteCount: "24", type: "base64" }, label: "Base64 bytes" },
+				{
+					fields: { length: "10", lowercase: "false", type: "alphanumeric", uppercase: "false" },
+					label: "Digits only",
+				},
+			],
 			[
 				field("type", "Type", "alphanumeric", false, "select", [
 					"alphanumeric",
@@ -1237,15 +1825,41 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"lorem",
 				]),
 				field("count", "Count", "1", true),
-				field("length", "Length", "32", true),
-				field("wordCount", "Words", "5", true),
-				field("sentenceCount", "Sentences", "3", true),
-				field("paragraphCount", "Paragraphs", "2", true),
-				field("byteCount", "Bytes", "32", true),
-				field("case", "Case", "mixed", false, "select", ["mixed", "lower", "upper"]),
-				field("uppercase", "Uppercase", "true", false, "select", ["true", "false"]),
-				field("lowercase", "Lowercase", "true", false, "select", ["true", "false"]),
-				field("numbers", "Numbers", "true", false, "select", ["true", "false"]),
+				shownWhen(field("length", "Length", "32", true), "type", [
+					"alphanumeric",
+					"letters",
+					"binary",
+					"hex",
+				]),
+				shownWhen(field("wordCount", "Words", "5", true), "type", ["words"]),
+				shownWhen(field("sentenceCount", "Sentences", "3", true), "type", [
+					"sentences",
+					"paragraphs",
+					"lorem",
+				]),
+				shownWhen(field("paragraphCount", "Paragraphs", "2", true), "type", [
+					"paragraphs",
+					"lorem",
+				]),
+				shownWhen(field("byteCount", "Bytes", "32", true), "type", ["base64"]),
+				shownWhen(
+					field("case", "Case", "mixed", false, "select", ["mixed", "lower", "upper"]),
+					"type",
+					["letters"],
+				),
+				shownWhen(
+					field("uppercase", "Uppercase", "true", false, "select", ["true", "false"]),
+					"type",
+					["alphanumeric"],
+				),
+				shownWhen(
+					field("lowercase", "Lowercase", "true", false, "select", ["true", "false"]),
+					"type",
+					["alphanumeric"],
+				),
+				shownWhen(field("numbers", "Numbers", "true", false, "select", ["true", "false"]), "type", [
+					"alphanumeric",
+				]),
 			],
 		),
 		tool(
@@ -1258,7 +1872,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"6",
 			"text",
 			"Generate emoji",
-			["6", "12"],
+			[
+				{ fields: { count: "6" }, label: "Six emoji" },
+				{ fields: { count: "12", separator: " " }, label: "Twelve, spaced" },
+			],
 			[field("count", "Count", "6", true), field("separator", "Separator", "", false)],
 		),
 		tool(
@@ -1271,7 +1888,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"4",
 			"text",
 			"Generate PIN",
-			["4", "6"],
+			[
+				{ fields: { length: "4" }, label: "4-digit PINs" },
+				{
+					fields: { excludeRepeating: "true", excludeSequential: "true", length: "6" },
+					label: "6-digit, no patterns",
+				},
+				{ fields: { length: "8", uniqueDigits: "true" }, label: "8 unique digits" },
+			],
 			[
 				field("length", "Length", "4", true),
 				field("count", "Count", "10", true),
@@ -1293,7 +1917,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"5",
 			"text",
 			"Generate phrase",
-			["5", "6"],
+			[
+				{ fields: { separator: "-", wordCount: "5" }, label: "Five words, hyphens" },
+				{
+					fields: { capitalize: "true", includeNumbers: "true", wordCount: "4" },
+					label: "Capitalised with number",
+				},
+				{ fields: { separator: ".", wordCount: "6" }, label: "Six words, dots" },
+			],
 			[
 				field("wordCount", "Words", "5", true),
 				field("separator", "Separator", "-", false),
@@ -1312,7 +1943,15 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"10",
 			"fields",
 			"Generate colours",
-			["5", "10"],
+			[
+				{ fields: { format: "hex", palette: "random" }, label: "Ten hex" },
+				{ fields: { count: "5", format: "rgb", palette: "pastel" }, label: "Pastel RGB" },
+				{
+					fields: { alpha: "0.6", format: "rgba", palette: "vibrant" },
+					label: "Translucent vibrant",
+				},
+				{ fields: { count: "5", format: "all", palette: "dark" }, label: "Dark, every format" },
+			],
 			[
 				field("count", "Count", "10", true),
 				field("format", "Format", "hex", false, "select", [
@@ -1331,7 +1970,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"light",
 					"grayscale",
 				]),
-				field("alpha", "Alpha", "1", true),
+				shownWhen(field("alpha", "Alpha", "1", true), "format", ["rgba", "hsla", "all"]),
 			],
 		),
 		tool(
@@ -1344,7 +1983,23 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Cyber citrus checkout",
 			"palette",
 			"Make palette",
-			["Cyber citrus checkout", "Neon ink docs"],
+			[
+				{ fields: { seed: "Cyber citrus checkout" }, label: "Cyber citrus" },
+				{
+					fields: { count: "4", harmony: "complementary", seed: "Neon ink docs" },
+					label: "Complementary brand",
+				},
+				{
+					fields: {
+						harmony: "monochrome",
+						lightness: "45",
+						saturation: "30",
+						seed: "Quiet dashboard",
+					},
+					label: "Muted monochrome",
+				},
+				{ fields: { count: "6", harmony: "triadic", seed: "Arcade night" }, label: "Six triadic" },
+			],
 			[
 				field("seed", "Seed", "Cyber citrus checkout", false),
 				field("count", "Count", "5", true),
@@ -1370,7 +2025,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Pashi gradient",
 			"text",
 			"Generate CSS",
-			["135", "90"],
+			[
+				{ fields: { angle: "135", from: "#17c964", to: "#0ea5e9" }, label: "Green to blue" },
+				{ fields: { angle: "90", from: "#f97316", to: "#ec4899" }, label: "Sunset, horizontal" },
+				{ fields: { angle: "180", from: "#0f172a", to: "#1e293b" }, label: "Dark vertical fade" },
+			],
 			[
 				field("angle", "Angle", "135", true),
 				field("from", "From", "#17c964", true),
@@ -1387,7 +2046,20 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"text",
 			"Generate shadow",
-			["0", "4"],
+			[
+				{
+					fields: { blur: "24", color: "rgba(15, 23, 42, 0.18)", spread: "0", x: "0", y: "8" },
+					label: "Soft card",
+				},
+				{
+					fields: { blur: "2", color: "rgba(0, 0, 0, 0.3)", spread: "0", x: "0", y: "1" },
+					label: "Tight drop",
+				},
+				{
+					fields: { blur: "32", color: "rgba(14, 165, 233, 0.5)", spread: "4", x: "0", y: "0" },
+					label: "Blue glow",
+				},
+			],
 			[
 				field("x", "X offset", "0", true),
 				field("y", "Y offset", "8", true),
@@ -1406,7 +2078,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"text",
 			"Generate shadow",
-			["0", "2"],
+			[
+				{ fields: { blur: "10", x: "0", y: "2" }, label: "Subtle lift" },
+				{ fields: { blur: "0", color: "#000000", x: "3", y: "3" }, label: "Hard offset" },
+				{
+					fields: { blur: "12", color: "rgba(236, 72, 153, 0.8)", x: "0", y: "0" },
+					label: "Pink neon",
+				},
+			],
 			[
 				field("x", "X offset", "0", true),
 				field("y", "Y offset", "2", true),
@@ -1424,7 +2103,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"8",
 			"text",
 			"Generate radius",
-			["8", "12"],
+			[
+				{ fields: { radius: "8" }, label: "Card corners" },
+				{ fields: { radius: "12" }, label: "Rounded button" },
+				{ fields: { radius: "999" }, label: "Pill" },
+			],
 			[field("radius", "Radius", "8", true)],
 		),
 		tool(
@@ -1437,7 +2120,23 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Apples: 10\nPears: 5",
 			"text",
 			"Generate chart",
-			["bar", "word-cloud"],
+			[
+				{
+					fields: { data: "Apples: 10\nPears: 5\nPlums: 7", type: "bar" },
+					label: "Fruit bar chart",
+				},
+				{
+					fields: { data: "Jan: 120\nFeb: 180\nMar: 240\nApr: 210", type: "bar" },
+					label: "Monthly sign-ups",
+				},
+				{
+					fields: {
+						data: "TypeScript: 40\nReact: 32\nWorkers: 24\nVite: 18\nHono: 12",
+						type: "word-cloud",
+					},
+					label: "Tech word cloud",
+				},
+			],
 			[
 				field("type", "Type", "bar", false, "select", ["bar", "word-cloud"]),
 				field("data", "Data", "Apples: 10\nPears: 5", true, "textarea"),
@@ -1453,7 +2152,17 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Pashi interface",
 			"text",
 			"Generate lorem",
-			["Pashi interface", "Checkout flow"],
+			[
+				{ fields: { topic: "Pashi interface" }, label: "Interface copy" },
+				{
+					fields: { paragraphs: "1", sentences: "4", topic: "Checkout flow" },
+					label: "One checkout paragraph",
+				},
+				{
+					fields: { paragraphs: "5", sentences: "5", topic: "Product launch" },
+					label: "Long landing page",
+				},
+			],
 			[
 				field("topic", "Topic", "Pashi interface", false),
 				field("paragraphs", "Paragraphs", "2", true),
@@ -1470,7 +2179,35 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"https://nicholasgriffin.dev/pricing",
 			"text",
 			"Build UTM",
-			["https://nicholasgriffin.dev/pricing", "https://pashi.app"],
+			[
+				{
+					fields: {
+						campaign: "launch",
+						medium: "email",
+						source: "newsletter",
+						url: "https://nicholasgriffin.dev/pricing",
+					},
+					label: "Newsletter launch",
+				},
+				{
+					fields: {
+						campaign: "spring-update",
+						medium: "social",
+						source: "mastodon",
+						url: "https://pashi.app",
+					},
+					label: "Social post",
+				},
+				{
+					fields: {
+						campaign: "brand-terms",
+						medium: "cpc",
+						source: "google",
+						url: "https://example.com/pricing",
+					},
+					label: "Paid search",
+				},
+			],
 			[
 				field("url", "URL", "https://example.com/pricing", true),
 				field("source", "Source", "newsletter", true),
@@ -1488,7 +2225,15 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"global",
 			"fields",
 			"Generate coords",
-			["global", "uk"],
+			[
+				{ fields: { region: "global" }, label: "Anywhere" },
+				{ fields: { format: "dms", region: "uk" }, label: "UK in DMS" },
+				{ fields: { count: "5", precision: "4", region: "europe" }, label: "Five in Europe" },
+				{
+					fields: { maxLat: "51.69", maxLon: "0.33", minLat: "51.28", minLon: "-0.51" },
+					label: "Around London",
+				},
+			],
 			[
 				field("region", "Region", "global", false, "select", [
 					"global",
@@ -1522,7 +2267,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"en_GB",
 			"text",
 			"Generate post code",
-			["en_GB", "en_US"],
+			[
+				{ fields: { locale: "en_GB" }, label: "UK postcodes" },
+				{ fields: { locale: "en_US" }, label: "US ZIP codes" },
+				{ fields: { count: "5", locale: "ja_JP" }, label: "Japanese codes" },
+			],
 			[
 				field("locale", "Locale", "en_GB", false, "select", [
 					"en_GB",
@@ -1567,7 +2316,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"visa",
 			"fields",
 			"Generate card",
-			["visa", "mastercard"],
+			[
+				{ fields: { type: "visa" }, label: "Visa with details" },
+				{
+					fields: { count: "5", includeDetails: "false", includeName: "false", type: "mastercard" },
+					label: "Mastercard numbers only",
+				},
+				{ fields: { type: "amex" }, label: "Amex" },
+			],
 			[
 				field("type", "Type", "visa", false, "select", ["visa", "mastercard", "amex", "discover"]),
 				field("count", "Count", "1", true),
@@ -1585,7 +2341,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"GB",
 			"text",
 			"Generate IBAN",
-			["GB", "DE"],
+			[
+				{ fields: { country: "GB" }, label: "UK IBANs" },
+				{ fields: { country: "DE" }, label: "German IBANs" },
+				{ fields: { count: "5", country: "NL" }, label: "Five Dutch" },
+			],
 			[
 				field("country", "Country", "GB", false, "select", ["GB", "DE", "FR", "IT", "ES", "NL"]),
 				field("count", "Count", "10", true),
@@ -1601,7 +2361,19 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"d6",
 			"fields",
 			"Roll dice",
-			["1", "5"],
+			[
+				{ fields: { dice_type: "d20", num_dice: "1" }, label: "One d20" },
+				{
+					fields: { count: "6", dice_type: "d6", drop_lowest: "1", num_dice: "4" },
+					label: "Ability scores",
+				},
+				{ fields: { dice_type: "d20", keep_highest: "1", num_dice: "2" }, label: "Advantage roll" },
+				{ fields: { dice_type: "d8", modifier: "3", num_dice: "2" }, label: "2d8 + 3 damage" },
+				{
+					fields: { dice_sides: "7", dice_type: "custom", num_dice: "3" },
+					label: "Three custom d7",
+				},
+			],
 			[
 				field("count", "Rolls", "1", true),
 				field("dice_type", "Dice type", "d6", false, "select", [
@@ -1614,7 +2386,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 					"d100",
 					"custom",
 				]),
-				field("dice_sides", "Custom sides", "6", true),
+				shownWhen(field("dice_sides", "Custom sides", "6", true), "dice_type", ["custom"]),
 				field("num_dice", "Dice count", "1", true),
 				field("modifier", "Modifier", "0", true),
 				field("drop_lowest", "Drop lowest", "0", true),
@@ -1633,7 +2405,14 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"2d6",
 			"fields",
 			"Calculate odds",
-			["2d6", "3d6"],
+			[
+				{ fields: { comparison: ">=", notation: "2d6", target: "7" }, label: "2d6 at least 7" },
+				{ fields: { comparison: "=", notation: "3d6", target: "10" }, label: "3d6 exactly 10" },
+				{
+					fields: { comparison: ">", notation: "1d20+5", target: "15" },
+					label: "d20 + 5 beats 15",
+				},
+			],
 			[
 				field("notation", "Notation", "2d6", true),
 				field("comparison", "Comparison", ">=", true, "select", [">=", ">", "=", "<=", "<"]),
@@ -1650,7 +2429,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"6",
 			"fields",
 			"Generate lottery",
-			["6", "5"],
+			[
+				{ fields: { count: "6", max: "59", min: "1" }, label: "UK Lotto" },
+				{ fields: { count: "5", max: "50", min: "1" }, label: "EuroMillions main" },
+				{ fields: { count: "5", max: "69", min: "1" }, label: "Powerball main" },
+			],
 			[
 				field("count", "Count", "6", true),
 				field("min", "Min", "1", true),
@@ -1667,7 +2450,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"text",
 			"Generate seed",
-			["world seed"],
+			[],
 		),
 		tool(
 			"pokemon",
@@ -1679,7 +2462,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"any",
 			"text",
 			"Generate Pokemon",
-			["any", "electric"],
+			[
+				{ fields: { type: "any" }, label: "Any type" },
+				{ fields: { count: "3", type: "electric" }, label: "Three electric" },
+				{ fields: { count: "6", type: "water" }, label: "Water team of six" },
+			],
 			[
 				field("type", "Type", "any", false, "select", POKEMON_TYPES),
 				field("count", "Count", "1", true),
@@ -1695,7 +2482,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1",
 			"text",
 			"Flip coin",
-			["1", "10"],
+			[
+				{ fields: { count: "1" }, label: "One flip" },
+				{ fields: { count: "10" }, label: "Best of ten" },
+			],
 			[field("count", "Count", "1", true)],
 		),
 		tool(
@@ -1708,7 +2498,13 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Ada\nGrace\nMargaret",
 			"text",
 			"Shuffle list",
-			["Ada, Grace, Margaret"],
+			[
+				{ fields: { items: "Ada\nGrace\nMargaret" }, label: "Shuffle names" },
+				{
+					fields: { items: "Design, Engineering, Product, Support, Sales" },
+					label: "Presentation order",
+				},
+			],
 			[field("items", "Items", "Ada\nGrace\nMargaret", true, "textarea")],
 		),
 		tool(
@@ -1721,7 +2517,11 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"50",
 			"text",
 			"Decide",
-			["50"],
+			[
+				{ fields: { yesWeight: "50" }, label: "Even odds" },
+				{ fields: { yesWeight: "75" }, label: "Lean yes" },
+				{ fields: { yesWeight: "10" }, label: "Long shot" },
+			],
 			[field("yesWeight", "Yes chance", "50", true)],
 		),
 		tool(
@@ -1734,7 +2534,16 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Ada\nGrace\nMargaret\nKatherine",
 			"fields",
 			"Make teams",
-			["Ada, Grace, Margaret, Katherine"],
+			[
+				{ fields: { items: "Ada\nGrace\nMargaret\nKatherine", teams: "2" }, label: "Two pairs" },
+				{
+					fields: {
+						items: "Ada, Grace, Margaret, Katherine, Hedy, Radia, Barbara, Frances, Joan",
+						teams: "3",
+					},
+					label: "Three quiz teams",
+				},
+			],
 			[
 				field("items", "Items", "Ada\nGrace\nMargaret\nKatherine", true, "textarea"),
 				field("teams", "Teams", "2", true),
@@ -1750,7 +2559,13 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Ada\nGrace\nMargaret",
 			"fields",
 			"Assign pairs",
-			["Ada, Grace, Margaret"],
+			[
+				{ fields: { items: "Ada\nGrace\nMargaret" }, label: "Three friends" },
+				{
+					fields: { items: "Ada, Grace, Margaret, Katherine, Hedy, Radia" },
+					label: "Office party",
+				},
+			],
 			[field("items", "People", "Ada\nGrace\nMargaret", true, "textarea")],
 		),
 		tool(
@@ -1763,7 +2578,10 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Ada\nGrace\nMargaret",
 			"text",
 			"Pick one",
-			["Ada, Grace, Margaret"],
+			[
+				{ fields: { items: "Ada\nGrace\nMargaret" }, label: "Pick a name" },
+				{ fields: { items: "Pizza, Ramen, Tacos, Curry, Salad" }, label: "Where to eat" },
+			],
 			[field("items", "Items", "Ada\nGrace\nMargaret", true, "textarea")],
 		),
 	];
@@ -1795,7 +2613,7 @@ function tool(
 	placeholder: string,
 	resultKind: ResultKind,
 	actionLabel: string,
-	examples: readonly string[],
+	examples: readonly ToolExample[],
 	fields?: readonly GeneratorInputField[],
 ): GeneratorTool {
 	return {
@@ -1831,4 +2649,12 @@ function field(
 	options?: readonly string[],
 ): GeneratorInputField {
 	return { id, label, options, placeholder, required, type };
+}
+
+function shownWhen(
+	definition: GeneratorInputField,
+	controller: string,
+	values: readonly string[],
+): GeneratorInputField {
+	return { ...definition, visibleWhen: { field: controller, values } };
 }

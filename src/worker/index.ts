@@ -13,6 +13,7 @@ import { createLabsRoutes } from "./routes/labs";
 import { createPolychatRoutes } from "./routes/polychat";
 import { createToolRoutes } from "./routes/tools";
 import { isExpensiveGeneratorId } from "./security/policies";
+import { assertCatalogueExamples } from "./services/catalogue-examples";
 import { assertUniqueToolIdentifiers } from "./services/catalogue-integrity";
 import {
 	ConversionContainer,
@@ -35,6 +36,7 @@ import { toErrorResponse } from "./utils/error-response";
 import { errorJson } from "./utils/http";
 
 assertUniqueToolIdentifiers();
+assertCatalogueExamples();
 
 const app = new Hono<AppContext>({ strict: false });
 

@@ -1,3 +1,4 @@
+import type { ToolExample } from "../../shared/tool-examples";
 import { findConverterTool } from "../services/converters/catalogue";
 import type { ConverterApiField, ConverterTool } from "../services/converters/types";
 import { findGenerator } from "../services/generators/catalogue";
@@ -16,6 +17,7 @@ interface DescribedField {
 interface DescribedTool {
 	actionLabel: string;
 	description: string;
+	examples: readonly ToolExample[];
 	fields: DescribedField[];
 	id: string;
 	input: { label: string; placeholder: string; required: boolean; used: boolean };
@@ -28,6 +30,19 @@ export const DESCRIBED_TOOL_OUTPUT_SCHEMA = {
 	properties: {
 		actionLabel: { type: "string" },
 		description: { type: "string" },
+		examples: {
+			items: {
+				additionalProperties: false,
+				properties: {
+					fields: { additionalProperties: { type: "string" }, type: "object" },
+					input: { type: "string" },
+					label: { type: "string" },
+				},
+				required: ["label"],
+				type: "object",
+			},
+			type: "array",
+		},
 		fields: {
 			items: {
 				additionalProperties: false,
@@ -60,7 +75,7 @@ export const DESCRIBED_TOOL_OUTPUT_SCHEMA = {
 		kind: { enum: ["converter", "generator"], type: "string" },
 		label: { type: "string" },
 	},
-	required: ["actionLabel", "description", "fields", "id", "input", "kind", "label"],
+	required: ["actionLabel", "description", "examples", "fields", "id", "input", "kind", "label"],
 	type: "object",
 };
 
@@ -93,6 +108,7 @@ function describeGenerator(tool: GeneratorTool): DescribedTool {
 	return {
 		actionLabel: tool.display.actionLabel,
 		description: tool.description,
+		examples: tool.display.examples,
 		fields: (tool.input.fields ?? []).map(describeGeneratorField),
 		id: tool.id,
 		input: {
@@ -110,6 +126,7 @@ function describeConverter(tool: ConverterTool): DescribedTool {
 	return {
 		actionLabel: tool.display.actionLabel,
 		description: tool.description,
+		examples: tool.display.examples,
 		fields: (tool.api?.fields ?? []).map(describeConverterField),
 		id: tool.id,
 		input: {
