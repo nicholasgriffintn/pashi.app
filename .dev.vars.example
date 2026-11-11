@@ -1,3 +1,6 @@
 # Copy to .dev.vars for local development. Never commit .dev.vars.
 # POLYCHAT_API_URL=http://localhost:8787
 # Polychat links back with PASHI_URL=http://localhost:5180 in its apps/api/.dev.vars.
+# /api/stats reads Analytics Engine through the SQL API. The token needs Account Analytics Read.
+# ANALYTICS_ACCOUNT_ID=your-cloudflare-account-id
+# ANALYTICS_API_TOKEN=your-analytics-read-token
