@@ -22,6 +22,12 @@ import {
 	isDeveloperInspectFormat,
 } from "./developer-inspect.ts";
 import {
+	convertDocumentToMarkdown,
+	DOCUMENT_MARKDOWN_FORMATS,
+	DocumentMarkdownError,
+	isDocumentMarkdownFormat,
+} from "./document-markdown.ts";
+import {
 	DEVELOPER_TEXT_FORMATS,
 	DeveloperTextError,
 	isDeveloperTextFormat,
@@ -159,6 +165,12 @@ function developerTextFormat(value: string | undefined) {
 	return isDeveloperTextFormat(format) ? format : undefined;
 }
 
+function documentMarkdownFormat(value: string | undefined) {
+	const format = value || "markdown";
+
+	return isDocumentMarkdownFormat(format) ? format : undefined;
+}
+
 function requestTransformFormat(value: string | undefined) {
 	const format = value || "curl-to-fetch";
 
@@ -236,6 +248,46 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			);
 		} catch (error) {
 			if (error instanceof DeveloperInspectError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"document-to-markdown": async ({ fields, file }, { env }) => {
+		const outputFormat = documentMarkdownFormat(fields.outputFormat || fields.format);
+
+		if (!outputFormat) {
+			throw new ConverterRequestError(
+				`Choose a supported output format: ${DOCUMENT_MARKDOWN_FORMATS.join(", ")}.`,
+			);
+		}
+
+		if (!file) {
+			throw new ConverterRequestError("Upload a document file to convert.");
+		}
+
+		if (!env?.AI) {
+			throw new ConverterRequestError("Document conversion is not available.", 503);
+		}
+
+		try {
+			const converted = await convertDocumentToMarkdown(env.AI, file, outputFormat);
+			const isMarkdown = outputFormat === "markdown";
+
+			return textResult(
+				"document-to-markdown",
+				isMarkdown ? "Markdown" : "Plain text",
+				file.name,
+				converted.content,
+				`${converted.label} converted to ${isMarkdown ? "Markdown" : "plain text"} (${converted.tokens} tokens).`,
+				{
+					downloadName: converted.downloadName,
+					mimeType: isMarkdown ? "text/markdown;charset=utf-8" : "text/plain;charset=utf-8",
+				},
+			);
+		} catch (error) {
+			if (error instanceof DocumentMarkdownError) {
 				throw new ConverterRequestError(error.message, error.status);
 			}
 
