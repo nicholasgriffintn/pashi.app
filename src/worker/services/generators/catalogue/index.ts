@@ -347,7 +347,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"user_123",
 			"fields",
 			"Sign JWT",
-			["user_123", "RS256"],
+			["1", "3"],
 			[
 				field("count", "Count", "1", true),
 				field("algorithm", "Algorithm", "HS256", false, "select", [
@@ -424,7 +424,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"aes",
 			"fields",
 			"Generate key",
-			["aes", "rsa"],
+			["1", "3"],
 			[
 				field("count", "Count", "1", true),
 				field("algorithm", "Algorithm", "aes", false, "select", ["aes", "hmac", "rsa"]),
@@ -474,7 +474,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"fields",
 			"Generate SSH",
-			["rsa", "deploy@ci-server"],
+			["1", "2"],
 			[
 				field("count", "Count", "1", true),
 				field("type", "Type", "rsa", false, "select", ["rsa"]),
@@ -506,7 +506,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1024-65535",
 			"text",
 			"Generate port",
-			["1024-65535"],
+			["1024", "49152"],
 			[
 				field("min", "Min", "1024", true),
 				field("max", "Max", "65535", true),
@@ -583,7 +583,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"email",
 			"fields",
 			"Generate regex",
-			["email", "uuid", "hex colour"],
+			["email", "uuid", "hex-colour"],
 			[
 				field("preset", "Preset", "email", false, "select", [
 					"email",
@@ -613,7 +613,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"name:string\nage:number",
 			"text",
 			"Generate schema",
-			["name:string\nage:number"],
+			["User", "Order"],
 			[
 				field("title", "Title", "Example", false),
 				field("fields", "Fields", "name:string\nage:number", true, "textarea"),
@@ -645,7 +645,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate Fetch",
-			['{"ok":true}'],
+			["https://api.example.com/items"],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -668,7 +668,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate Axios",
-			['{"ok":true}'],
+			["https://api.example.com/items"],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -691,7 +691,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate cURL",
-			['{"ok":true}', "GET https://api.example.com/items"],
+			["https://api.example.com/items", "https://api.example.com/users"],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -714,7 +714,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate request",
-			['{"ok":true}', "GET /items"],
+			["https://api.example.com/items", "https://api.example.com/users"],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -737,7 +737,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"ok":true}',
 			"text",
 			"Generate HAR",
-			['{"ok":true}', "POST request"],
+			["https://api.example.com/items", "https://api.example.com/users"],
 			[
 				field("url", "URL", "https://api.example.com/items", true),
 				field("method", "Method", "POST", false, "select", [
@@ -760,7 +760,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			'{"id":123}',
 			"text",
 			"Generate response",
-			['{"id":123}'],
+			["200", "404"],
 			[
 				field("status", "Status", "200", true),
 				field("success", "Success", "true", false, "select", ["true", "false"]),
@@ -794,7 +794,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"2020-2030",
 			"fields",
 			"Generate timestamp",
-			["2020-2030", "unix seconds"],
+			["2020-01-01T00:00:00Z", "2024-06-01T00:00:00Z"],
 			[
 				field("start", "Start", "2020-01-01T00:00:00Z", true),
 				field("end", "End", "2030-12-31T23:59:59Z", true),
@@ -812,7 +812,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"1970-01-01",
 			"text",
 			"Generate date",
-			["2020-01-01", "unix"],
+			["2020-01-01", "2000-01-01"],
 			[
 				field("startDate", "Start date", "1970-01-01", true),
 				field("endDate", "End date", todayIsoDate(), true),
@@ -1127,7 +1127,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"integer",
 			"text",
 			"Generate number",
-			["integer", "negative", "even", "odd", "prime", "percentage"],
+			["1", "-100"],
 			[
 				field("min", "Min", "1", true),
 				field("max", "Max", "100", true),
@@ -1370,7 +1370,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Pashi gradient",
 			"text",
 			"Generate CSS",
-			["Pashi gradient"],
+			["135", "90"],
 			[
 				field("angle", "Angle", "135", true),
 				field("from", "From", "#17c964", true),
@@ -1387,7 +1387,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"text",
 			"Generate shadow",
-			["soft card shadow"],
+			["0", "4"],
 			[
 				field("x", "X offset", "0", true),
 				field("y", "Y offset", "8", true),
@@ -1406,7 +1406,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"",
 			"text",
 			"Generate shadow",
-			["soft heading shadow"],
+			["0", "2"],
 			[
 				field("x", "X offset", "0", true),
 				field("y", "Y offset", "2", true),
@@ -1437,7 +1437,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"Apples: 10\nPears: 5",
 			"text",
 			"Generate chart",
-			["Apples: 10\nPears: 5"],
+			["bar", "word-cloud"],
 			[
 				field("type", "Type", "bar", false, "select", ["bar", "word-cloud"]),
 				field("data", "Data", "Apples: 10\nPears: 5", true, "textarea"),
@@ -1601,7 +1601,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"d6",
 			"fields",
 			"Roll dice",
-			["d20", "4d6", "2d20"],
+			["1", "5"],
 			[
 				field("count", "Rolls", "1", true),
 				field("dice_type", "Dice type", "d6", false, "select", [
@@ -1633,7 +1633,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"2d6",
 			"fields",
 			"Calculate odds",
-			["2d6 >= 7", "4d6 drop lowest >= 12"],
+			["2d6", "3d6"],
 			[
 				field("notation", "Notation", "2d6", true),
 				field("comparison", "Comparison", ">=", true, "select", [">=", ">", "=", "<=", "<"]),
@@ -1650,7 +1650,7 @@ function createGeneratorTools(): readonly GeneratorTool[] {
 			"6",
 			"fields",
 			"Generate lottery",
-			["6 from 1-59"],
+			["6", "5"],
 			[
 				field("count", "Count", "6", true),
 				field("min", "Min", "1", true),

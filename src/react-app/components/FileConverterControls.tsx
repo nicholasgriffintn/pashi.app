@@ -1,11 +1,15 @@
+import type { ToolExample } from "../../shared/tool-examples";
 import type { ConverterInfoTool } from "../lib/converter-api";
+import { visibleConverterFields } from "../lib/converter-state";
 import { ConverterFieldControl } from "./ConverterFieldControl";
 import { ConverterOutputControl } from "./ConverterOutputControl";
+import { ToolExamples } from "./ToolExamples";
 
 interface FileConverterControlsProps {
 	onFileChange: (file: File | undefined) => void;
 	converterFields: Record<string, string>;
 	input: string;
+	onApplyExample: (example: ToolExample) => void;
 	onInputChange: (value: string) => void;
 	onConverterFieldChange: (id: string, value: string) => void;
 	onOutputFormatChange: (value: string) => void;
@@ -18,6 +22,7 @@ export function FileConverterControls({
 	onFileChange,
 	converterFields,
 	input,
+	onApplyExample,
 	onInputChange,
 	onConverterFieldChange,
 	onOutputFormatChange,
@@ -42,6 +47,9 @@ export function FileConverterControls({
 					type="file"
 				/>
 			</label>
+			<div className="field-control-full">
+				<ToolExamples examples={tool.display.examples} label="Presets" onApply={onApplyExample} />
+			</div>
 			{acceptsUrlInput ? (
 				<label className="field-control converter-input">
 					<span>Image URL</span>
@@ -59,9 +67,8 @@ export function FileConverterControls({
 				outputFormat={outputFormat}
 				tool={tool}
 			/>
-			{fields
-				.filter((field) => field.id !== "outputFormat")
-				.map((field) => (
+			{visibleConverterFields(tool, { fields: converterFields, input, outputFormat }).map(
+				(field) => (
 					<ConverterFieldControl
 						key={field.id}
 						field={field}
@@ -69,7 +76,8 @@ export function FileConverterControls({
 						onFileChange={onFileChange}
 						value={converterFields[field.id] ?? ""}
 					/>
-				))}
+				),
+			)}
 			{selectedFile ? (
 				<p className="selected-file">
 					{selectedFile.name} / {Math.ceil(selectedFile.size / 1024)} KB

@@ -1,8 +1,16 @@
 import type { FormEvent } from "react";
 
+import type { ToolExample } from "../../shared/tool-examples";
 import type { ConverterInfoTool } from "../lib/converter-api";
+import {
+	converterExamplesForMode,
+	converterModeField,
+	visibleConverterFields,
+} from "../lib/converter-state";
+import { ConverterFieldControl } from "./ConverterFieldControl";
 import { ConverterOutputControl } from "./ConverterOutputControl";
 import { FileConverterControls } from "./FileConverterControls";
+import { ToolExamples } from "./ToolExamples";
 import { ToolPicker } from "./ToolPicker";
 
 interface ConverterFormProps {
@@ -11,6 +19,7 @@ interface ConverterFormProps {
 	input: string;
 	isLoading: boolean;
 	converterFields: Record<string, string>;
+	onApplyExample: (example: ToolExample) => void;
 	onConverterFieldChange: (id: string, value: string) => void;
 	onFileChange: (file: File | undefined) => void;
 	onInputChange: (value: string) => void;
@@ -22,20 +31,13 @@ interface ConverterFormProps {
 	tools: ConverterInfoTool[];
 }
 
-function applyExample(example: string, onInputChange: (value: string) => void) {
-	onInputChange(example);
-}
-
-function shouldShowOutputControl(tool: ConverterInfoTool) {
-	return tool.outputs.length > 1;
-}
-
 export function ConverterForm({
 	activeTool,
 	error,
 	converterFields,
 	input,
 	isLoading,
+	onApplyExample,
 	onConverterFieldChange,
 	onFileChange,
 	onInputChange,
@@ -47,7 +49,8 @@ export function ConverterForm({
 	tools,
 }: ConverterFormProps) {
 	const isAvailable = activeTool.status === "available";
-	const visibleExamples = activeTool.input.kind === "text" ? activeTool.display.examples : [];
+	const values = { fields: converterFields, input, outputFormat };
+	const modeField = converterModeField(activeTool);
 
 	return (
 		<form className="generator converter-panel" onSubmit={onSubmit}>
@@ -75,18 +78,28 @@ export function ConverterForm({
 								value={input}
 							/>
 						</label>
-						{shouldShowOutputControl(activeTool) ? (
+						{modeField && activeTool.outputs.length > 1 ? (
 							<ConverterOutputControl
+								field={modeField}
 								onOutputFormatChange={onOutputFormatChange}
 								outputFormat={outputFormat}
 								tool={activeTool}
 							/>
 						) : null}
+						{visibleConverterFields(activeTool, values).map((field) => (
+							<ConverterFieldControl
+								key={field.id}
+								field={field}
+								onChange={(value) => onConverterFieldChange(field.id, value)}
+								value={converterFields[field.id] ?? ""}
+							/>
+						))}
 					</div>
 				) : isAvailable && activeTool.input.kind === "file" ? (
 					<FileConverterControls
 						converterFields={converterFields}
 						input={input}
+						onApplyExample={onApplyExample}
 						onConverterFieldChange={onConverterFieldChange}
 						onFileChange={onFileChange}
 						onInputChange={onInputChange}
@@ -99,19 +112,12 @@ export function ConverterForm({
 					<p className="error">{activeTool.label} is not available.</p>
 				)}
 
-				{visibleExamples.length > 0 ? (
-					<div className="examples" aria-label="Examples">
-						<span>Try</span>
-						{visibleExamples.map((example) => (
-							<button
-								key={example}
-								onClick={() => applyExample(example, onInputChange)}
-								type="button"
-							>
-								{example}
-							</button>
-						))}
-					</div>
+				{isAvailable && activeTool.input.kind === "text" ? (
+					<ToolExamples
+						examples={converterExamplesForMode(activeTool, outputFormat)}
+						label="Try"
+						onApply={onApplyExample}
+					/>
 				) : null}
 			</div>
 
