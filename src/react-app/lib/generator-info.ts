@@ -1,3 +1,4 @@
+import type { FieldVisibility, ToolExample } from "../../shared/tool-examples";
 import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./pashi-info.ts";
 
 export type ResultDisplayKind = "fields" | "image" | "palette" | "text";
@@ -22,7 +23,7 @@ export interface GeneratorInfoTool {
 	display: {
 		actionLabel: string;
 		category: string;
-		examples: string[];
+		examples: ToolExample[];
 	};
 	endpoint: string;
 	id: string;
@@ -48,6 +49,7 @@ export interface GeneratorInputField {
 	placeholder: string;
 	required: boolean;
 	type?: "select" | "textarea" | "text";
+	visibleWhen?: FieldVisibility;
 }
 
 export interface GeneratorInfo {
