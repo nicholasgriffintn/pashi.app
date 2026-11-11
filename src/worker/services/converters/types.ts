@@ -1,9 +1,16 @@
+import type { FieldVisibility, ToolExample } from "../../../shared/tool-examples.ts";
+
 export type ConverterAudience = "Documents" | "Media";
 export type ConverterInputKind = "file" | "text";
 export type ConverterMethod = "GET" | "POST";
 export type ConverterRuntime = "container" | "worker";
 export type ConverterStatus = "available";
-export type ConverterApiFieldControl = "effect-presets" | "select" | "source-presets" | "text";
+export type ConverterApiFieldControl =
+	| "effect-presets"
+	| "select"
+	| "source-presets"
+	| "text"
+	| "textarea";
 export type ConverterApiFieldWidth = "auto" | "full";
 
 export interface ConverterApiFieldDisplay {
@@ -17,7 +24,9 @@ export interface ConverterApiField {
 	display?: ConverterApiFieldDisplay;
 	id: string;
 	required?: boolean;
+	sensitive?: boolean;
 	values?: readonly string[];
+	visibleWhen?: FieldVisibility;
 }
 
 export interface ConverterApiExample {
@@ -51,7 +60,7 @@ export interface ConverterTool {
 	display: {
 		actionLabel: string;
 		category: string;
-		examples: readonly string[];
+		examples: readonly ToolExample[];
 	};
 	endpoint?: string;
 	id: string;

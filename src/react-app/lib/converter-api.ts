@@ -1,10 +1,16 @@
+import type { FieldVisibility, ToolExample } from "../../shared/tool-examples";
 import { apiFetch } from "./api-request.ts";
 import { fetchPashiInfo, type FeatureStatusMap, type ServiceStatusMap } from "./pashi-info.ts";
 
 export type ConverterStatus = "available";
 export type ConverterRuntime = "container" | "worker";
 export type ConverterMethod = "GET" | "POST";
-export type ConverterApiFieldControl = "effect-presets" | "select" | "source-presets" | "text";
+export type ConverterApiFieldControl =
+	| "effect-presets"
+	| "select"
+	| "source-presets"
+	| "text"
+	| "textarea";
 export type ConverterApiFieldWidth = "auto" | "full";
 
 export interface ConverterApiFieldDisplay {
@@ -18,7 +24,9 @@ export interface ConverterApiField {
 	display?: ConverterApiFieldDisplay;
 	id: string;
 	required?: boolean;
+	sensitive?: boolean;
 	values?: string[];
+	visibleWhen?: FieldVisibility;
 }
 
 export interface ConverterApiExample {
@@ -52,7 +60,7 @@ export interface ConverterInfoTool {
 	display: {
 		actionLabel: string;
 		category: string;
-		examples: string[];
+		examples: ToolExample[];
 	};
 	endpoint?: string;
 	id: string;
