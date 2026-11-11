@@ -125,12 +125,13 @@ test("the resource list includes the new app views", async ({ request }) => {
 
 	const evaluating = listed.result.resources
 		.filter(
-			(resource: { _meta: { ui: { csp: { allowEval?: boolean } } } }) =>
-				resource._meta.ui.csp.allowEval,
+			(resource: { _meta?: { ui: { csp: { allowEval?: boolean } } } }) =>
+				resource._meta?.ui.csp.allowEval,
 		)
 		.map((resource: { uri: string }) => resource.uri);
 
 	expect(evaluating).toEqual(["ui://pashi/strudel"]);
+	expect(uris).toContain("skill://pashi-toolkit/SKILL.md");
 });
 
 test("handshake and discovery traffic from a host is not rate limited", async ({ request }) => {

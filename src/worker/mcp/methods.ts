@@ -1,12 +1,21 @@
 import { isRecord } from "../../shared/records";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listMcpResources, readMcpResource } from "./resources";
+import {
+	getMcpSkill,
+	isMcpSkillUri,
+	listMcpSkills,
+	MCP_SKILL_RESOURCE,
+	MCP_SKILLS_EXTENSION,
+	readMcpSkillResource,
+} from "./skills";
 import { errorToolResult } from "./tool-result";
 import { callMcpTool, canReadMcpResource, listMcpTools, type McpCaller } from "./tools";
 
 export const MCP_SERVER_INFO = { name: "pashi", version: "1.0.0" };
 
 export const MCP_SERVER_CAPABILITIES = {
+	extensions: { [MCP_SKILLS_EXTENSION]: {} },
 	resources: { listChanged: false, subscribe: false },
 	tools: { listChanged: false },
 };
@@ -47,9 +56,10 @@ const MCP_METHODS = new Map<string, McpMethod>([
 			run: ({ caller }) => ({
 				cacheScope: "private",
 				result: {
-					resources: listMcpResources().filter((resource) =>
-						canReadMcpResource(resource.uri, caller),
-					),
+					resources: [
+						...listMcpResources().filter((resource) => canReadMcpResource(resource.uri, caller)),
+						MCP_SKILL_RESOURCE,
+					],
 				},
 			}),
 		},
@@ -62,13 +72,36 @@ const MCP_METHODS = new Map<string, McpMethod>([
 		"resources/read",
 		{
 			nameParam: "uri",
-			run: ({ caller, params }) => {
+			run: async ({ caller, params }) => {
 				const uri = stringParam(params, "uri");
+
+				if (isMcpSkillUri(uri)) {
+					const skill = await readMcpSkillResource(uri);
+
+					return skill ? { cacheScope: "public", result: skill } : { missingResource: uri };
+				}
+
 				const resource = canReadMcpResource(uri, caller)
 					? readMcpResource(uri, caller.origin)
 					: undefined;
 
 				return resource ? { cacheScope: "private", result: resource } : { missingResource: uri };
+			},
+		},
+	],
+	[
+		"skills/list",
+		{ run: async () => ({ cacheScope: "public", result: { skills: await listMcpSkills() } }) },
+	],
+	[
+		"skills/get",
+		{
+			nameParam: "uri",
+			run: async ({ params }) => {
+				const uri = stringParam(params, "uri");
+				const skill = await getMcpSkill(uri);
+
+				return skill ? { cacheScope: "public", result: { skill } } : { missingResource: uri };
 			},
 		},
 	],
