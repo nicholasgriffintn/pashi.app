@@ -7,6 +7,7 @@ const CONVERTER_FIELD_PRESETS: Record<string, Record<string, string>> = {
 	"audio-thumbnail-generator": { operation: "waveform", outputFormat: "png" },
 	"audio-trimmer": { duration: "10", operation: "trim" },
 	"audio-waveform-generator": { operation: "waveform", outputFormat: "png" },
+	"bank-holidays": { outputFormat: "next-bank-holiday" },
 	"slack-hdr-emoji": {
 		gamma: "0.9",
 		intensity: "1.5",
@@ -15,12 +16,17 @@ const CONVERTER_FIELD_PRESETS: Record<string, Record<string, string>> = {
 	},
 	slackmoji: { operation: "slackmoji", outputFormat: "gif" },
 	"change-video-fps": { fps: "30" },
+	"date-difference-calculator": { outputFormat: "calendar-difference" },
 	"extract-audio-from-video": { operation: "extract-audio", outputFormat: "mp3" },
 	"json-query": { outputFormat: "query" },
 	"json-structural-diff": { outputFormat: "diff-json" },
 	"jsonpath-query": { outputFormat: "query" },
 	"markdown-to-html-converter": { outputFormat: "wordpress-html" },
+	"next-date-occurrence": { outputFormat: "next-occurrence" },
 	"resize-video-dimensions": { height: "720", operation: "resize", width: "1280" },
+	"time-zone-converter": { outputFormat: "convert-zone" },
+	"timezone-converter": { outputFormat: "convert-zone" },
+	"uk-bank-holidays": { outputFormat: "next-bank-holiday" },
 	"video-audio-remover": { operation: "remove-audio" },
 	"video-bitrate-changer": { bitrate: "2500k" },
 	"video-compressor": { bitrate: "2500k" },
@@ -33,6 +39,7 @@ const CONVERTER_FIELD_PRESETS: Record<string, Record<string, string>> = {
 	"video-keyframe-extractor": { operation: "thumbnail", outputFormat: "png" },
 	"video-speed-changer": { speed: "1.25" },
 	"video-thumbnail-generator": { operation: "thumbnail", outputFormat: "png" },
+	"world-clock": { outputFormat: "now-in-zone" },
 };
 
 export function applyConverterPresetFields(type: string, fields: Record<string, string>) {

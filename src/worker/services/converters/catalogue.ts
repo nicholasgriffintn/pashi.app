@@ -2,6 +2,7 @@ import { JWT_SECRET_ENCODINGS } from "../../utils/jwt.ts";
 import { REGEX_DEFAULT_FLAGS } from "../../utils/regex-tester.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
 import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
+import { UK_BANK_HOLIDAY_LICENCE } from "../generators/data/uk-bank-holidays.ts";
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
 import { DEVELOPER_INSPECT_FORMATS } from "./developer-inspect.ts";
 import { DEVELOPER_TEXT_FORMATS } from "./developer-text.ts";
@@ -18,9 +19,19 @@ import {
 } from "./queued-output-formats.ts";
 import { REQUEST_TRANSFORM_FORMATS } from "./request-transform.ts";
 import { TEXT_FILE_FORMATS } from "./text-file-conversion.ts";
-import { TIMESTAMP_TRANSFORM_FORMATS } from "./timestamp-transform.ts";
+import { TIMESTAMP_MAX_OCCURRENCES, TIMESTAMP_TRANSFORM_FORMATS } from "./timestamp-transform.ts";
 import type { ConverterTool } from "./types";
 import { URL_TRANSFORM_FORMATS } from "./url-transform.ts";
+import {
+	UK_BANK_HOLIDAY_FIRST_DATE,
+	UK_BANK_HOLIDAY_LAST_DATE,
+	WORKING_DAYS_DEFAULT_REGION,
+	WORKING_DAYS_DEFAULT_WEEKEND,
+	WORKING_DAYS_FORMATS,
+	WORKING_DAYS_MAX_AMOUNT,
+	WORKING_DAYS_MAX_RESULTS,
+	WORKING_DAYS_REGIONS,
+} from "./working-days.ts";
 
 const TEXT_REQUEST_FORMATS = [
 	"application/json",
@@ -345,6 +356,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			"timestamp-difference-calculator",
 			"timestamp-validator-formatter",
 			"epoch-timestamp-generator",
+			"time-zone-converter",
+			"timezone-converter",
+			"world-clock",
+			"date-difference-calculator",
+			"next-date-occurrence",
 		],
 		api: {
 			accepts: TEXT_REQUEST_FORMATS,
@@ -355,6 +371,40 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					description: "Post a timestamp or date and select an output format.",
 					method: "POST",
 					url: "/api/timestamp-transform?outputFormat=unix",
+				},
+				{
+					body: JSON.stringify({
+						fromZone: "Europe/London",
+						input: "2027-03-20T10:30",
+						outputFormat: "convert-zone",
+						toZone: "America/New_York",
+					}),
+					contentType: "application/json",
+					description:
+						"Convert a local wall time between zones, with offsets, abbreviations and daylight saving in each.",
+					method: "POST",
+					url: "/api/timestamp-transform",
+				},
+				{
+					description: "Show the current time in a zone.",
+					method: "GET",
+					url: "/api/timestamp-transform?outputFormat=now-in-zone&toZone=Asia%2FTokyo&input=now",
+				},
+				{
+					body: JSON.stringify({
+						input: "2027-01-31",
+						outputFormat: "calendar-difference",
+						until: "2027-02-28",
+					}),
+					contentType: "application/json",
+					description: "Years, months and days between two dates, plus the total days.",
+					method: "POST",
+					url: "/api/timestamp-transform",
+				},
+				{
+					description: "List the next three 31sts after a date.",
+					method: "GET",
+					url: "/api/timestamp-transform?outputFormat=next-occurrence&dayOfMonth=31&count=3&input=2027-01-31",
 				},
 			],
 			fields: [
@@ -378,9 +428,9 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					visibleWhen: { field: "outputFormat", values: ["add", "subtract"] },
 				},
 				{
-					description: "End timestamp for difference mode.",
+					description: "End timestamp for difference and calendar-difference modes.",
 					id: "until",
-					visibleWhen: { field: "outputFormat", values: ["difference"] },
+					visibleWhen: { field: "outputFormat", values: ["difference", "calendar-difference"] },
 				},
 				{
 					defaultValue: "full",
@@ -389,13 +439,41 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: ["shortTime", "longTime", "shortDate", "longDate", "full", "relative"],
 					visibleWhen: { field: "outputFormat", values: ["discord"] },
 				},
+				{
+					description:
+						"Zone a local input is in for convert-zone, such as Europe/London. Defaults to UTC and is ignored when the input carries an offset or Z.",
+					id: "fromZone",
+					visibleWhen: { field: "outputFormat", values: ["convert-zone"] },
+				},
+				{
+					description:
+						"Target IANA zone for convert-zone and now-in-zone, such as America/New_York.",
+					id: "toZone",
+					visibleWhen: { field: "outputFormat", values: ["convert-zone", "now-in-zone"] },
+				},
+				{
+					description: "Weekday for next-occurrence: a name such as Friday, or 0 (Sunday) to 6.",
+					id: "weekday",
+					visibleWhen: { field: "outputFormat", values: ["next-occurrence"] },
+				},
+				{
+					description:
+						"Day of the month (1-31) for next-occurrence. Months without it are skipped.",
+					id: "dayOfMonth",
+					visibleWhen: { field: "outputFormat", values: ["next-occurrence"] },
+				},
+				{
+					description: `How many occurrences to list for next-occurrence, up to ${TIMESTAMP_MAX_OCCURRENCES}.`,
+					id: "count",
+					visibleWhen: { field: "outputFormat", values: ["next-occurrence"] },
+				},
 			],
 			methods: ["GET", "POST"],
 			response: "json",
 		},
 		audience: "Documents",
 		description:
-			"Convert timestamps and dates between Unix, milliseconds, ISO, readable UTC, RFC, Discord, and simple date math outputs.",
+			"Convert timestamps and dates between Unix, milliseconds, ISO, readable UTC, RFC, Discord, and simple date math outputs. Convert wall times between time zones with daylight saving handled, show the time now in a zone, count calendar years, months and days between dates, and find the next weekday or day of the month.",
 		display: {
 			actionLabel: "Convert timestamp",
 			category: "Dates",
@@ -446,6 +524,54 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					input: "2024-01-01T00:00:00Z",
 					label: "Time between two dates",
 				},
+				{
+					fields: {
+						outputFormat: "convert-zone",
+						fromZone: "Europe/London",
+						toZone: "America/New_York",
+					},
+					input: "2027-03-03T10:30",
+					label: "London 10:30 in New York",
+				},
+				{
+					fields: {
+						outputFormat: "convert-zone",
+						fromZone: "Europe/London",
+						toZone: "America/New_York",
+					},
+					input: "2027-03-20T10:30",
+					label: "Across the US clock change",
+				},
+				{
+					fields: { outputFormat: "convert-zone", fromZone: "UTC", toZone: "Asia/Kolkata" },
+					input: "2027-06-01T09:00Z",
+					label: "UTC to India",
+				},
+				{
+					fields: { outputFormat: "now-in-zone", toZone: "Asia/Tokyo" },
+					input: "now",
+					label: "Time now in Tokyo",
+				},
+				{
+					fields: { outputFormat: "calendar-difference", until: "2027-02-28" },
+					input: "2027-01-31",
+					label: "Months and days to month end",
+				},
+				{
+					fields: { outputFormat: "calendar-difference", until: "2027-03-15" },
+					input: "1990-07-04",
+					label: "Age in years, months and days",
+				},
+				{
+					fields: { count: "3", outputFormat: "next-occurrence", weekday: "Friday" },
+					input: "2026-11-11",
+					label: "Next three Fridays",
+				},
+				{
+					fields: { count: "3", dayOfMonth: "31", outputFormat: "next-occurrence" },
+					input: "2027-01-31",
+					label: "Next three 31sts",
+				},
 			],
 		},
 		endpoint: "/api/timestamp-transform",
@@ -458,6 +584,147 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "Timestamp transform",
 		outputs: TIMESTAMP_TRANSFORM_FORMATS,
 		placeholder: "2024-01-02T03:04:05Z",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: ["business-days", "working-day-calculator", "bank-holidays", "uk-bank-holidays"],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					body: JSON.stringify({
+						amount: "10",
+						input: "2026-12-18",
+						outputFormat: "add",
+						region: "england-and-wales",
+					}),
+					contentType: "application/json",
+					description: "Add working days to a date, skipping weekends and bank holidays.",
+					method: "POST",
+					url: "/api/working-days",
+				},
+				{
+					body: JSON.stringify({
+						input: "2026-12-21",
+						outputFormat: "count",
+						region: "scotland",
+						until: "2027-01-08",
+					}),
+					contentType: "application/json",
+					description: "Count working days between two dates, inclusive of both ends.",
+					method: "POST",
+					url: "/api/working-days",
+				},
+				{
+					description: "List the next three bank holidays in Northern Ireland.",
+					method: "GET",
+					url: "/api/working-days?outputFormat=next-bank-holiday&region=northern-ireland&count=3&input=2026-11-11",
+				},
+			],
+			fields: [
+				{
+					description: "Working days mode.",
+					id: "outputFormat",
+					required: true,
+					values: WORKING_DAYS_FORMATS,
+				},
+				{
+					defaultValue: "10",
+					description: `Working days to add or subtract, from 0 to ${WORKING_DAYS_MAX_AMOUNT}.`,
+					id: "amount",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract"] },
+				},
+				{
+					description: "End date for count mode, as YYYY-MM-DD.",
+					id: "until",
+					visibleWhen: { field: "outputFormat", values: ["count"] },
+				},
+				{
+					defaultValue: WORKING_DAYS_DEFAULT_REGION,
+					description: `UK bank holiday calendar, or none. Bundled data covers ${UK_BANK_HOLIDAY_FIRST_DATE} to ${UK_BANK_HOLIDAY_LAST_DATE}.`,
+					id: "region",
+					values: WORKING_DAYS_REGIONS,
+				},
+				{
+					defaultValue: WORKING_DAYS_DEFAULT_WEEKEND,
+					description: "Comma-separated weekend days, such as sat,sun or fri,sat.",
+					id: "weekend",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract", "count"] },
+				},
+				{
+					description: "Extra non-working dates, comma-separated as YYYY-MM-DD.",
+					display: { width: "full" },
+					id: "holidays",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract", "count"] },
+				},
+				{
+					description: `How many bank holidays to list for next-bank-holiday, up to ${WORKING_DAYS_MAX_RESULTS}.`,
+					id: "count",
+					visibleWhen: { field: "outputFormat", values: ["next-bank-holiday"] },
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		description: `Add, subtract and count working days with UK bank holidays for England and Wales, Scotland or Northern Ireland, custom weekends and extra holidays, check whether a date is a bank holiday, and find the next one. Bank holiday data from GOV.UK covers ${UK_BANK_HOLIDAY_FIRST_DATE} to ${UK_BANK_HOLIDAY_LAST_DATE}. ${UK_BANK_HOLIDAY_LICENCE}.`,
+		display: {
+			actionLabel: "Calculate working days",
+			category: "Dates",
+			examples: [
+				{
+					fields: { amount: "10", outputFormat: "add", region: "england-and-wales" },
+					input: "2026-12-18",
+					label: "Add 10 working days over Christmas",
+				},
+				{
+					fields: { amount: "10", outputFormat: "add", region: "none" },
+					input: "2026-12-18",
+					label: "Add 10 days, weekends only",
+				},
+				{
+					fields: { amount: "5", outputFormat: "subtract", region: "england-and-wales" },
+					input: "2027-04-06",
+					label: "Five working days before Easter Tuesday",
+				},
+				{
+					fields: { outputFormat: "count", region: "scotland", until: "2027-01-08" },
+					input: "2026-12-21",
+					label: "Working days over new year in Scotland",
+				},
+				{
+					fields: {
+						outputFormat: "count",
+						region: "england-and-wales",
+						until: "2026-12-31",
+						weekend: "fri,sat",
+					},
+					input: "2026-12-01",
+					label: "December with a Friday and Saturday weekend",
+				},
+				{
+					fields: { outputFormat: "is-bank-holiday", region: "england-and-wales" },
+					input: "2026-12-28",
+					label: "Is 28 December a bank holiday?",
+				},
+				{
+					fields: { count: "3", outputFormat: "next-bank-holiday", region: "northern-ireland" },
+					input: "2026-11-11",
+					label: "Next three Northern Ireland bank holidays",
+				},
+			],
+		},
+		endpoint: "/api/working-days",
+		id: "working-days",
+		input: {
+			label: "Date",
+			kind: "text",
+			required: true,
+		},
+		label: "Working days",
+		outputs: WORKING_DAYS_FORMATS,
+		placeholder: "2026-12-18",
 		runtime: "worker",
 		status: "available",
 	},
