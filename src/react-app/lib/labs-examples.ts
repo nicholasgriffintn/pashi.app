@@ -1,3 +1,5 @@
+import { SAMPLE_JWT } from "../../shared/sample-jwt";
+
 export type ExplainSubject = "cron" | "curl" | "jwt" | "regex" | "sql";
 
 export interface ExplainExample {
@@ -42,6 +44,11 @@ export const EXPLAIN_EXAMPLES: readonly ExplainExample[] = [
 		input: "*/15 9-17 * * 1-5",
 		label: "Weekday working hours",
 		subject: "cron",
+	},
+	{
+		input: SAMPLE_JWT,
+		label: "Decode a sample token",
+		subject: "jwt",
 	},
 	{
 		input:

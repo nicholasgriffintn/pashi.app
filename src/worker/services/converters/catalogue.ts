@@ -1,3 +1,4 @@
+import { SAMPLE_JWT, SAMPLE_JWT_SECRET } from "../../../shared/sample-jwt.ts";
 import { JWT_SECRET_ENCODINGS } from "../../utils/jwt.ts";
 import { REGEX_DEFAULT_FLAGS } from "../../utils/regex-tester.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
@@ -1299,6 +1300,16 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			category: "Developer",
 			examples: [
 				{
+					fields: { outputFormat: "jwt" },
+					input: SAMPLE_JWT,
+					label: "Decode a JWT",
+				},
+				{
+					fields: { outputFormat: "jwt", secret: SAMPLE_JWT_SECRET },
+					input: SAMPLE_JWT,
+					label: "Verify an HS256 signature",
+				},
+				{
 					fields: { outputFormat: "uuid" },
 					input: "018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00",
 					label: "Inspect a v7 UUID",
@@ -1375,7 +1386,6 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		placeholder: "0 9 * * 1",
 		runtime: "worker",
 		status: "available",
-		undemonstratedModes: ["jwt"],
 	},
 	{
 		aliases: [

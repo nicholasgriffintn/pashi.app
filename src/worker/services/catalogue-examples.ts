@@ -20,7 +20,6 @@ interface CheckedTool {
 	requiredModes: readonly string[];
 	takesInput: boolean;
 	toolId: string;
-	undemonstratedModes: readonly string[];
 }
 
 function fromGenerator(tool: GeneratorTool): CheckedTool {
@@ -38,7 +37,6 @@ function fromGenerator(tool: GeneratorTool): CheckedTool {
 		requiredModes: [],
 		takesInput: tool.input.mode !== "none" || fields.length > 0,
 		toolId: tool.id,
-		undemonstratedModes: [],
 	};
 }
 
@@ -59,7 +57,6 @@ function fromConverter(tool: ConverterTool): CheckedTool {
 		requiredModes: tool.runtime === "worker" ? (modeField?.values ?? []) : [],
 		takesInput: true,
 		toolId: tool.id,
-		undemonstratedModes: tool.undemonstratedModes ?? [],
 	};
 }
 
@@ -110,14 +107,8 @@ function toolProblems(tool: CheckedTool) {
 	}
 
 	for (const mode of tool.requiredModes) {
-		if (!demonstrated.has(mode) && !tool.undemonstratedModes.includes(mode)) {
+		if (!demonstrated.has(mode)) {
 			problems.push(`${name} has no example for ${MODE_FIELD_ID} ${mode}`);
-		}
-	}
-
-	for (const mode of tool.undemonstratedModes) {
-		if (!tool.requiredModes.includes(mode) || demonstrated.has(mode)) {
-			problems.push(`${name} lists ${mode} as undemonstrated, but it is not a missing mode`);
 		}
 	}
 

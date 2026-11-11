@@ -79,7 +79,6 @@ export interface ConverterTool {
 	runtime: ConverterRuntime;
 	placeholder: string;
 	status: ConverterStatus;
-	undemonstratedModes?: readonly string[];
 }
 
 export interface ConverterResult {
