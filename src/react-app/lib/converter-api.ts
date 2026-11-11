@@ -48,7 +48,9 @@ export interface ConverterApiContract {
 export interface ConverterCapabilities {
 	acceptsSourceUrl?: boolean;
 	batchesByEffect?: boolean;
+	binaryInput?: boolean;
 	compactInput?: boolean;
+	usesAiBinding?: boolean;
 }
 
 export interface ConverterInfoTool {
@@ -206,6 +208,7 @@ export async function convertFileThing(
 	file: File,
 	fields: Record<string, string> = {},
 	apiKey = "",
+	signal?: AbortSignal,
 ): Promise<ConvertResult> {
 	const formData = new FormData();
 
@@ -219,6 +222,7 @@ export async function convertFileThing(
 	const response = await apiFetch(endpoint, apiKey, {
 		body: formData,
 		method: "POST",
+		signal,
 	});
 
 	const body = (await response.json()) as ConvertResult | { error?: string };

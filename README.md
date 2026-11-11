@@ -9,7 +9,7 @@ The home for side projects. Named for the manga SFX `pashi`: a crisp smack or cl
 Pashi has three layers on one domain.
 
 - **Hub** at `/` lists every project, including the ones that live on their own subdomains.
-- **Tools** at `/tools` is the console: 79 generators and 22 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
+- **Tools** at `/tools` is the console: 79 generators and 23 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
 - **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool, runs it when the tool is simple and otherwise opens it with the form filled in.
 
 Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, [/api/info](https://pashi.app/api/info) for the raw contract, or [/api/openapi.json](https://pashi.app/api/openapi.json) for an OpenAPI 3.1 document covering every path.
