@@ -14,7 +14,7 @@ function toolCallPolicy(message: unknown) {
 	);
 }
 
-export async function readMcpCallPolicies(request: Request): Promise<PolicyName[]> {
+async function readMessages(request: Request): Promise<unknown[]> {
 	let body: unknown;
 
 	try {
@@ -25,8 +25,19 @@ export async function readMcpCallPolicies(request: Request): Promise<PolicyName[
 
 	const messages = Array.isArray(body) ? body : [body];
 
-	if (messages.length > MCP_MAX_BATCH) {
-		return [];
+	return messages.length > MCP_MAX_BATCH ? [] : messages;
+}
+
+export async function readMcpCallPolicies(
+	request: Request,
+	isAnonymous: boolean,
+): Promise<PolicyName[]> {
+	const messages = await readMessages(request);
+
+	if (isAnonymous) {
+		return messages.length > 0
+			? messages.map((message) => toolCallPolicy(message) ?? "read")
+			: ["read"];
 	}
 
 	return messages.flatMap((message) => {

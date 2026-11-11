@@ -2,7 +2,7 @@ import { isRecord } from "../../shared/records";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listMcpResources, readMcpResource } from "./resources";
 import { errorToolResult } from "./tool-result";
-import { callMcpTool, listMcpTools, type McpCaller } from "./tools";
+import { callMcpTool, canReadMcpResource, listMcpTools, type McpCaller } from "./tools";
 
 const SUPPORTED_PROTOCOL_VERSIONS = new Set(["2024-11-05", "2025-03-26", "2025-06-18"]);
 const DEFAULT_PROTOCOL_VERSION = "2025-06-18";
@@ -50,11 +50,13 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv, caller
 	}
 
 	if (request.method === "tools/list") {
-		return result(request.id, { tools: listMcpTools() });
+		return result(request.id, { tools: listMcpTools(caller) });
 	}
 
 	if (request.method === "resources/list") {
-		return result(request.id, { resources: listMcpResources() });
+		return result(request.id, {
+			resources: listMcpResources().filter((resource) => canReadMcpResource(resource.uri, caller)),
+		});
 	}
 
 	if (request.method === "resources/templates/list") {
@@ -63,7 +65,9 @@ async function handleRequest(request: JsonRpcRequest, env: ConversionEnv, caller
 
 	if (request.method === "resources/read") {
 		const uri = typeof request.params?.uri === "string" ? request.params.uri : "";
-		const resource = readMcpResource(uri, caller.origin);
+		const resource = canReadMcpResource(uri, caller)
+			? readMcpResource(uri, caller.origin)
+			: undefined;
 
 		return resource
 			? result(request.id, resource)
