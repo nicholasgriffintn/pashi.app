@@ -3,6 +3,7 @@ import { Container, getContainer } from "@cloudflare/containers";
 import mimeTypesJson from "../../../../containers/converter/mime-types.json";
 import { UploadTooLargeError } from "../../utils/http";
 import { fileExtension, safeFilenameWithExtension } from "../../utils/text";
+import { recordEvent } from "../events";
 import {
 	appendConversionOperationSearchParams,
 	createConversionOperationFields,
@@ -229,21 +230,18 @@ export async function processConversionQueue(
 	env: ConversionEnv,
 ) {
 	for (const message of batch.messages) {
+		const startedAt = Date.now();
+
 		try {
 			await processConversionJob(message.body, env);
+			recordConversionOutcome(env, message.body, "conversion_complete", startedAt);
 			message.ack();
 		} catch (error) {
-			if (error instanceof ConversionInputError) {
-				await markJobFailed(message.body, env, error);
-				message.ack();
-
-				continue;
-			}
-
 			const attempts = message.attempts;
 
-			if (attempts >= MAX_CONVERSION_ATTEMPTS) {
+			if (error instanceof ConversionInputError || attempts >= MAX_CONVERSION_ATTEMPTS) {
 				await markJobFailed(message.body, env, error);
+				recordConversionOutcome(env, message.body, "conversion_failed", startedAt);
 				message.ack();
 
 				continue;
@@ -253,6 +251,22 @@ export async function processConversionQueue(
 			message.retry({ delaySeconds: RETRY_DELAYS_SECONDS[attempts - 1] ?? 300 });
 		}
 	}
+}
+
+function recordConversionOutcome(
+	env: ConversionEnv,
+	message: ConversionJobMessage,
+	name: "conversion_complete" | "conversion_failed",
+	startedAt: number,
+) {
+	recordEvent(env, {
+		durationMs: Date.now() - startedAt,
+		kind: message.kind,
+		name,
+		outcome: name === "conversion_complete" ? "ok" : "error",
+		toolId: message.converterId,
+		toolType: "converter",
+	});
 }
 
 async function processConversionJob(message: ConversionJobMessage, env: ConversionEnv) {

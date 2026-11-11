@@ -1,6 +1,5 @@
 import { isRecord } from "../../shared/records";
 import type { PolicyName } from "../security/policies";
-import { MCP_MAX_BATCH } from "./protocol";
 import { mcpToolRatePolicy } from "./tools";
 
 function toolCallPolicy(message: unknown) {
@@ -14,26 +13,7 @@ function toolCallPolicy(message: unknown) {
 	);
 }
 
-async function readMessages(request: Request): Promise<unknown[]> {
-	let body: unknown;
-
-	try {
-		body = await request.clone().json();
-	} catch {
-		return [];
-	}
-
-	const messages = Array.isArray(body) ? body : [body];
-
-	return messages.length > MCP_MAX_BATCH ? [] : messages;
-}
-
-export async function readMcpCallPolicies(
-	request: Request,
-	isAnonymous: boolean,
-): Promise<PolicyName[]> {
-	const messages = await readMessages(request);
-
+export function mcpCallPolicies(messages: readonly unknown[], isAnonymous: boolean): PolicyName[] {
 	if (isAnonymous) {
 		return messages.length > 0
 			? messages.map((message) => toolCallPolicy(message) ?? "read")
