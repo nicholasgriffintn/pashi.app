@@ -7,6 +7,7 @@ import { mcpCallPolicies } from "./mcp/rate-policy";
 import { renderSharedPolisPage } from "./mcp/resources";
 import { apiCors } from "./middleware/cors";
 import { aiClientFor, requirePolychat, resolveAgentAccess } from "./middleware/polychat-access";
+import { securityHeaders } from "./middleware/security-headers";
 import { serveAppView } from "./routes/app-views";
 import { createAppRoutes } from "./routes/apps";
 import { guard, type AppContext } from "./routes/context";
@@ -42,6 +43,7 @@ assertCatalogueExamples();
 
 const app = new Hono<AppContext>({ strict: false });
 
+app.use("*", securityHeaders);
 app.use("*", apiCors);
 
 app.onError((error) => toErrorResponse(error, "Something went wrong handling that request."));
