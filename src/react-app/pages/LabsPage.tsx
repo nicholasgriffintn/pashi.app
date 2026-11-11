@@ -29,6 +29,14 @@ const EXPERIMENTS: readonly Experiment[] = [
 	},
 	{
 		blurb:
+			"Ask a decision model up to eight typed questions about some text or an image. Yes or no answers come back as probabilities, choices as a spread over your options and scores as a level. Needs Polychat Pro.",
+		id: "decide",
+		path: "/labs/decide",
+		state: "live",
+		title: "Decide",
+	},
+	{
+		blurb:
 			"Pashi's games and tool views are MCP Apps. Play Charades, Photo Sorter, Twenty Questions, Strudel, Verbatim and Polis here, or add https://pashi.app/mcp as an MCP server in Polychat or any host that renders apps. The games need Polychat or an API key.",
 		id: "mcp-apps",
 		path: "/labs/apps",
@@ -40,7 +48,7 @@ const EXPERIMENTS: readonly Experiment[] = [
 export function LabsPage() {
 	useDocumentMetadata(
 		"Labs",
-		"AI experiments in Pashi: plain English tool routing, format explainers and MCP Apps.",
+		"AI experiments in Pashi: plain English tool routing, format explainers, typed decisions and MCP Apps.",
 	);
 
 	return (

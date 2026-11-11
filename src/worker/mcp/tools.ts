@@ -1,4 +1,10 @@
 import type { AppAccess } from "../../shared/app-previews";
+import {
+	DECIDE_ID_PATTERN,
+	DECIDE_IMAGE_TYPES,
+	DECIDE_LIMITS,
+	DECIDE_QUESTION_TYPES,
+} from "../../shared/decide";
 import { POLYCHAT_APP_META_KEY } from "../../shared/mcp-apps";
 import { POLIS_DRAFT_LENGTH, POLIS_MAX_BUCKETS_PER_REQUEST } from "../../shared/polis";
 import type { AiClient } from "../ai/run";
@@ -7,6 +13,7 @@ import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listGeneratorTools } from "../services/generators/catalogue";
 import { ASK_REQUEST_MAX_LENGTH } from "../services/labs/ask";
+import { decide } from "../services/labs/decide";
 import { EXPLAIN_INPUT_MAX_LENGTH, EXPLAIN_SUBJECTS } from "../services/labs/explain";
 import { MCP_VIEW_URIS, type McpToolUiMeta, type PolychatAppMeta } from "./apps";
 import { CHARADES_DECKS, setUpCharades } from "./charades";
@@ -176,6 +183,71 @@ const MCP_TOOLS: readonly McpToolDefinition[] = [
 		name: "pashi_describe_tool",
 		outputSchema: DESCRIBED_TOOL_OUTPUT_SCHEMA,
 		ratePolicy: "read",
+	},
+	{
+		annotations: { readOnlyHint: true },
+		description:
+			"Ask a decision model on your Polychat Pro plan up to eight typed questions about a piece of text and an optional image. Yes or no questions return a probability, choices return a distribution over your options and scores return a level on your scale. The subject is judged as data; nothing is stored.",
+		inputSchema: {
+			additionalProperties: false,
+			properties: {
+				image: {
+					description: `An optional base64 ${DECIDE_IMAGE_TYPES.join(", ")} data URL of at most ${DECIDE_LIMITS.imageBytes / 1024 / 1024} MiB.`,
+					type: "string",
+				},
+				questions: {
+					items: {
+						additionalProperties: false,
+						properties: {
+							id: { maxLength: DECIDE_LIMITS.idLength, pattern: DECIDE_ID_PATTERN, type: "string" },
+							levels: {
+								description: "For score questions: the scale, lowest first.",
+								items: { maxLength: DECIDE_LIMITS.labelLength, minLength: 1, type: "string" },
+								maxItems: DECIDE_LIMITS.maxLevels,
+								minItems: DECIDE_LIMITS.minLevels,
+								type: "array",
+							},
+							options: {
+								description: "For choice questions: the options to choose between.",
+								items: {
+									additionalProperties: false,
+									properties: {
+										id: {
+											maxLength: DECIDE_LIMITS.idLength,
+											pattern: DECIDE_ID_PATTERN,
+											type: "string",
+										},
+										label: { maxLength: DECIDE_LIMITS.labelLength, minLength: 1, type: "string" },
+									},
+									required: ["id", "label"],
+									type: "object",
+								},
+								maxItems: DECIDE_LIMITS.maxOptions,
+								minItems: DECIDE_LIMITS.minOptions,
+								type: "array",
+							},
+							prompt: { maxLength: DECIDE_LIMITS.promptLength, minLength: 1, type: "string" },
+							type: { enum: [...DECIDE_QUESTION_TYPES], type: "string" },
+						},
+						required: ["id", "prompt", "type"],
+						type: "object",
+					},
+					maxItems: DECIDE_LIMITS.maxQuestions,
+					minItems: DECIDE_LIMITS.minQuestions,
+					type: "array",
+				},
+				subject: {
+					description: "The text to judge. It is treated as data, never as instructions.",
+					maxLength: DECIDE_LIMITS.subjectLength,
+					minLength: 1,
+					type: "string",
+				},
+			},
+			required: ["subject", "questions"],
+			type: "object",
+		},
+		name: "pashi_decide",
+		ratePolicy: "expensive",
 	},
 	{
 		annotations: { readOnlyHint: true },
@@ -835,6 +907,10 @@ async function callJsonTool(
 	env: ConversionEnv,
 	{ ai, owner }: McpOwnerCaller,
 ): Promise<unknown> {
+	if (name === "pashi_decide") {
+		return decide(env, ai, argumentsValue);
+	}
+
 	if (name === "pashi_ask") {
 		return askPashiTool(argumentsValue, env, ai);
 	}

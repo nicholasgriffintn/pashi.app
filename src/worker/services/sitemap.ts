@@ -22,6 +22,7 @@ function createSitemapXml(origin: string) {
 		"/labs/explain",
 		"/labs/apps",
 		...listAppPreviews().map((preview) => appPagePath(preview.id)),
+		"/labs/decide",
 		"/about",
 		"/api",
 		...listGeneratorTools().map((tool) => `/tools/${tool.id}`),
