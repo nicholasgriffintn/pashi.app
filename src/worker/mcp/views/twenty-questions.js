@@ -6,6 +6,9 @@
 	const DIAL_RADIUS = 40;
 	const TICKS = 11;
 	const SUSPICIOUSLY_QUICK = 10;
+	const CONTEXT_ANSWERS = 10;
+	const CONTEXT_QUESTION_LENGTH = 80;
+	const CONTEXT_LABEL_LENGTH = 60;
 	const VERBAL_SCALE = [
 		[0.95, "Almost certainly"],
 		[0.8, "Very likely"],
@@ -80,6 +83,62 @@
 
 	function categoryLabel(id) {
 		return config.categories.find((category) => category.id === id)?.label ?? id;
+	}
+
+	function describeAnswer(answer) {
+		const question = bridge.clipText(answer.question, CONTEXT_QUESTION_LENGTH);
+		const reading =
+			answer.kind === "question"
+				? `${verdictFor(answer)} (${percent(answer.yes)} yes), ${answer.warmth.label.toLowerCase()}`
+				: verdictFor(answer);
+
+		return `- ${answer.kind === "guess" ? "Guess" : "Question"} “${question}”: ${reading}`;
+	}
+
+	function describeOutcome() {
+		const used = `${counted(state.history)} of ${state.game.maxQuestions} questions used`;
+
+		if (state.phase === "won") {
+			return `Outcome: the player solved it, ${used}`;
+		}
+
+		return state.phase === "lost"
+			? `Outcome: the player did not solve it, ${used}`
+			: `Outcome: still playing, ${used}`;
+	}
+
+	function describeState() {
+		const lines = ["Pashi Twenty Questions state:"];
+
+		if (!state.game || state.phase === "choosing") {
+			return [...lines, "No game in progress. The player is picking a category."].join("\n");
+		}
+
+		const ended = state.phase === "won" || state.phase === "lost";
+		const skipped = Math.max(0, state.history.length - CONTEXT_ANSWERS);
+
+		lines.push(
+			`Category: ${bridge.clipText(categoryLabel(state.game.category), CONTEXT_LABEL_LENGTH)}`,
+			describeOutcome(),
+			ended && state.secret
+				? `Secret, revealed now the game has ended: “${bridge.clipText(state.secret, CONTEXT_LABEL_LENGTH)}”`
+				: "Secret: sealed on the server and not known to this view",
+		);
+
+		if (state.history.length > 0) {
+			lines.push(
+				skipped > 0
+					? `Asked so far (latest ${CONTEXT_ANSWERS}, ${skipped} earlier omitted):`
+					: "Asked so far:",
+				...state.history.slice(skipped).map(describeAnswer),
+			);
+		}
+
+		return lines.join("\n");
+	}
+
+	function shareState() {
+		bridge.updateModelContext(describeState());
 	}
 
 	function polar(fraction, radius) {
@@ -332,6 +391,7 @@
 			state.history = [];
 			state.secret = null;
 			state.phase = "playing";
+			shareState();
 		});
 	}
 
@@ -355,6 +415,8 @@
 				state.secret = answer.secret;
 				state.phase = "lost";
 			}
+
+			shareState();
 		});
 	}
 
@@ -370,6 +432,7 @@
 
 			state.secret = reveal.secret;
 			state.phase = "lost";
+			shareState();
 		});
 	}
 
@@ -380,6 +443,7 @@
 		state.phase = "choosing";
 		setError("error", "");
 		render();
+		shareState();
 	}
 
 	byId("ask").addEventListener("submit", (event) => {

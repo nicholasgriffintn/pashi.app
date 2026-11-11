@@ -15,6 +15,7 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 	const consoleState = useConverterConsole({ navigateToTool, routeToolId });
 	const {
 		activeTool,
+		applyExample,
 		clearResult,
 		clearResultHistory,
 		convertActiveTool,
@@ -38,13 +39,14 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 		setOutputFormat,
 		setInput,
 		setSelectedFile,
+		shareFields,
 		tools,
 	} = consoleState;
 	const actions =
 		result && activeTool ? (
 			<ResultActions
 				exportFormats={[]}
-				fields={{}}
+				fields={shareFields}
 				input={input}
 				onClear={clearResult}
 				onNotify={notify}
@@ -95,6 +97,7 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 					input={input}
 					converterFields={converterFields}
 					isLoading={isLoading}
+					onApplyExample={applyExample}
 					onConverterFieldChange={setConverterField}
 					onInputChange={setInput}
 					onOutputFormatChange={setOutputFormat}

@@ -15,7 +15,10 @@ type ApiKeyContext = {
 	Variables: ApiKeyVariables;
 };
 
-export async function requireApiKey<E extends ApiKeyContext>(c: Context<E>) {
+export async function requireApiKey<E extends ApiKeyContext>(
+	c: Context<E>,
+	{ allowAbsent = false }: { allowAbsent?: boolean } = {},
+) {
 	if (c.get("application")) {
 		return undefined;
 	}
@@ -25,6 +28,10 @@ export async function requireApiKey<E extends ApiKeyContext>(c: Context<E>) {
 	if (authentication.status === "authenticated") {
 		c.set("application", authentication.application);
 
+		return undefined;
+	}
+
+	if (authentication.status === "absent" && allowAbsent) {
 		return undefined;
 	}
 

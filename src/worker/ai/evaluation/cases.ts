@@ -1,5 +1,6 @@
 export interface RouteCase {
 	acceptableToolIds: readonly string[];
+	expectedFields?: Readonly<Record<string, string>>;
 	expectedToolId: string;
 	request: string;
 }
@@ -13,11 +14,13 @@ export interface ExplainCase {
 export const ROUTE_CASES: readonly RouteCase[] = [
 	{
 		acceptableToolIds: ["uuid"],
+		expectedFields: { count: "5", format: "v7", outputFormat: "uppercase" },
 		expectedToolId: "uuid",
 		request: "five uppercase v7 uuids",
 	},
 	{
 		acceptableToolIds: ["password", "passphrase"],
+		expectedFields: { length: "24", symbols: "true" },
 		expectedToolId: "password",
 		request: "a strong 24 character password with symbols",
 	},
@@ -28,6 +31,7 @@ export const ROUTE_CASES: readonly RouteCase[] = [
 	},
 	{
 		acceptableToolIds: ["dice-probability", "dice"],
+		expectedFields: { comparison: ">=", notation: "3d6", target: "15" },
 		expectedToolId: "dice-probability",
 		request: "what are the odds of rolling 15 or more on 3d6",
 	},
@@ -78,5 +82,17 @@ export const EXPLAIN_CASES: readonly ExplainCase[] = [
 		input: "delete from sessions where last_seen < now() - interval '30 days'",
 		mustMention: ["sessions"],
 		subject: "sql",
+	},
+	{
+		input:
+			"curl -X POST -H 'Content-Type: application/json' -d '{\"name\":\"pashi\"}' https://api.example.com/v1/things",
+		mustMention: ["POST", "api.example.com"],
+		subject: "curl",
+	},
+	{
+		input:
+			"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTQyIiwiaWF0IjoxNzA0MDY3MjAwLCJleHAiOjE3MDQwNzA4MDB9.c2lnbmF0dXJl",
+		mustMention: ["HS256", "expired"],
+		subject: "jwt",
 	},
 ];

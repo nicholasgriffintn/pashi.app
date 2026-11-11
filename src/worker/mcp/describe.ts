@@ -23,6 +23,47 @@ interface DescribedTool {
 	label: string;
 }
 
+export const DESCRIBED_TOOL_OUTPUT_SCHEMA = {
+	additionalProperties: false,
+	properties: {
+		actionLabel: { type: "string" },
+		description: { type: "string" },
+		fields: {
+			items: {
+				additionalProperties: false,
+				properties: {
+					control: { enum: ["select", "text", "textarea"], type: "string" },
+					defaultValue: { type: "string" },
+					hint: { type: "string" },
+					id: { type: "string" },
+					label: { type: "string" },
+					options: { items: { type: "string" }, type: "array" },
+					required: { type: "boolean" },
+				},
+				required: ["control", "id", "label", "required"],
+				type: "object",
+			},
+			type: "array",
+		},
+		id: { type: "string" },
+		input: {
+			additionalProperties: false,
+			properties: {
+				label: { type: "string" },
+				placeholder: { type: "string" },
+				required: { type: "boolean" },
+				used: { type: "boolean" },
+			},
+			required: ["label", "placeholder", "required", "used"],
+			type: "object",
+		},
+		kind: { enum: ["converter", "generator"], type: "string" },
+		label: { type: "string" },
+	},
+	required: ["actionLabel", "description", "fields", "id", "input", "kind", "label"],
+	type: "object",
+};
+
 function describeGeneratorField(field: GeneratorInputField): DescribedField {
 	return {
 		control: field.type ?? (field.options ? "select" : "text"),

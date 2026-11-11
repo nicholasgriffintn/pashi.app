@@ -4,6 +4,7 @@ import { errorMessage } from "../shared/errors";
 import { host } from "../shared/host";
 import { parseCommaSeparatedTags } from "../shared/text";
 import type { StrudelConfig, StrudelPattern } from "./config";
+import { sharePattern } from "./pattern-context";
 import { needsPolychatSignIn, SignInState } from "./SignInState";
 import { StrudelPlayer } from "./StrudelPlayer";
 import type { PatternDraft, StrudelLibrary } from "./useStrudelLibrary";
@@ -53,6 +54,7 @@ export function PatternEditor({
 			const result = await library.generate({ complexity: "medium", prompt: prompt.trim() });
 
 			setCode(result.code);
+			sharePattern({ code: result.code, event: "generated from a prompt", title: name });
 		});
 
 	const save = () => {
@@ -66,7 +68,10 @@ export function PatternEditor({
 
 		return run("saving", async () => {
 			try {
-				onSaved(await library.save(draft));
+				const saved = await library.save(draft);
+
+				sharePattern({ code: saved.code, event: "saved to the library", title: saved.name });
+				onSaved(saved);
 				setRefusedDraft(null);
 			} catch (saveError) {
 				setRefusedDraft(host.embedded() ? draft : null);
@@ -83,7 +88,12 @@ export function PatternEditor({
 
 	return (
 		<div className="editor-grid">
-			<StrudelPlayer code={code} config={config} onChange={setCode} />
+			<StrudelPlayer
+				code={code}
+				config={config}
+				onChange={setCode}
+				onPlay={(played) => sharePattern({ code: played, event: "played", title: name })}
+			/>
 			<section className="panel editor-form">
 				<label className="field">
 					<span className="field-label">Name</span>

@@ -10,7 +10,7 @@ Pashi has three layers on one domain.
 
 - **Hub** at `/` lists every project, including the ones that live on their own subdomains.
 - **Tools** at `/tools` is the console: 79 generators and 22 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
-- **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool and fills its form.
+- **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool, runs it when the tool is simple and otherwise opens it with the form filled in.
 
 Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, [/api/info](https://pashi.app/api/info) for the raw contract, or [/api/openapi.json](https://pashi.app/api/openapi.json) for an OpenAPI 3.1 document covering every path.
 
@@ -18,13 +18,19 @@ Press `K` anywhere, or the search button, to open the command palette: tools, pa
 
 ## Agent access
 
-An MCP endpoint at `/mcp` exposes three meta tools rather than one per generator, so an agent can work without flooding its context.
+An MCP endpoint at `/mcp` exposes four meta tools rather than one per generator, so an agent can work without flooding its context.
 
 - `pashi_list_tools` finds a tool id, optionally filtered by search or kind.
+- `pashi_describe_tool` describes one tool's input and options.
 - `pashi_generate` runs a generator.
 - `pashi_convert` runs a text converter. Media and document conversion is not available over MCP.
 
-It speaks JSON-RPC over POST and takes either a Pashi API key or the Polychat link token as a bearer token.
+It speaks JSON-RPC over POST. The meta tools work without a credential and are rate limited per IP address. AI mode needs a Polychat link. Everything else takes either a Pashi API key or the Polychat link token as a bearer token.
+
+Two Labs tools need a Polychat link.
+
+- `pashi_ask` routes a plain English request to a tool and runs it when it is simple.
+- `pashi_explain` explains a cron schedule, curl command, JWT, regular expression or SQL statement.
 
 ### MCP Apps
 
@@ -37,7 +43,7 @@ Pashi's views and games are [MCP Apps](https://modelcontextprotocol.io/specifica
 - `pashi_open_polis` links `ui://pashi/polis`. You found a town of up to 50,000 people, pass laws in plain English and stage disasters, and residents decide through the linked Polychat account (Workers AI without a link). Shared towns replay at `/polis/<token>`.
 - A tool that opens an app on its own carries `_meta["app.polychat/app"]` (name, description, category, icon, theme, when, uses, produces, surface) next to its `_meta.ui.resourceUri`. It is read-only and needs no arguments, so a host can open the app by calling it with `{}`.
 
-To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps) with your token, then ask for a password, a Jira conversion or a game of Charades.
+To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any host that renders MCP Apps), then ask for a password or a Jira conversion. Add your token to ask for a game of Charades.
 
 ## API access
 

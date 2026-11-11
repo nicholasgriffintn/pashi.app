@@ -128,8 +128,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Convert to Jira",
 			category: "Jira and Confluence",
 			examples: [
-				"## Release notes\n\n- **Fixed** auth\n- Added `copy` action",
-				"[Pashi](https://pashi.app) is **fast**",
+				{
+					input: "## Release notes\n\n- **Fixed** auth\n- Added `copy` action",
+					label: "Release notes list",
+				},
+				{ input: "[Pashi](https://pashi.app) is **fast**", label: "Inline link" },
 			],
 		},
 		endpoint: "/api/markdown-to-jira",
@@ -168,8 +171,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Convert to Markdown",
 			category: "Jira and Confluence",
 			examples: [
-				"h2. Release notes\n\n* *Fixed* auth\n* Added {{copy}} action",
-				"[Pashi|https://pashi.app] is *fast*",
+				{
+					input: "h2. Release notes\n\n* *Fixed* auth\n* Added {{copy}} action",
+					label: "Release notes list",
+				},
+				{ input: "[Pashi|https://pashi.app] is *fast*", label: "Inline link" },
 			],
 		},
 		endpoint: "/api/jira-to-markdown",
@@ -222,7 +228,18 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert Markdown",
 			category: "Markdown",
-			examples: ["## Release notes\n\n- **Fixed** auth\n- [Pashi](https://pashi.app)"],
+			examples: [
+				{
+					fields: { outputFormat: "slack" },
+					input: "## Release notes\n\n- **Fixed** auth\n- [Pashi](https://pashi.app)",
+					label: "Release notes for Slack",
+				},
+				{
+					fields: { outputFormat: "wordpress-html" },
+					input: "# Launch day\n\nPashi now has **converters**.\n\n- Fast\n- Free",
+					label: "Blog post as WordPress HTML",
+				},
+			],
 		},
 		endpoint: "/api/markdown-format",
 		id: "markdown-format",
@@ -273,7 +290,45 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform HTML",
 			category: "HTML",
-			examples: ["<h1>Title</h1><p>Hello <strong>world</strong>.</p>"],
+			examples: [
+				{
+					fields: { outputFormat: "escape" },
+					input: '<a href="/menu">Fish & chips</a>',
+					label: "Escape a snippet",
+				},
+				{
+					fields: { outputFormat: "unescape" },
+					input: "&lt;p&gt;Fish &amp; chips&lt;/p&gt;",
+					label: "Unescape entities",
+				},
+				{
+					fields: { outputFormat: "strip-tags" },
+					input: "<h1>Title</h1><p>Hello <strong>world</strong>.</p>",
+					label: "Strip tags to text",
+				},
+				{
+					fields: { outputFormat: "extract-links" },
+					input:
+						'<p>Read <a href="https://pashi.app">Pashi</a> and <a href="https://example.com/docs">the docs</a>.</p>',
+					label: "Extract links",
+				},
+				{
+					fields: { outputFormat: "extract-comments" },
+					input: "<!-- build 42 --><main>Hi</main><!-- TODO: footer -->",
+					label: "Extract comments",
+				},
+				{
+					fields: { outputFormat: "remove-comments" },
+					input: "<!-- build 42 --><main>Hi</main><!-- TODO: footer -->",
+					label: "Remove comments",
+				},
+				{
+					fields: { outputFormat: "to-markdown" },
+					input:
+						"<h1>Title</h1><p>Hello <strong>world</strong>.</p><ul><li>One</li><li>Two</li></ul>",
+					label: "Article to Markdown",
+				},
+			],
 		},
 		endpoint: "/api/html-transform",
 		id: "html-transform",
@@ -360,45 +415,57 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: TIMESTAMP_TRANSFORM_FORMATS,
 				},
 				{
+					defaultValue: "1",
 					description: "Amount for add or subtract modes.",
 					id: "amount",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract"] },
 				},
 				{
+					defaultValue: "days",
 					description: "Unit for add or subtract modes.",
 					id: "unit",
 					values: ["milliseconds", "seconds", "minutes", "hours", "days", "weeks"],
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract"] },
 				},
 				{
 					description: "End timestamp for difference and calendar-difference modes.",
 					id: "until",
+					visibleWhen: { field: "outputFormat", values: ["difference", "calendar-difference"] },
 				},
 				{
+					defaultValue: "full",
 					description: "Discord timestamp style.",
 					id: "style",
 					values: ["shortTime", "longTime", "shortDate", "longDate", "full", "relative"],
+					visibleWhen: { field: "outputFormat", values: ["discord"] },
 				},
 				{
 					description:
 						"Zone a local input is in for convert-zone, such as Europe/London. Defaults to UTC and is ignored when the input carries an offset or Z.",
 					id: "fromZone",
+					visibleWhen: { field: "outputFormat", values: ["convert-zone"] },
 				},
 				{
 					description:
 						"Target IANA zone for convert-zone and now-in-zone, such as America/New_York.",
 					id: "toZone",
+					visibleWhen: { field: "outputFormat", values: ["convert-zone", "now-in-zone"] },
 				},
 				{
 					description: "Weekday for next-occurrence: a name such as Friday, or 0 (Sunday) to 6.",
 					id: "weekday",
+					visibleWhen: { field: "outputFormat", values: ["next-occurrence"] },
 				},
 				{
 					description:
 						"Day of the month (1-31) for next-occurrence. Months without it are skipped.",
 					id: "dayOfMonth",
+					visibleWhen: { field: "outputFormat", values: ["next-occurrence"] },
 				},
 				{
 					description: `How many occurrences to list for next-occurrence, up to ${TIMESTAMP_MAX_OCCURRENCES}.`,
 					id: "count",
+					visibleWhen: { field: "outputFormat", values: ["next-occurrence"] },
 				},
 			],
 			methods: ["GET", "POST"],
@@ -410,7 +477,102 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert timestamp",
 			category: "Dates",
-			examples: ["2024-01-02T03:04:05Z", "1704164645", "2027-03-20T10:30", "2027-01-31"],
+			examples: [
+				{
+					fields: { outputFormat: "unix" },
+					input: "2024-01-02T03:04:05Z",
+					label: "ISO date to Unix seconds",
+				},
+				{
+					fields: { outputFormat: "milliseconds" },
+					input: "2024-01-02T03:04:05Z",
+					label: "Date to milliseconds",
+				},
+				{ fields: { outputFormat: "iso" }, input: "1704164645", label: "Unix seconds to ISO" },
+				{
+					fields: { outputFormat: "readable" },
+					input: "1704164645000",
+					label: "Milliseconds to readable UTC",
+				},
+				{
+					fields: { outputFormat: "rfc2822" },
+					input: "2024-01-02T03:04:05Z",
+					label: "Date to RFC 2822",
+				},
+				{
+					fields: { outputFormat: "discord", style: "relative" },
+					input: "2024-01-02T03:04:05Z",
+					label: "Discord relative timestamp",
+				},
+				{
+					fields: { outputFormat: "discord", style: "full" },
+					input: "1704164645",
+					label: "Discord full date",
+				},
+				{
+					fields: { amount: "90", outputFormat: "add", unit: "minutes" },
+					input: "2024-01-02T03:04:05Z",
+					label: "Add 90 minutes",
+				},
+				{
+					fields: { amount: "1", outputFormat: "subtract", unit: "weeks" },
+					input: "2024-01-02T03:04:05Z",
+					label: "Subtract a week",
+				},
+				{
+					fields: { outputFormat: "difference", until: "2024-03-01T12:30:00Z" },
+					input: "2024-01-01T00:00:00Z",
+					label: "Time between two dates",
+				},
+				{
+					fields: {
+						outputFormat: "convert-zone",
+						fromZone: "Europe/London",
+						toZone: "America/New_York",
+					},
+					input: "2027-03-03T10:30",
+					label: "London 10:30 in New York",
+				},
+				{
+					fields: {
+						outputFormat: "convert-zone",
+						fromZone: "Europe/London",
+						toZone: "America/New_York",
+					},
+					input: "2027-03-20T10:30",
+					label: "Across the US clock change",
+				},
+				{
+					fields: { outputFormat: "convert-zone", fromZone: "UTC", toZone: "Asia/Kolkata" },
+					input: "2027-06-01T09:00Z",
+					label: "UTC to India",
+				},
+				{
+					fields: { outputFormat: "now-in-zone", toZone: "Asia/Tokyo" },
+					input: "now",
+					label: "Time now in Tokyo",
+				},
+				{
+					fields: { outputFormat: "calendar-difference", until: "2027-02-28" },
+					input: "2027-01-31",
+					label: "Months and days to month end",
+				},
+				{
+					fields: { outputFormat: "calendar-difference", until: "2027-03-15" },
+					input: "1990-07-04",
+					label: "Age in years, months and days",
+				},
+				{
+					fields: { count: "3", outputFormat: "next-occurrence", weekday: "Friday" },
+					input: "2026-11-11",
+					label: "Next three Fridays",
+				},
+				{
+					fields: { count: "3", dayOfMonth: "31", outputFormat: "next-occurrence" },
+					input: "2027-01-31",
+					label: "Next three 31sts",
+				},
+			],
 		},
 		endpoint: "/api/timestamp-transform",
 		id: "timestamp-transform",
@@ -468,12 +630,15 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: WORKING_DAYS_FORMATS,
 				},
 				{
+					defaultValue: "10",
 					description: `Working days to add or subtract, from 0 to ${WORKING_DAYS_MAX_AMOUNT}.`,
 					id: "amount",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract"] },
 				},
 				{
 					description: "End date for count mode, as YYYY-MM-DD.",
 					id: "until",
+					visibleWhen: { field: "outputFormat", values: ["count"] },
 				},
 				{
 					defaultValue: WORKING_DAYS_DEFAULT_REGION,
@@ -485,15 +650,18 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					defaultValue: WORKING_DAYS_DEFAULT_WEEKEND,
 					description: "Comma-separated weekend days, such as sat,sun or fri,sat.",
 					id: "weekend",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract", "count"] },
 				},
 				{
 					description: "Extra non-working dates, comma-separated as YYYY-MM-DD.",
 					display: { width: "full" },
 					id: "holidays",
+					visibleWhen: { field: "outputFormat", values: ["add", "subtract", "count"] },
 				},
 				{
 					description: `How many bank holidays to list for next-bank-holiday, up to ${WORKING_DAYS_MAX_RESULTS}.`,
 					id: "count",
+					visibleWhen: { field: "outputFormat", values: ["next-bank-holiday"] },
 				},
 			],
 			methods: ["GET", "POST"],
@@ -504,7 +672,48 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Calculate working days",
 			category: "Dates",
-			examples: ["2026-12-18", "2026-11-11"],
+			examples: [
+				{
+					fields: { amount: "10", outputFormat: "add", region: "england-and-wales" },
+					input: "2026-12-18",
+					label: "Add 10 working days over Christmas",
+				},
+				{
+					fields: { amount: "10", outputFormat: "add", region: "none" },
+					input: "2026-12-18",
+					label: "Add 10 days, weekends only",
+				},
+				{
+					fields: { amount: "5", outputFormat: "subtract", region: "england-and-wales" },
+					input: "2027-04-06",
+					label: "Five working days before Easter Tuesday",
+				},
+				{
+					fields: { outputFormat: "count", region: "scotland", until: "2027-01-08" },
+					input: "2026-12-21",
+					label: "Working days over new year in Scotland",
+				},
+				{
+					fields: {
+						outputFormat: "count",
+						region: "england-and-wales",
+						until: "2026-12-31",
+						weekend: "fri,sat",
+					},
+					input: "2026-12-01",
+					label: "December with a Friday and Saturday weekend",
+				},
+				{
+					fields: { outputFormat: "is-bank-holiday", region: "england-and-wales" },
+					input: "2026-12-28",
+					label: "Is 28 December a bank holiday?",
+				},
+				{
+					fields: { count: "3", outputFormat: "next-bank-holiday", region: "northern-ireland" },
+					input: "2026-11-11",
+					label: "Next three Northern Ireland bank holidays",
+				},
+			],
 		},
 		endpoint: "/api/working-days",
 		id: "working-days",
@@ -586,16 +795,20 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					values: TEXT_TRANSFORM_FORMATS,
 				},
 				{
+					defaultValue: "2",
 					description: "Repeat count for repeat mode.",
 					id: "count",
+					visibleWhen: { field: "outputFormat", values: ["repeat"] },
 				},
 				{
 					description: "Search text for replace mode.",
 					id: "search",
+					visibleWhen: { field: "outputFormat", values: ["replace"] },
 				},
 				{
 					description: "Replacement text for replace mode.",
 					id: "replace",
+					visibleWhen: { field: "outputFormat", values: ["replace"] },
 				},
 			],
 			methods: ["GET", "POST"],
@@ -606,7 +819,149 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform text",
 			category: "Text",
-			examples: ["Hello, Pashi App!", "01001000 01101001"],
+			examples: [
+				{
+					fields: { outputFormat: "lowercase" },
+					input: "HELLO, PASHI APP!",
+					label: "Lowercase a heading",
+				},
+				{
+					fields: { outputFormat: "uppercase" },
+					input: "hello, pashi app!",
+					label: "Uppercase a heading",
+				},
+				{
+					fields: { outputFormat: "title" },
+					input: "the quick brown fox",
+					label: "Title case a phrase",
+				},
+				{
+					fields: { outputFormat: "kebab" },
+					input: "Hello Pashi App",
+					label: "Kebab-case a title",
+				},
+				{
+					fields: { outputFormat: "snake" },
+					input: "Hello Pashi App",
+					label: "Snake-case a title",
+				},
+				{
+					fields: { outputFormat: "camel" },
+					input: "hello pashi app",
+					label: "Camel-case a title",
+				},
+				{ fields: { outputFormat: "reverse" }, input: "stressed", label: "Reverse a word" },
+				{
+					fields: { outputFormat: "sort-lines" },
+					input: "pear\napple\nbanana",
+					label: "Sort lines",
+				},
+				{
+					fields: { outputFormat: "unique-lines" },
+					input: "apple\nbanana\napple\ncherry\nbanana",
+					label: "Remove duplicate lines",
+				},
+				{
+					fields: { outputFormat: "dedupe-words" },
+					input: "the the quick quick brown fox",
+					label: "Remove repeated words",
+				},
+				{
+					fields: { outputFormat: "word-count" },
+					input: "Pashi is the home for side projects and handy tools.",
+					label: "Count words",
+				},
+				{
+					fields: { outputFormat: "character-count" },
+					input: "Hello, Pashi App!",
+					label: "Count characters",
+				},
+				{
+					fields: { outputFormat: "sentence-count" },
+					input: "Pashi is fast. It has tools! Want more?",
+					label: "Count sentences",
+				},
+				{
+					fields: { outputFormat: "text-size" },
+					input: "Hello, Pashi App! 👋",
+					label: "Measure text size",
+				},
+				{
+					fields: { outputFormat: "word-frequency" },
+					input: "to be or not to be",
+					label: "Word frequency",
+				},
+				{
+					fields: { outputFormat: "hashtags" },
+					input: "launch day for pashi tools",
+					label: "Make hashtags",
+				},
+				{
+					fields: { outputFormat: "list" },
+					input: "apples, pears, plums",
+					label: "Comma list to lines",
+				},
+				{
+					fields: { count: "3", outputFormat: "repeat" },
+					input: "Hip hip hooray",
+					label: "Repeat three times",
+				},
+				{
+					fields: { outputFormat: "replace", replace: "Pashi", search: "world" },
+					input: "Hello world, goodbye world",
+					label: "Find and replace",
+				},
+				{ fields: { outputFormat: "leet" }, input: "elite hacker", label: "Leet speak" },
+				{
+					fields: { outputFormat: "upside-down" },
+					input: "hello world",
+					label: "Upside-down text",
+				},
+				{ fields: { outputFormat: "binary" }, input: "Hi", label: "Text to binary" },
+				{
+					fields: { outputFormat: "from-binary" },
+					input: "01001000 01101001",
+					label: "Binary to text",
+				},
+				{ fields: { outputFormat: "hex" }, input: "Hi", label: "Text to hex" },
+				{ fields: { outputFormat: "from-hex" }, input: "48 69", label: "Hex to text" },
+				{ fields: { outputFormat: "ascii-decimal" }, input: "ABC", label: "ASCII to decimal" },
+				{ fields: { outputFormat: "ascii-hex" }, input: "ABC", label: "ASCII to hex" },
+				{ fields: { outputFormat: "ascii-octal" }, input: "ABC", label: "ASCII to octal" },
+				{
+					fields: { outputFormat: "url-encode" },
+					input: "name=Ada Lovelace&role=admin",
+					label: "URL-encode a query",
+				},
+				{
+					fields: { outputFormat: "url-decode" },
+					input: "name%3DAda%20Lovelace%26role%3Dadmin",
+					label: "URL-decode a query",
+				},
+				{
+					fields: { outputFormat: "unicode-escape" },
+					input: "café ☕",
+					label: "Escape to Unicode",
+				},
+				{
+					fields: { outputFormat: "unicode-unescape" },
+					input: "caf\\u00e9 \\u2615",
+					label: "Unescape Unicode",
+				},
+				{ fields: { outputFormat: "normalize-nfc" }, input: "café", label: "Normalise to NFC" },
+				{ fields: { outputFormat: "normalize-nfd" }, input: "café", label: "Normalise to NFD" },
+				{
+					fields: { outputFormat: "remove-whitespace" },
+					input: "  a b\tc \n d ",
+					label: "Remove all whitespace",
+				},
+				{
+					fields: { outputFormat: "remove-zero-width" },
+					input: "pa​shi‍ app",
+					label: "Remove zero-width characters",
+				},
+				{ fields: { outputFormat: "vertical" }, input: "PASHI", label: "Vertical text" },
+			],
 		},
 		endpoint: "/api/text-transform",
 		id: "text-transform",
@@ -669,7 +1024,9 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				},
 				{
 					description: "JSONPath-style path for query mode, for example $.users[*].name.",
+					display: { width: "full" },
 					id: "path",
+					visibleWhen: { field: "outputFormat", values: ["query"] },
 				},
 			],
 			methods: ["GET", "POST"],
@@ -681,7 +1038,59 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform JSON",
 			category: "JSON",
-			examples: ['{"b":2,"a":{"c":3}}'],
+			examples: [
+				{
+					fields: { outputFormat: "format" },
+					input: '{"b":2,"a":{"c":3}}',
+					label: "Pretty-print JSON",
+				},
+				{
+					fields: { outputFormat: "minify" },
+					input: '{\n  "name": "Ada",\n  "tags": ["admin", "editor"]\n}',
+					label: "Minify JSON",
+				},
+				{
+					fields: { outputFormat: "sort" },
+					input: '{"b":2,"a":1,"c":{"z":1,"y":2}}',
+					label: "Sort keys",
+				},
+				{
+					fields: { outputFormat: "flatten" },
+					input: '{"user":{"name":"Ada","tags":["a","b"]}}',
+					label: "Flatten nested JSON",
+				},
+				{
+					fields: { outputFormat: "keys" },
+					input: '{"user":{"name":"Ada","roles":["admin"]},"active":true}',
+					label: "List every key path",
+				},
+				{ fields: { outputFormat: "base64" }, input: '{"ok":true}', label: "Encode as base64" },
+				{
+					fields: { outputFormat: "from-base64" },
+					input: "eyJvayI6dHJ1ZX0=",
+					label: "Decode base64 JSON",
+				},
+				{
+					fields: { outputFormat: "escape" },
+					input: '{"message":"Hello \\"Ada\\""}',
+					label: "Escape for a string",
+				},
+				{
+					fields: { outputFormat: "unescape" },
+					input: '{\\"message\\":\\"Hello\\"}',
+					label: "Unescape a string",
+				},
+				{
+					fields: { outputFormat: "query", path: "$.users[*].name" },
+					input: '{"users":[{"name":"Ada"},{"name":"Grace"}]}',
+					label: "Query user names",
+				},
+				{
+					fields: { outputFormat: "query", path: "$.items[-1].id" },
+					input: '{"items":[{"id":1},{"id":2},{"id":3}]}',
+					label: "Query the last item",
+				},
+			],
 		},
 		endpoint: "/api/json-transform",
 		id: "json-transform",
@@ -741,7 +1150,18 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Inspect data",
 			category: "Data",
-			examples: ['{"users":[{"id":1,"name":"Ada"}]}', "id,name\n1,Ada\n2,Grace"],
+			examples: [
+				{
+					fields: { outputFormat: "json-shape" },
+					input: '{"users":[{"id":1,"name":"Ada"}]}',
+					label: "Inspect JSON structure",
+				},
+				{
+					fields: { outputFormat: "csv-shape" },
+					input: "id,name\n1,Ada\n2,Grace",
+					label: "Inspect CSV columns",
+				},
+			],
 		},
 		endpoint: "/api/data-shape",
 		id: "data-shape",
@@ -835,26 +1255,32 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				{
 					description: "Foreground colour for contrast checks: hex, rgb(), hsl() or a CSS name.",
 					id: "foreground",
+					visibleWhen: { field: "outputFormat", values: ["colour-contrast"] },
 				},
 				{
 					description: "Background colour for contrast checks: hex, rgb(), hsl() or a CSS name.",
 					id: "background",
+					visibleWhen: { field: "outputFormat", values: ["colour-contrast"] },
 				},
 				{
 					description:
 						"Secret for verifying HS256, HS384 and HS512 JWT signatures. Send it in a POST body, not a query string.",
 					id: "secret",
+					sensitive: true,
+					visibleWhen: { field: "outputFormat", values: ["jwt"] },
 				},
 				{
 					defaultValue: "utf8",
 					description: "How the JWT secret is encoded.",
 					id: "secretEncoding",
 					values: JWT_SECRET_ENCODINGS,
+					visibleWhen: { field: "outputFormat", values: ["jwt"] },
 				},
 				{
 					description: "PEM public key for verifying RS256, RS384 and RS512 JWT signatures.",
-					display: { width: "full" },
+					display: { control: "textarea", width: "full" },
 					id: "publicKey",
+					visibleWhen: { field: "outputFormat", values: ["jwt"] },
 				},
 			],
 			methods: ["GET", "POST"],
@@ -867,10 +1293,69 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Inspect value",
 			category: "Developer",
 			examples: [
-				"0 9 * * 1",
-				"018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00",
-				"5d41402abc4b2a76b9719d911017c592",
-				"rgb(17, 24, 39) white",
+				{
+					fields: { outputFormat: "uuid" },
+					input: "018f9b7c-2f2d-7b68-8f4f-1f3f6c0b2f00",
+					label: "Inspect a v7 UUID",
+				},
+				{
+					fields: { outputFormat: "uuid" },
+					input: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+					label: "Inspect a v4 UUID",
+				},
+				{
+					fields: { outputFormat: "cron" },
+					input: "*/15 9-17 * * MON-FRI",
+					label: "Next runs of a weekday cron",
+				},
+				{ fields: { outputFormat: "cron" }, input: "0 9 * * 1", label: "Monday morning cron" },
+				{
+					fields: { outputFormat: "colour-contrast" },
+					input: "rgb(17, 24, 39) white",
+					label: "Contrast of two colours",
+				},
+				{
+					fields: { foreground: "#ff2f78", outputFormat: "colour-contrast" },
+					input: "white",
+					label: "Brand pink on white",
+				},
+				{
+					fields: { outputFormat: "mime-signature" },
+					input: "89 50 4e 47 0d 0a 1a 0a",
+					label: "PNG file signature",
+				},
+				{
+					fields: { outputFormat: "mime-signature" },
+					input: "data:application/pdf;base64,JVBERi0xLjcK",
+					label: "PDF data URL",
+				},
+				{
+					fields: { outputFormat: "hash-type" },
+					input: "5d41402abc4b2a76b9719d911017c592",
+					label: "Identify an MD5 hash",
+				},
+				{
+					fields: { outputFormat: "hash-type" },
+					input: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+					label: "Identify a SHA-256 hash",
+				},
+				{
+					fields: { outputFormat: "user-agent" },
+					input:
+						"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+					label: "Desktop Chrome user agent",
+				},
+				{
+					fields: { outputFormat: "user-agent" },
+					input:
+						"Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+					label: "iPhone Safari user agent",
+				},
+				{
+					fields: { outputFormat: "user-agent" },
+					input: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+					label: "Googlebot user agent",
+				},
 			],
 		},
 		endpoint: "/api/developer-inspect",
@@ -945,17 +1430,20 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				},
 				{
 					description: "Left-hand text or JSON for the diff modes.",
-					display: { width: "full" },
+					display: { control: "textarea" },
 					id: "left",
+					visibleWhen: { field: "outputFormat", values: ["diff-lines", "diff-json"] },
 				},
 				{
 					description: "Right-hand text or JSON for the diff modes.",
-					display: { width: "full" },
+					display: { control: "textarea" },
 					id: "right",
+					visibleWhen: { field: "outputFormat", values: ["diff-lines", "diff-json"] },
 				},
 				{
 					description: "Separator used when diffing from a single input field.",
 					id: "separator",
+					visibleWhen: { field: "outputFormat", values: ["diff-lines", "diff-json"] },
 				},
 			],
 			methods: ["GET", "POST"],
@@ -967,7 +1455,71 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Transform text",
 			category: "Developer",
-			examples: ["one\ntwo\n---\none\nthree", "body{color:#111;background:#fff}"],
+			examples: [
+				{
+					fields: { outputFormat: "diff-lines" },
+					input: "one\ntwo\n---\none\nthree",
+					label: "Diff two text blocks",
+				},
+				{
+					fields: {
+						left: "milk\neggs\nbread",
+						outputFormat: "diff-lines",
+						right: "milk\nbread\nbutter",
+					},
+					input: "",
+					label: "Diff left and right",
+				},
+				{
+					fields: {
+						left: '{"name":"Ada","tags":["a"]}',
+						outputFormat: "diff-json",
+						right: '{"name":"Grace","tags":["a","b"]}',
+					},
+					input: "",
+					label: "Diff two JSON documents",
+				},
+				{
+					fields: { outputFormat: "pretty-json" },
+					input: '{"name":"Ada","roles":["admin","editor"]}',
+					label: "Pretty-print JSON",
+				},
+				{
+					fields: { outputFormat: "minify-json" },
+					input: '{\n  "name": "Ada",\n  "active": true\n}',
+					label: "Minify JSON",
+				},
+				{
+					fields: { outputFormat: "pretty-css" },
+					input: "body{color:#111;background:#fff}a:hover{color:red}",
+					label: "Pretty-print CSS",
+				},
+				{
+					fields: { outputFormat: "minify-css" },
+					input: "body {\n  color: #111;\n  background: #fff;\n}",
+					label: "Minify CSS",
+				},
+				{
+					fields: { outputFormat: "pretty-html" },
+					input: "<main><h1>Title</h1><p>Hello <strong>world</strong></p></main>",
+					label: "Pretty-print HTML",
+				},
+				{
+					fields: { outputFormat: "minify-html" },
+					input: "<main>\n  <h1>Title</h1>\n  <p>Hello</p>\n</main>",
+					label: "Minify HTML",
+				},
+				{
+					fields: { outputFormat: "pretty-xml" },
+					input: '<feed><entry id="1"><title>Hello</title></entry></feed>',
+					label: "Pretty-print XML",
+				},
+				{
+					fields: { outputFormat: "minify-xml" },
+					input: "<feed>\n  <entry>\n    <title>Hello</title>\n  </entry>\n</feed>",
+					label: "Minify XML",
+				},
+			],
 		},
 		endpoint: "/api/developer-text",
 		id: "developer-text",
@@ -1042,7 +1594,28 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Test regex",
 			category: "Developer",
-			examples: ["Order 42 shipped on 2026-11-11", "ada@example.com, grace@example.org"],
+			examples: [
+				{
+					fields: { pattern: "\\d+" },
+					input: "Order 42 shipped on 2026-11-11 with 3 items",
+					label: "Find numbers",
+				},
+				{
+					fields: { pattern: "(?<first>\\w+) (?<last>\\w+)" },
+					input: "Ada Lovelace, Grace Hopper",
+					label: "Named groups for names",
+				},
+				{
+					fields: { pattern: "(\\d{4})-(\\d{2})-(\\d{2})", replacement: "$3/$2/$1" },
+					input: "Released 2026-11-11",
+					label: "Reformat dates",
+				},
+				{
+					fields: { flags: "gi", pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}" },
+					input: "ADA@example.com, grace@example.org",
+					label: "Find emails, any case",
+				},
+			],
 		},
 		endpoint: "/api/regex-tester",
 		id: "regex-tester",
@@ -1103,8 +1676,28 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Convert request",
 			category: "Requests",
 			examples: [
-				"curl -H 'Accept: application/json' https://api.example.com/items",
-				"GET /items HTTP/1.1\nHost: api.example.com",
+				{
+					fields: { outputFormat: "curl-to-fetch" },
+					input:
+						"curl -X POST -H 'Content-Type: application/json' --data-raw '{\"ok\":true}' https://api.example.com/items",
+					label: "curl to Fetch",
+				},
+				{
+					fields: { outputFormat: "curl-to-json" },
+					input: "curl -H 'Accept: application/json' https://api.example.com/items",
+					label: "curl to JSON",
+				},
+				{
+					fields: { outputFormat: "har-to-curl" },
+					input:
+						'{"log":{"entries":[{"request":{"method":"GET","url":"https://api.example.com/items","headers":[{"name":"Accept","value":"application/json"}]}}]}}',
+					label: "HAR entry to curl",
+				},
+				{
+					fields: { outputFormat: "request-to-curl" },
+					input: "GET /items HTTP/1.1\nHost: api.example.com\nAccept: application/json",
+					label: "Raw HTTP to curl",
+				},
 			],
 		},
 		endpoint: "/api/request-transform",
@@ -1157,8 +1750,31 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Inspect URL",
 			category: "URLs",
 			examples: [
-				"https://example.com/search?q=pashi&tag=tools",
-				"Email hello@example.com or read https://pashi.app",
+				{
+					fields: { outputFormat: "parse" },
+					input: "https://example.com/search?q=pashi&tag=tools#results",
+					label: "Parse a URL",
+				},
+				{
+					fields: { outputFormat: "query" },
+					input: "https://example.com/search?q=pashi&tag=tools&tag=docs",
+					label: "Read query parameters",
+				},
+				{
+					fields: { outputFormat: "extract-links" },
+					input: "Read https://pashi.app and https://example.com/docs today.",
+					label: "Extract links from text",
+				},
+				{
+					fields: { outputFormat: "extract-emails" },
+					input: "Email hello@example.com or support@pashi.app for help.",
+					label: "Extract email addresses",
+				},
+				{
+					fields: { outputFormat: "dedupe-links" },
+					input: "https://pashi.app\nhttps://example.com\nhttps://pashi.app",
+					label: "Deduplicate links",
+				},
 			],
 		},
 		endpoint: "/api/url-transform",
@@ -1237,7 +1853,74 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert unit",
 			category: "Units",
-			examples: ["10 m", "100 c", "1048576 b"],
+			examples: [
+				{ fields: { outputFormat: "m" }, input: "33 ft", label: "Feet to metres" },
+				{ fields: { outputFormat: "km" }, input: "26.2 mi", label: "Miles to kilometres" },
+				{
+					fields: { fromUnit: "mi", outputFormat: "km" },
+					input: "26.2",
+					label: "Bare number as miles",
+				},
+				{ fields: { outputFormat: "cm" }, input: "12 in", label: "Inches to centimetres" },
+				{ fields: { outputFormat: "mm" }, input: "0.5 in", label: "Inches to millimetres" },
+				{ fields: { outputFormat: "in" }, input: "30 cm", label: "Centimetres to inches" },
+				{ fields: { outputFormat: "ft" }, input: "10 m", label: "Metres to feet" },
+				{ fields: { outputFormat: "yd" }, input: "100 m", label: "Metres to yards" },
+				{ fields: { outputFormat: "mi" }, input: "5 km", label: "Kilometres to miles" },
+				{ fields: { outputFormat: "kg" }, input: "150 lb", label: "Pounds to kilograms" },
+				{ fields: { outputFormat: "g" }, input: "8 oz", label: "Ounces to grams" },
+				{ fields: { outputFormat: "lb" }, input: "70 kg", label: "Kilograms to pounds" },
+				{ fields: { outputFormat: "oz" }, input: "250 g", label: "Grams to ounces" },
+				{ fields: { outputFormat: "c" }, input: "98.6 f", label: "Fahrenheit to Celsius" },
+				{ fields: { outputFormat: "f" }, input: "100 c", label: "Celsius to Fahrenheit" },
+				{ fields: { outputFormat: "k" }, input: "25 c", label: "Celsius to kelvin" },
+				{ fields: { outputFormat: "b" }, input: "4 kb", label: "Kilobytes to bytes" },
+				{ fields: { outputFormat: "kb" }, input: "1048576 b", label: "Bytes to kilobytes" },
+				{ fields: { outputFormat: "mb" }, input: "2 gb", label: "Gigabytes to megabytes" },
+				{ fields: { outputFormat: "gb" }, input: "4096 mb", label: "Megabytes to gigabytes" },
+				{ fields: { outputFormat: "tb" }, input: "2048 gb", label: "Gigabytes to terabytes" },
+				{ fields: { outputFormat: "mps" }, input: "36 kph", label: "km/h to m/s" },
+				{ fields: { outputFormat: "kph" }, input: "70 mph", label: "mph to km/h" },
+				{ fields: { outputFormat: "mph" }, input: "100 kph", label: "km/h to mph" },
+				{ fields: { outputFormat: "kn" }, input: "50 kph", label: "km/h to knots" },
+				{
+					fields: { outputFormat: "sqm" },
+					input: "500 sqft",
+					label: "Square feet to square metres",
+				},
+				{
+					fields: { outputFormat: "sqft" },
+					input: "50 sqm",
+					label: "Square metres to square feet",
+				},
+				{ fields: { outputFormat: "acre" }, input: "10000 sqm", label: "Square metres to acres" },
+				{ fields: { outputFormat: "l" }, input: "5 gal", label: "Gallons to litres" },
+				{ fields: { outputFormat: "ml" }, input: "1.5 l", label: "Litres to millilitres" },
+				{ fields: { outputFormat: "gal" }, input: "20 l", label: "Litres to gallons" },
+				{ fields: { outputFormat: "deg" }, input: "3.14159 rad", label: "Radians to degrees" },
+				{ fields: { outputFormat: "rad" }, input: "180 deg", label: "Degrees to radians" },
+				{ fields: { outputFormat: "s" }, input: "15 min", label: "Minutes to seconds" },
+				{ fields: { outputFormat: "min" }, input: "2.5 h", label: "Hours to minutes" },
+				{ fields: { outputFormat: "h" }, input: "90 min", label: "Minutes to hours" },
+				{ fields: { outputFormat: "pa" }, input: "101.325 kpa", label: "Kilopascals to pascals" },
+				{ fields: { outputFormat: "kpa" }, input: "32 psi", label: "PSI to kilopascals" },
+				{ fields: { outputFormat: "bar" }, input: "32 psi", label: "PSI to bar" },
+				{ fields: { outputFormat: "psi" }, input: "2.2 bar", label: "Bar to PSI" },
+				{ fields: { outputFormat: "j" }, input: "250 cal", label: "Calories to joules" },
+				{ fields: { outputFormat: "kj" }, input: "2000 cal", label: "Calories to kilojoules" },
+				{ fields: { outputFormat: "kwh" }, input: "36000 kj", label: "Kilojoules to kWh" },
+				{ fields: { outputFormat: "cal" }, input: "100 kj", label: "Kilojoules to calories" },
+				{ fields: { outputFormat: "w" }, input: "1 hp", label: "Horsepower to watts" },
+				{ fields: { outputFormat: "kw" }, input: "300 hp", label: "Horsepower to kilowatts" },
+				{ fields: { outputFormat: "hp" }, input: "150 kw", label: "Kilowatts to horsepower" },
+				{ fields: { outputFormat: "n" }, input: "100 lbf", label: "Pound-force to newtons" },
+				{ fields: { outputFormat: "lbf" }, input: "500 n", label: "Newtons to pound-force" },
+				{ fields: { outputFormat: "hz" }, input: "2.4 khz", label: "Kilohertz to hertz" },
+				{ fields: { outputFormat: "khz" }, input: "1.5 mhz", label: "Megahertz to kilohertz" },
+				{ fields: { outputFormat: "mhz" }, input: "88000 khz", label: "Kilohertz to megahertz" },
+				{ fields: { outputFormat: "nm" }, input: "250 lbft", label: "lb-ft to newton metres" },
+				{ fields: { outputFormat: "lbft" }, input: "400 nm", label: "Newton metres to lb-ft" },
+			],
 		},
 		endpoint: "/api/unit-converter",
 		id: "unit-converter",
@@ -1309,7 +1992,13 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert image",
 			category: "Media",
-			examples: [],
+			examples: [
+				{ fields: { outputFormat: "webp" }, label: "WebP" },
+				{ fields: { outputFormat: "webp", quality: "80" }, label: "WebP at quality 80" },
+				{ fields: { outputFormat: "avif" }, label: "AVIF" },
+				{ fields: { outputFormat: "png" }, label: "PNG" },
+				{ fields: { outputFormat: "ico" }, label: "Favicon ICO" },
+			],
 		},
 		capabilities: { acceptsSourceUrl: true, compactInput: true },
 		endpoint: "/api/image-format",
@@ -1452,7 +2141,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Generate Slack-style GIF",
 			category: "Media",
-			examples: [],
+			examples: [
+				{ fields: { effect: "spinning", outputFormat: "gif" }, label: "Spinning" },
+				{ fields: { effect: "party", outputFormat: "gif" }, label: "Party" },
+				{ fields: { effect: "intensifies", outputFormat: "gif" }, label: "Intensifies" },
+			],
 		},
 		capabilities: { batchesByEffect: true },
 		endpoint: "/api/slackmoji",
@@ -1543,7 +2236,10 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Generate HDR emoji",
 			category: "Media",
-			examples: [],
+			examples: [
+				{ fields: { gamma: "1.1", intensity: "2.1", outputFormat: "png" }, label: "Maximum glow" },
+				{ fields: { gamma: "1.0", intensity: "1.2", outputFormat: "png" }, label: "Subtle glow" },
+			],
 		},
 		endpoint: "/api/slack-hdr-emoji",
 		id: "slack-hdr-emoji",
@@ -1647,7 +2343,22 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert file",
 			category: "Files",
-			examples: [],
+			examples: [
+				{ fields: { outputFormat: "txt" }, label: "To plain text" },
+				{ fields: { outputFormat: "md" }, label: "To Markdown" },
+				{ fields: { outputFormat: "json" }, label: "To JSON" },
+				{ fields: { outputFormat: "csv" }, label: "To CSV" },
+				{ fields: { outputFormat: "tsv" }, label: "To TSV" },
+				{ fields: { outputFormat: "html" }, label: "To HTML table" },
+				{ fields: { outputFormat: "xls" }, label: "To Excel XML" },
+				{ fields: { outputFormat: "yaml" }, label: "To YAML" },
+				{ fields: { outputFormat: "toml" }, label: "To TOML" },
+				{ fields: { outputFormat: "xml" }, label: "To XML" },
+				{ fields: { outputFormat: "ini" }, label: "To INI" },
+				{ fields: { outputFormat: "properties" }, label: "To properties" },
+				{ fields: { outputFormat: "env" }, label: "To env" },
+				{ fields: { outputFormat: "sql" }, label: "To SQL inserts" },
+			],
 		},
 		id: "file-format",
 		endpoint: "/api/file-format",
@@ -1733,7 +2444,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert document",
 			category: "Documents",
-			examples: [],
+			examples: [
+				{ fields: { outputFormat: "docx" }, label: "Word document" },
+				{ fields: { outputFormat: "epub" }, label: "EPUB e-book" },
+				{ fields: { outputFormat: "md" }, label: "Markdown" },
+			],
 		},
 		endpoint: "/api/document-format",
 		id: "document-format",
@@ -1829,7 +2544,14 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert video",
 			category: "Media",
-			examples: [],
+			examples: [
+				{ fields: { outputFormat: "webm" }, label: "Convert to WebM" },
+				{ fields: { operation: "thumbnail", outputFormat: "png" }, label: "Thumbnail frame" },
+				{ fields: { operation: "extract-audio", outputFormat: "mp3" }, label: "Extract audio" },
+				{ fields: { operation: "remove-audio", outputFormat: "mp4" }, label: "Remove audio" },
+				{ fields: { operation: "trim", outputFormat: "mp4" }, label: "Trim" },
+				{ fields: { operation: "grayscale", outputFormat: "mp4" }, label: "Greyscale" },
+			],
 		},
 		endpoint: "/api/video-format",
 		id: "video-format",
@@ -1920,7 +2642,12 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		display: {
 			actionLabel: "Convert audio",
 			category: "Media",
-			examples: [],
+			examples: [
+				{ fields: { outputFormat: "mp3" }, label: "Convert to MP3" },
+				{ fields: { outputFormat: "wav" }, label: "Convert to WAV" },
+				{ fields: { operation: "trim", outputFormat: "mp3" }, label: "Trim" },
+				{ fields: { operation: "waveform", outputFormat: "png" }, label: "Waveform image" },
+			],
 		},
 		endpoint: "/api/audio-format",
 		id: "audio-format",
