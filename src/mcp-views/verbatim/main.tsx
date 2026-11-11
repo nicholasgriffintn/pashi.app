@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { host, readViewData } from "../shared/host";
 
 import "../shared/view.css";
-import "../shared/readings.css";
+import "../../shared-ui/readings.css";
 import { isVerbatimConfig } from "./config";
 import { VerbatimApp } from "./VerbatimApp";
 

@@ -28,6 +28,9 @@ const AppsPage = lazy(() =>
 const AskPage = lazy(() =>
 	import("./pages/AskPage").then((module) => ({ default: module.AskPage })),
 );
+const DecidePage = lazy(() =>
+	import("./pages/DecidePage").then((module) => ({ default: module.DecidePage })),
+);
 const ExplainPage = lazy(() =>
 	import("./pages/ExplainPage").then((module) => ({ default: module.ExplainPage })),
 );
@@ -64,6 +67,7 @@ function App() {
 							<Route element={<AppsPage />} path="/labs/apps" />
 							<Route element={<AppPage />} path="/labs/apps/:appId" />
 							<Route element={<AskPage />} path="/labs/ask" />
+							<Route element={<DecidePage />} path="/labs/decide" />
 							<Route element={<ExplainPage />} path="/labs/explain" />
 							<Route element={<SignInPage />} path="/sign-in" />
 							<Route element={<AboutPage />} path="/about" />

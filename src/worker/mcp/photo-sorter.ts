@@ -9,9 +9,9 @@ import {
 	readDecisionScore,
 	roundDecisionScore,
 } from "../services/polychat/decisions";
+import { requirePolychatPro } from "../services/polychat/pro-gate";
 import type { PolychatSessionEnv } from "../services/polychat/session";
 import { readBase64DataUrl } from "../utils/data-url";
-import { requirePolychatPro } from "./pro-gate";
 
 export interface PhotoPile {
 	description: string;

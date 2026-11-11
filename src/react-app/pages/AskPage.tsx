@@ -4,14 +4,8 @@ import { useState, type FormEvent } from "react";
 import { AskAnswer } from "../components/AskAnswer";
 import { KeyRequiredNotice } from "../components/KeyRequiredNotice";
 import { askPashi } from "../lib/ask-api";
+import { ASK_EXAMPLES } from "../lib/labs-examples";
 import { useDocumentMetadata } from "../lib/use-document-metadata";
-
-const EXAMPLES = [
-	"five uppercase v7 uuids",
-	"a strong 24 character password with symbols",
-	"turn this markdown into jira markup",
-	"what are the odds of rolling 15 or more on 3d6",
-];
 
 export function AskPage() {
 	const [request, setRequest] = useState("");
@@ -55,10 +49,10 @@ export function AskPage() {
 			</form>
 
 			<ul className="ask-examples">
-				{EXAMPLES.map((example) => (
-					<li key={example}>
-						<button onClick={() => setRequest(example)} type="button">
-							{example}
+				{ASK_EXAMPLES.map((example) => (
+					<li key={example.label}>
+						<button onClick={() => setRequest(example.request)} type="button">
+							{example.label}
 						</button>
 					</li>
 				))}

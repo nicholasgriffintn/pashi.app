@@ -1,6 +1,6 @@
+import { formatProbabilityPercent } from "../../../shared-ui/probability";
 import { POLIS_ACTION_LABELS, POLIS_ACTIONS } from "../../../shared/polis";
 import { formatCompactCount } from "../../shared/numbers";
-import { formatProbabilityPercent } from "../../shared/probability";
 import { POLIS_MODEL_BUDGETS, type PolisStatus } from "../engine/protocol";
 import type { PolisEngine } from "../usePolisEngine";
 

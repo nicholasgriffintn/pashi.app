@@ -19,10 +19,10 @@ import { runWorkersAiObject, type WorkersAiEnv } from "../ai/workers-ai";
 import { invalidRequest } from "../services/generators/errors";
 import { createDecision } from "../services/polychat/client";
 import { readDecisionAnswers, readDecisionNoul } from "../services/polychat/decisions";
+import { requirePolychatPro } from "../services/polychat/pro-gate";
 import type { PolychatSessionEnv } from "../services/polychat/session";
 import { mapWithConcurrency } from "../utils/async";
 import { draftLaw, draftScenario } from "./polis-drafts";
-import { requirePolychatPro } from "./pro-gate";
 
 const APP_NAME = "Polis";
 const CONCURRENT_DECISIONS = 4;

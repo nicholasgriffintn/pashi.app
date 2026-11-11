@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { FULLSCREEN_CAPABILITIES, host, readViewData } from "../shared/host";
 
 import "../shared/view.css";
-import "../shared/readings.css";
+import "../../shared-ui/readings.css";
 import { isPolisViewData } from "./config";
 import { PolisApp } from "./PolisApp";
 import { SharedPolisTown } from "./SharedPolisTown";
