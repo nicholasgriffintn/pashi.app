@@ -2,12 +2,13 @@ import { Hono, type Context } from "hono";
 
 import { runEvaluation } from "../ai/evaluation/runner";
 import type { AiClient } from "../ai/run";
-import { aiClientFor, requirePolychat } from "../middleware/polychat-access";
+import { aiClientFor, attachPolychat, requirePolychat } from "../middleware/polychat-access";
 import { recordEvent } from "../services/events";
 import { createFeatureStatus } from "../services/features";
 import { routeRequestToTool } from "../services/labs/ask";
+import { DECIDE_BODY_BYTES, decide } from "../services/labs/decide";
 import { explainInput, isExplainSubject } from "../services/labs/explain";
-import { readGeneratorBody } from "../utils/body";
+import { readBoundedJson, readGeneratorBody } from "../utils/body";
 import { errorJson } from "../utils/http";
 import { guard, type AppContext } from "./context";
 
@@ -90,6 +91,22 @@ export function createLabsRoutes() {
 		});
 
 		return c.json(explanation);
+	});
+
+	routes.post("/decide", async (c) => {
+		if (aiUnavailable(c)) {
+			return errorJson("AI is not available.", 503, "unavailable");
+		}
+
+		await attachPolychat(c);
+
+		const limited = await guard(c, { isAiMode: true });
+
+		if (limited) {
+			return limited;
+		}
+
+		return c.json(await decide(c.env, aiClientFor(c), await readBoundedJson(c, DECIDE_BODY_BYTES)));
 	});
 
 	routes.post("/evaluate", async (c) => {

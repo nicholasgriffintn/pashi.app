@@ -4,7 +4,7 @@ import {
 	describeProbability,
 	formatProbabilityPercent,
 	probabilityTone,
-} from "../shared/probability";
+} from "../../shared-ui/probability";
 import type { VerbatimWord } from "./types";
 import type { TranscriptEntry } from "./useLiveTranscript";
 import { keyedWords } from "./words";

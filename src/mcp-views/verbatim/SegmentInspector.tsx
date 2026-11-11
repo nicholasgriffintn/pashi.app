@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
-import { formatProbabilityPercent } from "../shared/probability";
-import { ProbabilityDial } from "../shared/ProbabilityDial";
-import { StepScale } from "../shared/StepScale";
+import { formatProbabilityPercent } from "../../shared-ui/probability";
+import { ProbabilityDial } from "../../shared-ui/ProbabilityDial";
+import { StepScale } from "../../shared-ui/StepScale";
 import type { TranscribedSegment } from "./types";
 import { keyedWords } from "./words";
 
