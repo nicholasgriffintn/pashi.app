@@ -134,6 +134,13 @@ export function CommandPalette() {
 				run: go("/labs/explain"),
 				search: "explain regex cron jwt curl sql",
 			},
+			{
+				group: "Go",
+				id: "go-decide",
+				label: "Decide",
+				run: go("/labs/decide"),
+				search: "decide decision classify yes no choice score probability",
+			},
 			{ group: "Go", id: "go-api", label: "API", run: go("/api"), search: "api docs endpoints" },
 			{ group: "Go", id: "go-about", label: "About", run: go("/about"), search: "about" },
 		];

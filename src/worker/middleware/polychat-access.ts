@@ -20,16 +20,22 @@ type PolychatContext = {
 	Variables: PolychatVariables;
 };
 
-export async function requirePolychat<E extends PolychatContext>(c: Context<E>) {
+export async function attachPolychat<E extends PolychatContext>(c: Context<E>) {
 	const credential = await resolvePolychatCredential(c.req.raw, c.env);
 
-	if (!credential) {
+	if (credential) {
+		c.set("polychat", credential);
+	}
+
+	return credential;
+}
+
+export async function requirePolychat<E extends PolychatContext>(c: Context<E>) {
+	if (!(await attachPolychat(c))) {
 		return errorJson("Connect Polychat to use AI.", 401, "unauthorised", {
 			"Cache-Control": "no-store",
 		});
 	}
-
-	c.set("polychat", credential);
 
 	return undefined;
 }
@@ -65,11 +71,7 @@ export async function requireConversionAccess<E extends PolychatContext>(c: Cont
 }
 
 export async function resolveAgentAccess<E extends PolychatContext>(c: Context<E>) {
-	const credential = await resolvePolychatCredential(c.req.raw, c.env);
-
-	if (credential) {
-		c.set("polychat", credential);
-
+	if (await attachPolychat(c)) {
 		return undefined;
 	}
 

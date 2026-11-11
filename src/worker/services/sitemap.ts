@@ -17,6 +17,7 @@ function createSitemapXml(origin: string) {
 		"/tools",
 		"/labs",
 		"/labs/apps",
+		"/labs/decide",
 		"/about",
 		"/api",
 		...listGeneratorTools().map((tool) => `/tools/${tool.id}`),
