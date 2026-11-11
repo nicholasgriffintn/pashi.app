@@ -14,6 +14,7 @@ import {
 	nextCronRuns,
 	parseCronExpression,
 } from "../../utils/cron.ts";
+import { detectFileSignature } from "../../utils/file-signature.ts";
 import { base64UrlToBytes } from "../../utils/generation.ts";
 import { identifyHash } from "../../utils/hash-type.ts";
 import {
@@ -282,7 +283,7 @@ function inspectMimeSignature(input: string) {
 		throw new DeveloperInspectError("Enter hex bytes, base64 text, or a data URL.");
 	}
 
-	const signature = detectSignature(bytes);
+	const signature = detectFileSignature(bytes);
 
 	return {
 		bytes: bytes
@@ -412,54 +413,6 @@ function base64Bytes(value: string) {
 	} catch {
 		return [];
 	}
-}
-
-function detectSignature(bytes: readonly number[]) {
-	const starts = (signature: readonly number[]) =>
-		signature.every((byte, index) => bytes[index] === byte);
-	const ascii = String.fromCharCode(...bytes.slice(0, 16));
-
-	if (starts([0x89, 0x50, 0x4e, 0x47])) {
-		return { extension: "png", mimeType: "image/png", name: "PNG image" };
-	}
-
-	if (starts([0xff, 0xd8, 0xff])) {
-		return { extension: "jpg", mimeType: "image/jpeg", name: "JPEG image" };
-	}
-
-	if (ascii.startsWith("GIF87a") || ascii.startsWith("GIF89a")) {
-		return { extension: "gif", mimeType: "image/gif", name: "GIF image" };
-	}
-
-	if (ascii.startsWith("%PDF-")) {
-		return { extension: "pdf", mimeType: "application/pdf", name: "PDF document" };
-	}
-
-	if (starts([0x50, 0x4b, 0x03, 0x04])) {
-		return { extension: "zip", mimeType: "application/zip", name: "ZIP archive" };
-	}
-
-	if (ascii.slice(0, 4) === "RIFF" && ascii.slice(8, 12) === "WEBP") {
-		return { extension: "webp", mimeType: "image/webp", name: "WebP image" };
-	}
-
-	if (ascii.startsWith("OggS")) {
-		return { extension: "ogg", mimeType: "application/ogg", name: "Ogg container" };
-	}
-
-	if (ascii.startsWith("ID3")) {
-		return { extension: "mp3", mimeType: "audio/mpeg", name: "MP3 audio" };
-	}
-
-	if (ascii.startsWith("\0asm")) {
-		return { extension: "wasm", mimeType: "application/wasm", name: "WebAssembly binary" };
-	}
-
-	return {
-		extension: "unknown",
-		mimeType: "application/octet-stream",
-		name: "Unknown binary data",
-	};
 }
 
 function base64UrlByteLength(value: string) {
