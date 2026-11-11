@@ -1,4 +1,8 @@
+import { BudgetExceededError } from "../../utils/budget.ts";
+import { diffJson } from "../../utils/json-diff.ts";
+
 export type DeveloperTextFormat =
+	| "diff-json"
 	| "diff-lines"
 	| "minify-css"
 	| "minify-html"
@@ -11,6 +15,7 @@ export type DeveloperTextFormat =
 
 export const DEVELOPER_TEXT_FORMATS: readonly DeveloperTextFormat[] = [
 	"diff-lines",
+	"diff-json",
 	"pretty-json",
 	"minify-json",
 	"pretty-css",
@@ -21,7 +26,14 @@ export const DEVELOPER_TEXT_FORMATS: readonly DeveloperTextFormat[] = [
 	"minify-xml",
 ];
 
-export class DeveloperTextError extends Error {}
+export class DeveloperTextError extends Error {
+	readonly status: number;
+
+	constructor(message: string, status = 400) {
+		super(message);
+		this.status = status;
+	}
+}
 
 interface DeveloperTextOptions {
 	left?: string;
@@ -56,6 +68,8 @@ export function transformDeveloperText(
 	options: DeveloperTextOptions = {},
 ) {
 	switch (format) {
+		case "diff-json":
+			return diffJsonDocuments(input, options);
 		case "diff-lines":
 			return diffLines(input, options);
 		case "minify-css":
@@ -77,11 +91,27 @@ export function transformDeveloperText(
 	}
 }
 
-function parseJson(input: string): unknown {
+function parseJson(input: string, message = "Enter valid JSON."): unknown {
 	try {
 		return JSON.parse(input);
 	} catch {
-		throw new DeveloperTextError("Enter valid JSON.");
+		throw new DeveloperTextError(message);
+	}
+}
+
+function diffJsonDocuments(input: string, options: DeveloperTextOptions) {
+	const [left, right] = diffInputs(input, options);
+	const leftDocument = parseJson(left, "Enter valid JSON for the left document.");
+	const rightDocument = parseJson(right, "Enter valid JSON for the right document.");
+
+	try {
+		return JSON.stringify(diffJson(leftDocument, rightDocument), null, 2);
+	} catch (error) {
+		if (error instanceof BudgetExceededError) {
+			throw new DeveloperTextError(error.message, 422);
+		}
+
+		throw error;
 	}
 }
 

@@ -1,3 +1,5 @@
+import { BudgetExceededError } from "../../utils/budget.ts";
+import { RegexTesterError, testRegex } from "../../utils/regex-tester.ts";
 import {
 	isTextTransformFormat,
 	TEXT_TRANSFORM_FORMATS,
@@ -123,7 +125,11 @@ function jsonTransformFormat(value: string | undefined) {
 }
 
 function jsonTransformMimeType(format: (typeof JSON_TRANSFORM_FORMATS)[number]) {
-	return format === "flatten" || format === "format" || format === "minify" || format === "sort"
+	return format === "flatten" ||
+		format === "format" ||
+		format === "minify" ||
+		format === "query" ||
+		format === "sort"
 		? "application/json;charset=utf-8"
 		: "text/plain;charset=utf-8";
 }
@@ -247,7 +253,7 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			);
 		} catch (error) {
 			if (error instanceof DeveloperTextError) {
-				throw new ConverterRequestError(error.message);
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;
@@ -322,13 +328,13 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 				"json-transform",
 				"JSON transform",
 				input,
-				transformJson(input, outputFormat),
+				transformJson(input, outputFormat, fields),
 				`JSON transformed with ${outputFormat}.`,
 				{ mimeType: jsonTransformMimeType(outputFormat) },
 			);
 		} catch (error) {
 			if (error instanceof JsonTransformError) {
-				throw new ConverterRequestError(error.message);
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;
@@ -364,6 +370,28 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 						: "text/plain;charset=utf-8",
 			},
 		);
+	},
+	"regex-tester": ({ fields, input }) => {
+		try {
+			return textResult(
+				"regex-tester",
+				"Regex test",
+				input,
+				JSON.stringify(testRegex(input, fields), null, 2),
+				"Regular expression tested against the text.",
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof BudgetExceededError) {
+				throw new ConverterRequestError(error.message, 422);
+			}
+
+			if (error instanceof RegexTesterError) {
+				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
 	},
 	"request-transform": ({ fields, input }) => {
 		const outputFormat = requestTransformFormat(fields.outputFormat || fields.format);
