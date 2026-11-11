@@ -1,4 +1,6 @@
 import { isRecord } from "../../../shared/records.ts";
+import { BudgetExceededError } from "../../utils/budget.ts";
+import { JsonQueryError, queryJson } from "../../utils/json-query.ts";
 
 export type JsonTransformFormat =
 	| "base64"
@@ -8,6 +10,7 @@ export type JsonTransformFormat =
 	| "from-base64"
 	| "keys"
 	| "minify"
+	| "query"
 	| "sort"
 	| "unescape";
 
@@ -21,15 +24,31 @@ export const JSON_TRANSFORM_FORMATS: readonly JsonTransformFormat[] = [
 	"from-base64",
 	"escape",
 	"unescape",
+	"query",
 ];
 
-export class JsonTransformError extends Error {}
+export class JsonTransformError extends Error {
+	readonly status: number;
+
+	constructor(message: string, status = 400) {
+		super(message);
+		this.status = status;
+	}
+}
+
+interface JsonTransformOptions {
+	path?: string;
+}
 
 export function isJsonTransformFormat(value: string): value is JsonTransformFormat {
 	return JSON_TRANSFORM_FORMATS.some((format) => format === value);
 }
 
-export function transformJson(input: string, format: JsonTransformFormat) {
+export function transformJson(
+	input: string,
+	format: JsonTransformFormat,
+	options: JsonTransformOptions = {},
+) {
 	switch (format) {
 		case "base64":
 			return bytesToBase64(new TextEncoder().encode(input));
@@ -45,6 +64,8 @@ export function transformJson(input: string, format: JsonTransformFormat) {
 			return jsonKeys(parseJson(input)).sort().join("\n");
 		case "minify":
 			return JSON.stringify(parseJson(input));
+		case "query":
+			return JSON.stringify(queryJsonDocument(parseJson(input), options.path), null, 2);
 		case "sort":
 			return JSON.stringify(sortJson(parseJson(input)), null, 2);
 		case "unescape":
@@ -57,6 +78,30 @@ function parseJson(input: string): unknown {
 		return JSON.parse(input);
 	} catch {
 		throw new JsonTransformError("Enter valid JSON.");
+	}
+}
+
+function queryJsonDocument(document: unknown, path: string | undefined) {
+	const query = path?.trim();
+
+	if (!query) {
+		throw new JsonTransformError(
+			"Enter a JSONPath expression in the path field, for example $.users[*].name.",
+		);
+	}
+
+	try {
+		return queryJson(document, query);
+	} catch (error) {
+		if (error instanceof BudgetExceededError) {
+			throw new JsonTransformError(error.message, 422);
+		}
+
+		if (error instanceof JsonQueryError) {
+			throw new JsonTransformError(error.message);
+		}
+
+		throw error;
 	}
 }
 
