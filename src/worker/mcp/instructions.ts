@@ -1,10 +1,11 @@
+import { isMcpConverter } from "../services/converters/availability";
 import { listConverterTools } from "../services/converters/catalogue";
 import { listGeneratorTools } from "../services/generators/catalogue";
 import { listMcpAppToolNames, listMcpTools, type McpCaller } from "./tools";
 
 export function buildMcpInstructions(caller: McpCaller) {
 	const generators = listGeneratorTools().length;
-	const converters = listConverterTools().filter((tool) => tool.runtime === "worker").length;
+	const converters = listConverterTools().filter(isMcpConverter).length;
 	const apps = listMcpAppToolNames();
 	const callable = new Set(listMcpTools(caller).map((tool) => tool.name));
 	const open = apps.filter((name) => callable.has(name));

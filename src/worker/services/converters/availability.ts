@@ -34,3 +34,7 @@ export function isConverterAvailable(tool: ConverterTool, env: FeatureEnv | unde
 
 	return tool.runtime === "worker" || hasQueuedConversionServices(env);
 }
+
+export function isMcpConverter(tool: ConverterTool) {
+	return tool.runtime === "worker" && !tool.capabilities?.requiresAccount;
+}

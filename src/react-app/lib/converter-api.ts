@@ -50,6 +50,8 @@ export interface ConverterCapabilities {
 	batchesByEffect?: boolean;
 	binaryInput?: boolean;
 	compactInput?: boolean;
+	maxUploadBytes?: number;
+	requiresAccount?: boolean;
 	usesAiBinding?: boolean;
 }
 

@@ -30,6 +30,7 @@ export interface PolicyInput {
 	isExpensiveGenerator: boolean;
 	isUpload: boolean;
 	method: string;
+	fetchesNetwork?: boolean;
 	usesAiBinding?: boolean;
 }
 
@@ -51,7 +52,8 @@ export function policyFor(input: PolicyInput): PolicyName {
 		input.isContainerRuntime ||
 		input.isUpload ||
 		input.isExpensiveGenerator ||
-		input.usesAiBinding
+		input.usesAiBinding ||
+		input.fetchesNetwork
 	) {
 		return "expensive";
 	}

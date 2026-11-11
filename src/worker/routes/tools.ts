@@ -101,7 +101,16 @@ export function createToolRoutes() {
 				return createConverterResponse(type, request, c.env, params, application.id);
 			}
 
+			if (converterTool.capabilities?.requiresAccount) {
+				const denied = await requireConversionAccess(c);
+
+				if (denied) {
+					return denied;
+				}
+			}
+
 			const limited = await guard(c, {
+				fetchesNetwork: converterTool.capabilities?.fetchesNetwork,
 				usesAiBinding: converterTool.capabilities?.usesAiBinding,
 			});
 
@@ -231,7 +240,16 @@ export function createToolRoutes() {
 				);
 			}
 
+			if (converterTool.capabilities?.requiresAccount) {
+				const denied = await requireConversionAccess(c);
+
+				if (denied) {
+					return denied;
+				}
+			}
+
 			const limited = await guard(c, {
+				fetchesNetwork: converterTool.capabilities?.fetchesNetwork,
 				usesAiBinding: converterTool.capabilities?.usesAiBinding,
 			});
 
@@ -242,7 +260,7 @@ export function createToolRoutes() {
 			}
 
 			const body = converterTool.capabilities?.binaryInput
-				? await readConverterUploadBody(c)
+				? await readConverterUploadBody(c, converterTool.capabilities?.maxUploadBytes)
 				: await readConverterBody(c);
 			const response = await createConverterResponse(
 				type,

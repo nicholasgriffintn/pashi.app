@@ -1,6 +1,7 @@
 import { isRecord } from "../../shared/records";
 import type { AiClient } from "../ai/run";
 import { isExpensiveGeneratorId, policyFor, type PolicyName } from "../security/policies";
+import { isMcpConverter } from "../services/converters/availability";
 import { findConverterTool } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { createConverterResponse } from "../services/converters/response";
@@ -50,12 +51,16 @@ export function generatorRatePolicy(argumentsValue: ToolArguments): PolicyName {
 }
 
 export function converterRatePolicy(argumentsValue: ToolArguments): PolicyName {
+	const converter = findConverterTool(readToolId(argumentsValue));
+
 	return policyFor({
+		fetchesNetwork: converter?.capabilities?.fetchesNetwork,
 		isAiMode: false,
-		isContainerRuntime: findConverterTool(readToolId(argumentsValue))?.runtime === "container",
+		isContainerRuntime: converter?.runtime === "container",
 		isExpensiveGenerator: false,
 		isUpload: false,
 		method: "POST",
+		usesAiBinding: converter?.capabilities?.usesAiBinding,
 	});
 }
 
@@ -119,7 +124,9 @@ export async function runConverter(
 ): Promise<McpToolResult> {
 	const type = requireToolId(argumentsValue);
 
-	if (findConverterTool(type)?.runtime === "container") {
+	const converter = findConverterTool(type);
+
+	if (converter && !isMcpConverter(converter)) {
 		throw new Error("Media and document conversion is not available over MCP.");
 	}
 

@@ -9,7 +9,7 @@ The home for side projects. Named for the manga SFX `pashi`: a crisp smack or cl
 Pashi has three layers on one domain.
 
 - **Hub** at `/` lists every project, including the ones that live on their own subdomains.
-- **Tools** at `/tools` is the console: 79 generators and 23 converters, with exports to JSON, CSV and TXT. Text conversion runs in the Worker; media and document conversion runs in a container behind a queue.
+- **Tools** at `/tools` is the console: 79 generators and 26 converters, with exports to JSON, CSV and TXT. Text conversion, site inspection and the AI media tools run in the Worker; media and document format conversion runs in a container behind a queue.
 - **Labs** at `/labs` is where AI experiments live before they earn a permanent home. Ask Pashi routes a plain English request to the right tool, runs it when the tool is simple and otherwise opens it with the form filled in. Decide asks a Polychat decision model typed yes or no, choice and score questions about some text or an image.
 
 Every tool is also a URL. See [/api](https://pashi.app/api) for the documentation, generated from the live catalogue, [/api/info](https://pashi.app/api/info) for the raw contract, or [/api/openapi.json](https://pashi.app/api/openapi.json) for an OpenAPI 3.1 document covering every path.
@@ -50,7 +50,7 @@ To try them, add `https://pashi.app/mcp` as an MCP server in Polychat (or any ho
 
 AI runs on [Polychat](https://polychat.app). AI mode and the Labs endpoints need a connected Polychat account, and usage counts against that account's plan.
 
-Container-backed converters need an application API key or a connected Polychat Pro account. Send a key in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
+Container-backed converters and the paid AI media tools (audio transcription, image description) need an application API key or a connected Polychat Pro account. Send a key in either `Authorization: Bearer <api-key>` or `X-API-Key`. Everything else is open, rate limited per IP address.
 
 Locally, `pnpm dev` seeds a permanent development key into the local KV store the first time it runs, and writes it to `.env.local` so the sign-in page can offer it with one click. Run `pnpm seed:dev` to do the seeding on its own.
 

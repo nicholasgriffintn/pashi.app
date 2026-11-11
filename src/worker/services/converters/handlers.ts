@@ -10,6 +10,13 @@ import { safeFilename } from "../../utils/text.ts";
 import { convertUnitText, UNIT_OUTPUTS, UnitConversionError } from "../../utils/unit-conversion.ts";
 import { jiraToMarkdown, markdownToJira } from "./atlassian-markup.ts";
 import {
+	AUDIO_TRANSCRIPTION_FORMATS,
+	AudioTranscriptionError,
+	isAudioTranscriptionFormat,
+	normaliseTranscriptionLanguage,
+	transcribeAudio,
+} from "./audio-transcription.ts";
+import {
 	DATA_SHAPE_FORMATS,
 	DataShapeError,
 	inspectDataShape,
@@ -35,6 +42,12 @@ import {
 } from "./document-markdown.ts";
 import { HTML_TRANSFORM_FORMATS, isHtmlTransformFormat, transformHtml } from "./html-transform.ts";
 import {
+	describeImage,
+	IMAGE_DESCRIPTION_FORMATS,
+	ImageDescriptionError,
+	isImageDescriptionFormat,
+} from "./image-description.ts";
+import {
 	isJsonTransformFormat,
 	JSON_TRANSFORM_FORMATS,
 	JsonTransformError,
@@ -51,6 +64,12 @@ import {
 	RequestTransformError,
 	transformRequestText,
 } from "./request-transform.ts";
+import {
+	inspectSite,
+	isSiteInspectFormat,
+	SITE_INSPECT_FORMATS,
+	SiteInspectError,
+} from "./site-inspect.ts";
 import {
 	convertTextFileContent,
 	isTextFileFormat,
@@ -248,6 +267,99 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 			);
 		} catch (error) {
 			if (error instanceof DeveloperInspectError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"audio-transcription": async ({ fields, file }, { env }) => {
+		const outputFormat = fields.outputFormat || fields.format || "text";
+
+		if (!isAudioTranscriptionFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported output format: ${AUDIO_TRANSCRIPTION_FORMATS.join(", ")}.`,
+			);
+		}
+
+		if (!file) {
+			throw new ConverterRequestError("Upload an audio file to transcribe.");
+		}
+
+		if (!env?.AI) {
+			throw new ConverterRequestError("Audio transcription is not available.", 503);
+		}
+
+		try {
+			const transcript = await transcribeAudio(
+				env.AI,
+				file,
+				outputFormat,
+				normaliseTranscriptionLanguage(fields.language),
+			);
+
+			return textResult(
+				"audio-transcription",
+				"Transcript",
+				file.name,
+				transcript.content,
+				`Transcribed ${transcript.seconds} seconds of ${transcript.language} audio as ${outputFormat}.`,
+				{ downloadName: transcript.downloadName, mimeType: transcript.mimeType },
+			);
+		} catch (error) {
+			if (error instanceof AudioTranscriptionError) {
+				throw new ConverterRequestError(error.message, error.status);
+			}
+
+			throw error;
+		}
+	},
+	"image-description": async ({ fields, file }, { env }) => {
+		const outputFormat = fields.outputFormat || fields.format || "all";
+
+		if (!isImageDescriptionFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported output format: ${IMAGE_DESCRIPTION_FORMATS.join(", ")}.`,
+			);
+		}
+
+		if (!file) {
+			throw new ConverterRequestError("Upload an image to describe.");
+		}
+
+		if (!env?.AI) {
+			throw new ConverterRequestError("Image description is not available.", 503);
+		}
+
+		try {
+			const described = await describeImage(env.AI, file);
+			const meta = "Image described with a vision model.";
+
+			if (outputFormat === "alt-text") {
+				return textResult("image-description", "Alt text", file.name, described.altText, meta);
+			}
+
+			if (outputFormat === "description") {
+				return textResult(
+					"image-description",
+					"Description",
+					file.name,
+					described.description,
+					meta,
+				);
+			}
+
+			return {
+				generatedAt: new Date().toISOString(),
+				input: file.name,
+				kind: "fields",
+				label: "Image description",
+				meta,
+				result: { "Alt text": described.altText, Description: described.description },
+				type: "image-description",
+			};
+		} catch (error) {
+			if (error instanceof ImageDescriptionError) {
 				throw new ConverterRequestError(error.message, error.status);
 			}
 
@@ -571,6 +683,32 @@ export const converterHandlers: Record<string, ConverterHandler> = {
 		} catch (error) {
 			if (error instanceof UrlTransformError) {
 				throw new ConverterRequestError(error.message);
+			}
+
+			throw error;
+		}
+	},
+	"site-inspect": async ({ fields, input }) => {
+		const outputFormat = fields.outputFormat || fields.format;
+
+		if (!isSiteInspectFormat(outputFormat)) {
+			throw new ConverterRequestError(
+				`Choose a supported inspection mode: ${SITE_INSPECT_FORMATS.join(", ")}.`,
+			);
+		}
+
+		try {
+			return textResult(
+				"site-inspect",
+				"Site inspection",
+				input,
+				await inspectSite(input, outputFormat),
+				`Site inspected with ${outputFormat}.`,
+				{ mimeType: "application/json;charset=utf-8" },
+			);
+		} catch (error) {
+			if (error instanceof SiteInspectError) {
+				throw new ConverterRequestError(error.message, error.status);
 			}
 
 			throw error;

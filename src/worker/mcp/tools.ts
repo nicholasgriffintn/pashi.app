@@ -9,6 +9,7 @@ import { POLYCHAT_APP_META_KEY } from "../../shared/mcp-apps";
 import { POLIS_DRAFT_LENGTH, POLIS_MAX_BUCKETS_PER_REQUEST } from "../../shared/polis";
 import type { AiClient } from "../ai/run";
 import type { PolicyName } from "../security/policies";
+import { isMcpConverter } from "../services/converters/availability";
 import { listConverterTools } from "../services/converters/catalogue";
 import type { ConversionEnv } from "../services/converters/conversion-pipeline";
 import { listGeneratorTools } from "../services/generators/catalogue";
@@ -910,7 +911,7 @@ function listTools(argumentsValue: Record<string, unknown>) {
 		kind === "generator"
 			? []
 			: listConverterTools()
-					.filter((tool) => tool.runtime === "worker")
+					.filter(isMcpConverter)
 					.map((tool) => ({
 						category: tool.display.category,
 						description: tool.description,

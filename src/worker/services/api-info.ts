@@ -18,7 +18,7 @@ export function createApiIndexResponse(env: FeatureEnv) {
 		.filter((tool) => isConverterAvailable(tool, env))
 		.map((tool) => ({
 			...tool,
-			apiKeyRequired: tool.runtime === "container",
+			apiKeyRequired: tool.runtime === "container" || Boolean(tool.capabilities?.requiresAccount),
 			toolType: "converter" as const,
 		}));
 	const tools = [...generators, ...converters];
@@ -26,7 +26,9 @@ export function createApiIndexResponse(env: FeatureEnv) {
 	return {
 		authentication: {
 			headers: ["Authorization: Bearer <api-key>", "X-API-Key: <api-key>"],
-			requiredFor: ["container converters, unless a Polychat Pro account is connected"],
+			requiredFor: [
+				"container and account-only converters, unless a Polychat Pro account is connected",
+			],
 		},
 		endpoints: tools.flatMap((tool) => (tool.endpoint ? [tool.endpoint] : [])),
 		exportFormats: listExportFormats(),

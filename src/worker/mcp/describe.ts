@@ -1,4 +1,5 @@
 import type { ToolExample } from "../../shared/tool-examples";
+import { isMcpConverter } from "../services/converters/availability";
 import { findConverterTool } from "../services/converters/catalogue";
 import type { ConverterApiField, ConverterTool } from "../services/converters/types";
 import { findGenerator } from "../services/generators/catalogue";
@@ -149,7 +150,7 @@ export function describeTool(type: string): DescribedTool {
 
 	const converter = findConverterTool(type);
 
-	if (converter?.runtime === "worker") {
+	if (converter && isMcpConverter(converter)) {
 		return describeConverter(converter);
 	}
 

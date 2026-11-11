@@ -4,6 +4,11 @@ import { REGEX_DEFAULT_FLAGS } from "../../utils/regex-tester.ts";
 import { TEXT_TRANSFORM_FORMATS } from "../../utils/text-transforms.ts";
 import { UNIT_OUTPUTS } from "../../utils/unit-conversion.ts";
 import { UK_BANK_HOLIDAY_LICENCE } from "../generators/data/uk-bank-holidays.ts";
+import {
+	AUDIO_TRANSCRIPTION_EXTENSIONS,
+	AUDIO_TRANSCRIPTION_FORMATS,
+	AUDIO_TRANSCRIPTION_MAX_BYTES,
+} from "./audio-transcription.ts";
 import { DATA_SHAPE_FORMATS } from "./data-shape.ts";
 import { DEVELOPER_INSPECT_FORMATS } from "./developer-inspect.ts";
 import { DEVELOPER_TEXT_FORMATS } from "./developer-text.ts";
@@ -13,6 +18,12 @@ import {
 	DOCUMENT_MARKDOWN_MIME_TYPES,
 } from "./document-markdown.ts";
 import { HTML_TRANSFORM_FORMATS } from "./html-transform.ts";
+import {
+	IMAGE_DESCRIPTION_EXTENSIONS,
+	IMAGE_DESCRIPTION_FORMATS,
+	IMAGE_DESCRIPTION_MAX_BYTES,
+	IMAGE_DESCRIPTION_MIME_TYPES,
+} from "./image-description.ts";
 import { JSON_TRANSFORM_FORMATS } from "./json-transform.ts";
 import { MARKDOWN_TARGET_FORMATS } from "./markdown-targets.ts";
 import {
@@ -24,6 +35,7 @@ import {
 	VIDEO_FORMAT_OUTPUTS,
 } from "./queued-output-formats.ts";
 import { REQUEST_TRANSFORM_FORMATS } from "./request-transform.ts";
+import { SITE_INSPECT_FORMATS } from "./site-inspect.ts";
 import { TEXT_FILE_FORMATS } from "./text-file-conversion.ts";
 import { TIMESTAMP_MAX_OCCURRENCES, TIMESTAMP_TRANSFORM_FORMATS } from "./timestamp-transform.ts";
 import type { ConverterTool } from "./types";
@@ -731,6 +743,109 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "Working days",
 		outputs: WORKING_DAYS_FORMATS,
 		placeholder: "2026-12-18",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"link-preview",
+			"url-unfurl",
+			"security-headers",
+			"redirect-checker",
+			"dns-lookup",
+			"robots-txt-checker",
+			"inspect-website",
+		],
+		api: {
+			accepts: TEXT_REQUEST_FORMATS,
+			examples: [
+				{
+					description: "Read a page's title, description, Open Graph and Twitter card tags.",
+					method: "GET",
+					url: "/api/site-inspect?outputFormat=preview&input=https%3A%2F%2Fpashi.app",
+				},
+				{
+					description: "Grade a site's security headers.",
+					method: "GET",
+					url: "/api/site-inspect?outputFormat=headers&input=https%3A%2F%2Fpashi.app",
+				},
+				{
+					description: "Follow every redirect from an address and list each hop.",
+					method: "GET",
+					url: "/api/site-inspect?outputFormat=redirects&input=http%3A%2F%2Fgithub.com",
+				},
+				{
+					description: "List A, AAAA, CNAME, MX, TXT, NS and CAA records for a hostname.",
+					method: "GET",
+					url: "/api/site-inspect?outputFormat=dns&input=pashi.app",
+				},
+				{
+					description: "Summarise a site's robots.txt rules and sitemaps.",
+					method: "GET",
+					url: "/api/site-inspect?outputFormat=robots&input=https%3A%2F%2Fgithub.com",
+				},
+			],
+			fields: [
+				{
+					description: "Inspection mode.",
+					id: "outputFormat",
+					required: true,
+					values: SITE_INSPECT_FORMATS,
+				},
+			],
+			methods: ["GET", "POST"],
+			response: "json",
+		},
+		audience: "Documents",
+		capabilities: { fetchesNetwork: true },
+		description:
+			"Inspect a public website: link preview tags, security headers, the redirect chain, DNS records and robots.txt rules.",
+		display: {
+			actionLabel: "Inspect site",
+			category: "Web",
+			examples: [
+				{
+					fields: { outputFormat: "preview" },
+					input: "https://pashi.app",
+					label: "Link preview for pashi.app",
+				},
+				{
+					fields: { outputFormat: "preview" },
+					input: "https://github.com",
+					label: "Link preview for GitHub",
+				},
+				{
+					fields: { outputFormat: "headers" },
+					input: "https://pashi.app",
+					label: "Security headers on pashi.app",
+				},
+				{
+					fields: { outputFormat: "redirects" },
+					input: "http://github.com",
+					label: "Redirects from plain HTTP",
+				},
+				{
+					fields: { outputFormat: "dns" },
+					input: "pashi.app",
+					label: "DNS records for pashi.app",
+				},
+				{
+					fields: { outputFormat: "robots" },
+					input: "https://github.com",
+					label: "GitHub robots.txt",
+				},
+			],
+		},
+		endpoint: "/api/site-inspect",
+		id: "site-inspect",
+		input: {
+			label: "Address",
+			kind: "text",
+			required: true,
+		},
+		label: "Site inspector",
+		outputs: SITE_INSPECT_FORMATS,
+		placeholder: "https://pashi.app",
 		runtime: "worker",
 		status: "available",
 	},
@@ -2560,6 +2675,155 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 		label: "Documents to Markdown",
 		outputs: DOCUMENT_MARKDOWN_FORMATS,
 		placeholder: "PDF, DOCX, CSV, HTML, or XML",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: [
+			"speech-to-text",
+			"transcribe-audio",
+			"audio-to-text",
+			"audio-to-srt",
+			"audio-to-vtt",
+		],
+		api: {
+			accepts: ["application/octet-stream", "multipart/form-data"],
+			examples: [
+				{
+					body: "file=@interview.mp3; outputFormat=text",
+					contentType: "multipart/form-data",
+					description: "Upload an audio file with an API key and get the transcript back.",
+					method: "POST",
+					url: "/api/audio-transcription",
+				},
+				{
+					body: "<raw bytes of talk.wav>",
+					contentType: "application/octet-stream",
+					description:
+						"Post raw audio bytes, name the file with sourceName and ask for SRT subtitles.",
+					method: "POST",
+					url: "/api/audio-transcription?sourceName=talk.wav&outputFormat=srt&language=en",
+				},
+			],
+			fields: [
+				{
+					description: "Text returns the transcript. VTT and SRT return timed subtitles.",
+					id: "outputFormat",
+					required: true,
+					values: AUDIO_TRANSCRIPTION_FORMATS,
+				},
+				{
+					description:
+						"Optional language code such as en or fr. Leave empty to detect the language.",
+					id: "language",
+				},
+				{
+					description:
+						"Source filename with its extension. Needed for raw uploads; multipart uploads use the file name.",
+					id: "sourceName",
+				},
+			],
+			methods: ["POST"],
+			response: "json",
+		},
+		audience: "Media",
+		capabilities: {
+			binaryInput: true,
+			maxUploadBytes: AUDIO_TRANSCRIPTION_MAX_BYTES,
+			requiresAccount: true,
+			usesAiBinding: true,
+		},
+		description:
+			"Transcribe speech from MP3, WAV, FLAC, OGG, M4A or WebM audio with Whisper. Returns plain text, WebVTT or SRT. Uploads are capped at 16 MiB. Needs an API key or Polychat Pro, because each call costs money.",
+		display: {
+			actionLabel: "Transcribe audio",
+			category: "Media",
+			examples: [
+				{ fields: { outputFormat: "text" }, label: "Plain transcript" },
+				{ fields: { outputFormat: "vtt" }, label: "WebVTT subtitles" },
+				{ fields: { outputFormat: "srt" }, label: "SRT subtitles" },
+			],
+		},
+		endpoint: "/api/audio-transcription",
+		id: "audio-transcription",
+		input: {
+			accept: ["audio/*", ...AUDIO_TRANSCRIPTION_EXTENSIONS],
+			label: "Audio file",
+			kind: "file",
+			required: true,
+		},
+		label: "Audio transcription",
+		outputs: AUDIO_TRANSCRIPTION_FORMATS,
+		placeholder: "MP3, WAV, FLAC, OGG, M4A, or WebM",
+		runtime: "worker",
+		status: "available",
+	},
+	{
+		aliases: ["image-alt-text", "alt-text-generator", "describe-image", "image-to-text"],
+		api: {
+			accepts: ["application/octet-stream", "multipart/form-data"],
+			examples: [
+				{
+					body: "file=@photo.jpg; outputFormat=all",
+					contentType: "multipart/form-data",
+					description: "Upload an image with an API key and get alt text and a description.",
+					method: "POST",
+					url: "/api/image-description",
+				},
+				{
+					body: "<raw bytes of photo.png>",
+					contentType: "application/octet-stream",
+					description: "Post raw image bytes and ask for the alt text only.",
+					method: "POST",
+					url: "/api/image-description?sourceName=photo.png&outputFormat=alt-text",
+				},
+			],
+			fields: [
+				{
+					description:
+						"All returns alt text and a longer description. Alt text and description return one of them.",
+					id: "outputFormat",
+					required: true,
+					values: IMAGE_DESCRIPTION_FORMATS,
+				},
+				{
+					description:
+						"Source filename with its extension. Needed for raw uploads; multipart uploads use the file name.",
+					id: "sourceName",
+				},
+			],
+			methods: ["POST"],
+			response: "json",
+		},
+		audience: "Media",
+		capabilities: {
+			binaryInput: true,
+			maxUploadBytes: IMAGE_DESCRIPTION_MAX_BYTES,
+			requiresAccount: true,
+			usesAiBinding: true,
+		},
+		description:
+			"Describe a PNG, JPEG, WebP or GIF image with a vision model. Returns short alt text and a longer description. Uploads are capped at 10 MiB. Needs an API key or Polychat Pro, because each call costs money.",
+		display: {
+			actionLabel: "Describe image",
+			category: "Media",
+			examples: [
+				{ fields: { outputFormat: "all" }, label: "Alt text and description" },
+				{ fields: { outputFormat: "alt-text" }, label: "Alt text only" },
+				{ fields: { outputFormat: "description" }, label: "Description only" },
+			],
+		},
+		endpoint: "/api/image-description",
+		id: "image-description",
+		input: {
+			accept: [...IMAGE_DESCRIPTION_MIME_TYPES, ...IMAGE_DESCRIPTION_EXTENSIONS],
+			label: "Image file",
+			kind: "file",
+			required: true,
+		},
+		label: "Image description",
+		outputs: IMAGE_DESCRIPTION_FORMATS,
+		placeholder: "PNG, JPEG, WebP, or GIF",
 		runtime: "worker",
 		status: "available",
 	},

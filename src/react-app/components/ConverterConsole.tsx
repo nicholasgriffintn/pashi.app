@@ -68,7 +68,7 @@ export function ConverterConsole({ controls, navigateToTool, routeToolId }: Conv
 			isInfoLoading={isInfoLoading}
 			isLoading={isLoading}
 			keyRequiredFor={
-				activeTool?.runtime === "container"
+				activeTool?.runtime === "container" || activeTool?.capabilities?.requiresAccount
 					? { requires: "conversion", what: "This converter" }
 					: undefined
 			}

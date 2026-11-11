@@ -15,6 +15,7 @@ export type AppContext = {
 };
 
 export interface GuardOptions {
+	fetchesNetwork?: boolean;
 	isAiMode?: boolean;
 	isContainerRuntime?: boolean;
 	isExpensiveGenerator?: boolean;
@@ -35,6 +36,7 @@ export async function guard(c: Context<AppContext>, options: GuardOptions = {}) 
 				isExpensiveGenerator: options.isExpensiveGenerator ?? false,
 				isUpload: options.isUpload ?? false,
 				method: c.req.method,
+				fetchesNetwork: options.fetchesNetwork ?? false,
 				usesAiBinding: options.usesAiBinding ?? false,
 			}),
 		request: c.req.raw,
