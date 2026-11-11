@@ -2653,8 +2653,8 @@ function field(
 
 function shownWhen(
 	definition: GeneratorInputField,
-	field: string,
+	controller: string,
 	values: readonly string[],
 ): GeneratorInputField {
-	return { ...definition, visibleWhen: { field, values } };
+	return { ...definition, visibleWhen: { field: controller, values } };
 }

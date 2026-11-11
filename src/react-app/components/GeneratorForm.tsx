@@ -85,11 +85,7 @@ export function GeneratorForm({
 					</>
 				) : null}
 
-				<ToolExamples
-					examples={activeTool.display.examples}
-					label="Try"
-					onApply={onApplyExample}
-				/>
+				<ToolExamples examples={activeTool.display.examples} label="Try" onApply={onApplyExample} />
 			</div>
 
 			<div className="generate-actions">
