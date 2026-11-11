@@ -1,11 +1,7 @@
 import { isFieldVisible, type ToolExample } from "../../shared/tool-examples";
 import type { ConverterApiField, ConverterInfoTool } from "./converter-api";
 import { pushAppPath } from "./navigation";
-import {
-	readFieldParams,
-	type ToolValueField,
-	visibleFieldValues,
-} from "./tool-values";
+import { readFieldParams, type ToolValueField, visibleFieldValues } from "./tool-values";
 
 const MODE_FIELD_ID = "outputFormat";
 
@@ -116,7 +112,9 @@ export function converterExamplesForMode(tool: ConverterInfoTool, outputFormat: 
 		return tool.display.examples;
 	}
 
-	return tool.display.examples.filter((example) => example.fields?.[MODE_FIELD_ID] === outputFormat);
+	return tool.display.examples.filter(
+		(example) => example.fields?.[MODE_FIELD_ID] === outputFormat,
+	);
 }
 
 export function getRouteConverterId() {

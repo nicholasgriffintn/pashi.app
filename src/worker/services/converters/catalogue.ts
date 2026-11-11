@@ -313,7 +313,8 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				},
 				{
 					fields: { outputFormat: "to-markdown" },
-					input: "<h1>Title</h1><p>Hello <strong>world</strong>.</p><ul><li>One</li><li>Two</li></ul>",
+					input:
+						"<h1>Title</h1><p>Hello <strong>world</strong>.</p><ul><li>One</li><li>Two</li></ul>",
 					label: "Article to Markdown",
 				},
 			],
@@ -552,14 +553,42 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Transform text",
 			category: "Text",
 			examples: [
-				{ fields: { outputFormat: "lowercase" }, input: "HELLO, PASHI APP!", label: "Lowercase a heading" },
-				{ fields: { outputFormat: "uppercase" }, input: "hello, pashi app!", label: "Uppercase a heading" },
-				{ fields: { outputFormat: "title" }, input: "the quick brown fox", label: "Title case a phrase" },
-				{ fields: { outputFormat: "kebab" }, input: "Hello Pashi App", label: "Kebab-case a title" },
-				{ fields: { outputFormat: "snake" }, input: "Hello Pashi App", label: "Snake-case a title" },
-				{ fields: { outputFormat: "camel" }, input: "hello pashi app", label: "Camel-case a title" },
+				{
+					fields: { outputFormat: "lowercase" },
+					input: "HELLO, PASHI APP!",
+					label: "Lowercase a heading",
+				},
+				{
+					fields: { outputFormat: "uppercase" },
+					input: "hello, pashi app!",
+					label: "Uppercase a heading",
+				},
+				{
+					fields: { outputFormat: "title" },
+					input: "the quick brown fox",
+					label: "Title case a phrase",
+				},
+				{
+					fields: { outputFormat: "kebab" },
+					input: "Hello Pashi App",
+					label: "Kebab-case a title",
+				},
+				{
+					fields: { outputFormat: "snake" },
+					input: "Hello Pashi App",
+					label: "Snake-case a title",
+				},
+				{
+					fields: { outputFormat: "camel" },
+					input: "hello pashi app",
+					label: "Camel-case a title",
+				},
 				{ fields: { outputFormat: "reverse" }, input: "stressed", label: "Reverse a word" },
-				{ fields: { outputFormat: "sort-lines" }, input: "pear\napple\nbanana", label: "Sort lines" },
+				{
+					fields: { outputFormat: "sort-lines" },
+					input: "pear\napple\nbanana",
+					label: "Sort lines",
+				},
 				{
 					fields: { outputFormat: "unique-lines" },
 					input: "apple\nbanana\napple\ncherry\nbanana",
@@ -585,10 +614,26 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					input: "Pashi is fast. It has tools! Want more?",
 					label: "Count sentences",
 				},
-				{ fields: { outputFormat: "text-size" }, input: "Hello, Pashi App! 👋", label: "Measure text size" },
-				{ fields: { outputFormat: "word-frequency" }, input: "to be or not to be", label: "Word frequency" },
-				{ fields: { outputFormat: "hashtags" }, input: "launch day for pashi tools", label: "Make hashtags" },
-				{ fields: { outputFormat: "list" }, input: "apples, pears, plums", label: "Comma list to lines" },
+				{
+					fields: { outputFormat: "text-size" },
+					input: "Hello, Pashi App! 👋",
+					label: "Measure text size",
+				},
+				{
+					fields: { outputFormat: "word-frequency" },
+					input: "to be or not to be",
+					label: "Word frequency",
+				},
+				{
+					fields: { outputFormat: "hashtags" },
+					input: "launch day for pashi tools",
+					label: "Make hashtags",
+				},
+				{
+					fields: { outputFormat: "list" },
+					input: "apples, pears, plums",
+					label: "Comma list to lines",
+				},
 				{
 					fields: { count: "3", outputFormat: "repeat" },
 					input: "Hip hip hooray",
@@ -600,9 +645,17 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					label: "Find and replace",
 				},
 				{ fields: { outputFormat: "leet" }, input: "elite hacker", label: "Leet speak" },
-				{ fields: { outputFormat: "upside-down" }, input: "hello world", label: "Upside-down text" },
+				{
+					fields: { outputFormat: "upside-down" },
+					input: "hello world",
+					label: "Upside-down text",
+				},
 				{ fields: { outputFormat: "binary" }, input: "Hi", label: "Text to binary" },
-				{ fields: { outputFormat: "from-binary" }, input: "01001000 01101001", label: "Binary to text" },
+				{
+					fields: { outputFormat: "from-binary" },
+					input: "01001000 01101001",
+					label: "Binary to text",
+				},
 				{ fields: { outputFormat: "hex" }, input: "Hi", label: "Text to hex" },
 				{ fields: { outputFormat: "from-hex" }, input: "48 69", label: "Hex to text" },
 				{ fields: { outputFormat: "ascii-decimal" }, input: "ABC", label: "ASCII to decimal" },
@@ -618,7 +671,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					input: "name%3DAda%20Lovelace%26role%3Dadmin",
 					label: "URL-decode a query",
 				},
-				{ fields: { outputFormat: "unicode-escape" }, input: "café ☕", label: "Escape to Unicode" },
+				{
+					fields: { outputFormat: "unicode-escape" },
+					input: "café ☕",
+					label: "Escape to Unicode",
+				},
 				{
 					fields: { outputFormat: "unicode-unescape" },
 					input: "caf\\u00e9 \\u2615",
@@ -715,7 +772,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			actionLabel: "Transform JSON",
 			category: "JSON",
 			examples: [
-				{ fields: { outputFormat: "format" }, input: '{"b":2,"a":{"c":3}}', label: "Pretty-print JSON" },
+				{
+					fields: { outputFormat: "format" },
+					input: '{"b":2,"a":{"c":3}}',
+					label: "Pretty-print JSON",
+				},
 				{
 					fields: { outputFormat: "minify" },
 					input: '{\n  "name": "Ada",\n  "tags": ["admin", "editor"]\n}',
@@ -1134,7 +1195,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 					label: "Diff two text blocks",
 				},
 				{
-					fields: { left: "milk\neggs\nbread", outputFormat: "diff-lines", right: "milk\nbread\nbutter" },
+					fields: {
+						left: "milk\neggs\nbread",
+						outputFormat: "diff-lines",
+						right: "milk\nbread\nbutter",
+					},
 					input: "",
 					label: "Diff left and right",
 				},
@@ -1524,7 +1589,11 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 			examples: [
 				{ fields: { outputFormat: "m" }, input: "33 ft", label: "Feet to metres" },
 				{ fields: { outputFormat: "km" }, input: "26.2 mi", label: "Miles to kilometres" },
-				{ fields: { fromUnit: "mi", outputFormat: "km" }, input: "26.2", label: "Bare number as miles" },
+				{
+					fields: { fromUnit: "mi", outputFormat: "km" },
+					input: "26.2",
+					label: "Bare number as miles",
+				},
 				{ fields: { outputFormat: "cm" }, input: "12 in", label: "Inches to centimetres" },
 				{ fields: { outputFormat: "mm" }, input: "0.5 in", label: "Inches to millimetres" },
 				{ fields: { outputFormat: "in" }, input: "30 cm", label: "Centimetres to inches" },
@@ -1547,8 +1616,16 @@ const CONVERTER_TOOLS: readonly ConverterTool[] = [
 				{ fields: { outputFormat: "kph" }, input: "70 mph", label: "mph to km/h" },
 				{ fields: { outputFormat: "mph" }, input: "100 kph", label: "km/h to mph" },
 				{ fields: { outputFormat: "kn" }, input: "50 kph", label: "km/h to knots" },
-				{ fields: { outputFormat: "sqm" }, input: "500 sqft", label: "Square feet to square metres" },
-				{ fields: { outputFormat: "sqft" }, input: "50 sqm", label: "Square metres to square feet" },
+				{
+					fields: { outputFormat: "sqm" },
+					input: "500 sqft",
+					label: "Square feet to square metres",
+				},
+				{
+					fields: { outputFormat: "sqft" },
+					input: "50 sqm",
+					label: "Square metres to square feet",
+				},
 				{ fields: { outputFormat: "acre" }, input: "10000 sqm", label: "Square metres to acres" },
 				{ fields: { outputFormat: "l" }, input: "5 gal", label: "Gallons to litres" },
 				{ fields: { outputFormat: "ml" }, input: "1.5 l", label: "Litres to millilitres" },

@@ -67,15 +67,17 @@ export function FileConverterControls({
 				outputFormat={outputFormat}
 				tool={tool}
 			/>
-			{visibleConverterFields(tool, { fields: converterFields, input, outputFormat }).map((field) => (
-				<ConverterFieldControl
-					key={field.id}
-					field={field}
-					onChange={(value) => onConverterFieldChange(field.id, value)}
-					onFileChange={onFileChange}
-					value={converterFields[field.id] ?? ""}
-				/>
-			))}
+			{visibleConverterFields(tool, { fields: converterFields, input, outputFormat }).map(
+				(field) => (
+					<ConverterFieldControl
+						key={field.id}
+						field={field}
+						onChange={(value) => onConverterFieldChange(field.id, value)}
+						onFileChange={onFileChange}
+						value={converterFields[field.id] ?? ""}
+					/>
+				),
+			)}
 			{selectedFile ? (
 				<p className="selected-file">
 					{selectedFile.name} / {Math.ceil(selectedFile.size / 1024)} KB

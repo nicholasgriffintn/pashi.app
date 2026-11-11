@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { ToolExample } from "../../shared/tool-examples";
 import { useApiKey } from "./api-key-context";
 import {
 	convertImageThing,
@@ -13,7 +14,6 @@ import {
 	conversionJobStatus,
 } from "./converter-api";
 import { createConversionJobPoller, type ConversionJobPoller } from "./converter-polling";
-import type { ToolExample } from "../../shared/tool-examples";
 import {
 	converterRequestFields,
 	converterShareFields,
