@@ -25,7 +25,7 @@ An MCP endpoint at `/mcp` exposes four meta tools rather than one per generator,
 - `pashi_generate` runs a generator.
 - `pashi_convert` runs a text converter. Media and document conversion is not available over MCP.
 
-It speaks JSON-RPC over POST. The meta tools are open without a credential, rate limited per IP address, apart from AI mode. Everything else takes either a Pashi API key or the Polychat link token as a bearer token.
+It speaks JSON-RPC over POST. The meta tools work without a credential and are rate limited per IP address. AI mode needs a Polychat link. Everything else takes either a Pashi API key or the Polychat link token as a bearer token.
 
 ### MCP Apps
 
