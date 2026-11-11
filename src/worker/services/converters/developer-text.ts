@@ -153,7 +153,7 @@ function diffLines(input: string, options: DeveloperTextOptions) {
 }
 
 function diffInputs(input: string, options: DeveloperTextOptions): [string, string] {
-	if (options.left !== undefined || options.right !== undefined) {
+	if (options.left || options.right) {
 		return [options.left ?? "", options.right ?? ""];
 	}
 
